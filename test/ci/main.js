@@ -7,8 +7,8 @@ const HOST = 'http://localhost:4000'
 
 const createWindow = async ()=>{
     const win = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 400,
+        height: 350,
         // show: false,
         // frame: false,
         webPreferences: {
@@ -44,6 +44,13 @@ const createWindow = async ()=>{
         console.log(`\x1b[33m[${log.target}]\x1b[0m`)
         console.table(log.result)
         console.log('\n-----------------')
+        // quit ci on any test fail
+        for(let test in log.result){
+            if(log.result[test].fail !== 0){
+                vite.kill()
+                process.exit(1)
+            }
+        }
     })
 
     await win.loadURL(HOST + '/test/?auto')
