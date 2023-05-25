@@ -71,8 +71,7 @@ export class RendererBase extends CEventDispatcher {
 
 
 
-    public beforeCompute(view: View3D, occlusionSystem: OcclusionSystem) { }
-    public lateCompute(view: View3D, occlusionSystem: OcclusionSystem) { }
+    public compute(view: View3D, occlusionSystem: OcclusionSystem) { }
 
     public render(view: View3D, occlusionSystem: OcclusionSystem, clusterLightingBuffer: ClusterLightingBuffer, maskTr: boolean = false) {
         GPUContext.cleanCache();
@@ -84,8 +83,8 @@ export class RendererBase extends CEventDispatcher {
         let collectInfo = EntityCollect.instance.getRenderNodes(scene);
         // this.compute(collectInfo, scene, occlusionSystem);
 
-        let op_bundleList = this.renderBundleOp(view, collectInfo, occlusionSystem);
-        let tr_bundleList = maskTr ? [] : this.renderBundleTr(view, collectInfo, occlusionSystem);
+        let op_bundleList = this.renderBundleOp(view, collectInfo, occlusionSystem, clusterLightingBuffer);
+        let tr_bundleList = maskTr ? [] : this.renderBundleTr(view, collectInfo, occlusionSystem, clusterLightingBuffer);
 
         {
             let command = GPUContext.beginCommandEncoder();

@@ -24,7 +24,6 @@ export class ColorPassRenderer extends RendererBase {
     }
 
     public render(view: View3D, occlusionSystem: OcclusionSystem, clusterLightingBuffer?: ClusterLightingBuffer, maskTr: boolean = false) {
-        // return ;
         this.renderContext.clean();
 
         let scene = view.scene;
@@ -33,8 +32,9 @@ export class ColorPassRenderer extends RendererBase {
         this.rendererPassState.camera3D = camera;
         let collectInfo = EntityCollect.instance.getRenderNodes(scene);
 
-        let op_bundleList = this.renderBundleOp(view, collectInfo, occlusionSystem);
-        let tr_bundleList = maskTr ? [] : this.renderBundleTr(view, collectInfo, occlusionSystem);
+        let op_bundleList = this.renderBundleOp(view, collectInfo, occlusionSystem, clusterLightingBuffer);
+        let tr_bundleList = maskTr ? [] : this.renderBundleTr(view, collectInfo, occlusionSystem, clusterLightingBuffer);
+
         ProfilerUtil.start("colorPass Renderer");
         {
             ProfilerUtil.start("ColorPass Draw Opaque");
