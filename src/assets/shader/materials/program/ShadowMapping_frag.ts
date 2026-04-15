@@ -4,9 +4,9 @@ import { CSM } from "../../../../core/csm/CSM";
  * @internal
  */
 export let ShadowMapping_frag: string = /*wgsl*/ `
-    @group(1) @binding(auto) var shadowMapSampler: sampler;
+    @group(1) @binding(auto) var shadowMapSampler: sampler_comparison;
     @group(1) @binding(auto) var shadowMap: texture_depth_2d_array;
-    @group(1) @binding(auto) var pointShadowMapSampler: sampler;
+    @group(1) @binding(auto) var pointShadowMapSampler: sampler_comparison;
     @group(1) @binding(auto) var pointShadowMap: texture_depth_cube_array;
 
     var<private> directShadowVisibility: array<f32, 8>;
@@ -131,8 +131,8 @@ export let ShadowMapping_frag: string = /*wgsl*/ `
                 var offset = vec2<f32>(f32(x), f32(y)) ;
                 var offsetUV = offset * uvOnePixel ;
                 var weight = min(length(offset),1.0) ;
-                var depth = textureSampleLevel(shadowMap, shadowMapSampler, varying_shadowUV + offsetUV , depthTexIndex, 0);
-                if ((shadowPos.z - bias ) < depth) {
+                var inShadow = textureSampleCompareLevel(shadowMap, shadowMapSampler, varying_shadowUV + offsetUV, depthTexIndex, shadowPos.z - bias);
+                if (inShadow < 0.5) {
                   visibility += weight ;
                   totalWeight += weight;
                 }else{
@@ -170,9 +170,8 @@ export let ShadowMapping_frag: string = /*wgsl*/ `
                 for (var y: f32 = -offset; y < offset; y += sampleOffset) {
                   for (var z: f32 = -offset; z < offset; z += sampleOffset) {
                     let offsetDir = normalize(dir.xyz + vec3<f32>(x, y, z));
-                    var depth = textureSampleLevel(pointShadowMap, pointShadowMapSampler, offsetDir, light.castShadow, 0);
-                    depth *= globalUniform.far;
-                    if ((len - bias) > depth) {
+                    var inShadow = textureSampleCompareLevel(pointShadowMap, pointShadowMapSampler, offsetDir, i32(light.castShadow), (len - bias) / globalUniform.far);
+                    if (inShadow > 0.5) {
                       shadow += 1.0 * dot(offsetDir, dir.xyz);
                     }
                   }
@@ -180,26 +179,24 @@ export let ShadowMapping_frag: string = /*wgsl*/ `
               }
               shadow = min(max(shadow / (samples * samples * samples), 0.0), 1.0);
             #endif
-  
+
           #if USE_SOFT_SHADOW
               let vDis = length(globalUniform.CameraPos.xyz - worldPos.xyz);
               let sampleRadies = globalUniform.shadowSoft;
               let samples = 20;
               for (var j: i32 = 0; j < samples; j += 1) {
                 let offsetDir = normalize(dir.xyz + sampleOffsetDir[j] * sampleRadies);
-                var depth = textureSampleLevel(pointShadowMap, pointShadowMapSampler, offsetDir, light.castShadow, 0);
-                depth *= globalUniform.far;
-                if ((len - bias) > depth) {
+                var inShadow = textureSampleCompareLevel(pointShadowMap, pointShadowMapSampler, offsetDir, i32(light.castShadow), (len - bias) / globalUniform.far);
+                if (inShadow > 0.5) {
                   shadow += 1.0 * dot(offsetDir, dir.xyz);
                 }
               }
               shadow = min(max(shadow / f32(samples), 0.0), 1.0);
           #endif
-  
+
           #if USE_HARD_SHADOW
-              var depth = textureSampleLevel(pointShadowMap, pointShadowMapSampler, dir.xyz, light.castShadow, 0);
-              depth *= globalUniform.far;
-              if ((len - bias) > depth) {
+              var inShadow = textureSampleCompareLevel(pointShadowMap, pointShadowMapSampler, dir.xyz, i32(light.castShadow), (len - bias) / globalUniform.far);
+              if (inShadow > 0.5) {
                 shadow = 1.0;
               }
           #endif
