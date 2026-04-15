@@ -478,13 +478,14 @@ export class Engine3D {
      * (and the module-level `webGPUContext` binding) point here.
      */
     private _activateContext(): void {
+        Engine3D._active = this;                       // static proxies resolve to this engine
         setActiveWebGPUContext(this._context);
-        if (this._componentCollect)   ComponentCollect.setActive(this._componentCollect);
-        if (this._globalBindGroup)    GlobalBindGroup.setActive(this._globalBindGroup);
-        if (this._rtResourceMap)      RTResourceMap.setActive(this._rtResourceMap);
+        if (this._componentCollect)    ComponentCollect.setActive(this._componentCollect);
+        if (this._globalBindGroup)     GlobalBindGroup.setActive(this._globalBindGroup);
+        if (this._rtResourceMap)       RTResourceMap.setActive(this._rtResourceMap);
         if (this._shadowLightsCollect) ShadowLightsCollect.setActive(this._shadowLightsCollect);
-        if (this._shaderUtil)         ShaderUtil.setActive(this._shaderUtil);
-        if (this._gBufferFrameMap)    GBufferFrame.setActiveGBufferMap(this._gBufferFrameMap);
+        if (this._shaderUtil)          ShaderUtil.setActive(this._shaderUtil);
+        if (this._gBufferFrameMap)     GBufferFrame.setActiveGBufferMap(this._gBufferFrameMap);
     }
 
     private async _render(time: number) {
@@ -596,4 +597,103 @@ export class Engine3D {
         if (this._lateRender)
             await this._lateRender();
     }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Static compatibility layer
+    // ═══════════════════════════════════════════════════════════════════════
+    //
+    // All existing code that calls Engine3D.setting / Engine3D.res / etc.
+    // continues to work unchanged.  The static members delegate to the
+    // most-recently activated engine instance (_active).
+    //
+    // Single-engine usage pattern (unchanged):
+    //   await Engine3D.init({ ... });
+    //   Engine3D.startRenderView(view);
+    //
+    // Multi-engine usage pattern (new):
+    //   const e1 = new Engine3D();  await e1.init(...);  e1.startRenderView(v1);
+    //   const e2 = new Engine3D();  await e2.init(...);  e2.startRenderView(v2);
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /** @internal The last engine instance that called init() */
+    private static _active: Engine3D;
+
+    // ── Static property proxies ───────────────────────────────────────────────
+
+    /** Global engine setting (delegates to the active engine instance) */
+    public static get setting(): EngineSetting { return this._active?.setting; }
+    public static set setting(v: EngineSetting) { if (this._active) this._active.setting = v; }
+
+    /** Resource manager of the active engine */
+    public static get res(): Res { return this._active?.res; }
+    public static set res(v: Res) { if (this._active) this._active.res = v; }
+
+    /** Input system of the active engine */
+    public static get inputSystem(): InputSystem { return this._active?.inputSystem; }
+    public static set inputSystem(v: InputSystem) { if (this._active) this._active.inputSystem = v; }
+
+    /** Active views of the current engine */
+    public static get views(): View3D[] { return this._active?.views; }
+    public static set views(v: View3D[]) { if (this._active) this._active.views = v; }
+
+    /** Render jobs map of the active engine */
+    public static get renderJobs(): Map<View3D, RendererJob> { return this._active?.renderJobs; }
+
+    /** Frame rate of the active engine */
+    public static get frameRate(): number { return this._active?._frameRate ?? 360; }
+    public static set frameRate(v: number) { if (this._active) this._active.frameRate = v; }
+
+    /** Presentation size of the active engine's canvas */
+    public static get size(): number[] { return this._active?.size; }
+
+    /** Aspect ratio of the active engine's canvas */
+    public static get aspect(): number { return this._active?.aspect; }
+
+    /** Canvas width of the active engine */
+    public static get width(): number { return this._active?.width; }
+
+    /** Canvas height of the active engine */
+    public static get height(): number { return this._active?.height; }
+
+    // ── Static method proxies ─────────────────────────────────────────────────
+
+    /**
+     * Single-engine convenience initialiser.
+     * Creates (or reuses) a default Engine3D instance, initialises it,
+     * and registers it as the active engine.
+     */
+    public static async init(descriptor: {
+        canvasConfig?: CanvasConfig;
+        beforeRender?: Function;
+        renderLoop?: Function;
+        lateRender?: Function;
+        engineSetting?: EngineSetting;
+    } = {}): Promise<void> {
+        if (!Engine3D._active) {
+            Engine3D._active = new Engine3D();
+        }
+        // instance init() calls _activateContext() which sets Engine3D._active = this
+        await Engine3D._active.init(descriptor);
+    }
+
+    /** @see Engine3D#startRenderView */
+    public static startRenderView(view: View3D): RendererJob {
+        return this._active?.startRenderView(view);
+    }
+
+    /** @see Engine3D#startRenderViews */
+    public static startRenderViews(views: View3D[]): void {
+        this._active?.startRenderViews(views);
+    }
+
+    /** @see Engine3D#getRenderJob */
+    public static getRenderJob(view: View3D): RendererJob {
+        return this._active?.getRenderJob(view);
+    }
+
+    /** @see Engine3D#pause */
+    public static pause(): void { this._active?.pause(); }
+
+    /** @see Engine3D#resume */
+    public static resume(): void { this._active?.resume(); }
 }
