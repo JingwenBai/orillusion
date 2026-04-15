@@ -21,7 +21,7 @@ export class ColliderComponent extends ComponentBase {
      * @internal
      */
     public start(): void {
-        if (Engine3D.setting.pick.mode == `pixel`) {
+        if ((this.transform?.view3D?.engine ?? Engine3D.instances[0])?.setting.pick.mode == `pixel`) {
             this.transform.scene3D.view.pickFire.mouseEnableMap.set(this.transform.worldMatrix.index, this);
         }
     }
@@ -61,7 +61,7 @@ export class ColliderComponent extends ComponentBase {
     }
 
     public beforeDestroy(force?: boolean) {
-        if (Engine3D.setting.pick.mode == `pixel`) {
+        if ((this.transform?.view3D?.engine ?? Engine3D.instances[0])?.setting.pick.mode == `pixel`) {
             this.transform.scene3D.view.pickFire.mouseEnableMap.delete(this.transform.worldMatrix.index);
         }
         super.beforeDestroy(force);

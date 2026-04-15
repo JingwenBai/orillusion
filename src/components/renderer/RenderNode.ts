@@ -328,7 +328,7 @@ export class RenderNode extends ComponentBase {
 
         // add if alpha == 1
         let ignoreDepthPass = RendererMaskUtil.hasMask(this.rendererMask, RendererMask.IgnoreDepthPass);
-        if (!ignoreDepthPass && Engine3D.setting.render.zPrePass) {
+        if (!ignoreDepthPass && (this.transform?.view3D?.engine ?? Engine3D.instances[0])?.setting.render.zPrePass) {
             for (let i = 0; i < this.materials.length; i++) {
                 const mat = this.materials[i];
                 PassGenerate.createDepthPass(this, mat.shader);
@@ -561,16 +561,17 @@ export class RenderNode extends ComponentBase {
                         continue;
                     }
 
-                    let bdrflutTex = Engine3D.res.getTexture(`BRDFLUT`);
+                    let bdrflutTex = (view.engine ?? Engine3D.instances[0])?.res.getTexture(`BRDFLUT`);
                     renderShader.setTexture(`brdflutMap`, bdrflutTex);
 
-                    let shadowRenderer = Engine3D.getRenderJob(view).shadowMapPassRenderer;
+                    const renderJob = Engine3D.getRenderJob(view);
+                    let shadowRenderer = renderJob?.shadowMapPassRenderer;
                     if (shadowRenderer && shadowRenderer.depth2DArrayTexture) {
-                        renderShader.setTexture(`shadowMap`, Engine3D.getRenderJob(view).shadowMapPassRenderer.depth2DArrayTexture);
+                        renderShader.setTexture(`shadowMap`, shadowRenderer.depth2DArrayTexture);
                     }
                     // let shadowLight = ShadowLights.list;
                     // if (shadowLight.length) {
-                    let pointShadowRenderer = Engine3D.getRenderJob(view).pointLightShadowRenderer;
+                    let pointShadowRenderer = renderJob?.pointLightShadowRenderer;
                     if (pointShadowRenderer && pointShadowRenderer.cubeArrayTexture) {
                         renderShader.setTexture(`pointShadowMap`, pointShadowRenderer.cubeArrayTexture);
                     }

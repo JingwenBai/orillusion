@@ -277,23 +277,27 @@ export class OrbitController extends ComponentBase {
         let pos = this._spherical.getCoords();
         this._position.set(pos.x + this._target.x, pos.y + this._target.y, pos.z + this._target.z);
     }
+    private get _input() {
+        return this.transform?.view3D?.engine?.inputSystem ?? Engine3D.inputSystem;
+    }
+
     /**
      * @internal
      */
     private addEventListener() {
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
+        this._input.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
+        this._input.addEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
+        this._input.addEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
+        this._input.addEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
     }
     /**
      * @internal
      */
     private removeEventListener() {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
+        this._input.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
+        this._input.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
+        this._input.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
+        this._input.removeEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
     }
 }
 

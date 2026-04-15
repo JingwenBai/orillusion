@@ -42,10 +42,11 @@ export class GUIPick {
         this._upEvent = new PickGUIEvent3D(PickGUIEvent3D.PICK_UP_GUI);
         this._downEvent = new PickGUIEvent3D(PickGUIEvent3D.PICK_DOWN_GUI);
 
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onTouchDown, this, null, 1);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onTouchUp, this, null, 1);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onTouchMove, this, null, 1);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_CLICK, this.onTouchClick, this, null, 1);
+        const input = this._view.engine?.inputSystem ?? Engine3D.inputSystem;
+        input.addEventListener(PointerEvent3D.POINTER_DOWN, this.onTouchDown, this, null, 1);
+        input.addEventListener(PointerEvent3D.POINTER_UP, this.onTouchUp, this, null, 1);
+        input.addEventListener(PointerEvent3D.POINTER_MOVE, this.onTouchMove, this, null, 1);
+        input.addEventListener(PointerEvent3D.POINTER_CLICK, this.onTouchClick, this, null, 1);
     }
 
     private _lastDownTarget: IUIInteractive;
@@ -193,9 +194,11 @@ export class GUIPick {
     }
 
     private pick(colliders: IUIInteractive[]): GUIHitInfo {
-        this._ray = this._view.camera.screenPointToRay(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY);
-        let screenPos = new Vector2(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY);
-        let screenSize = new Vector2(webGPUContext.canvas.clientWidth, webGPUContext.canvas.clientHeight);
+        const input = this._view.engine?.inputSystem ?? Engine3D.inputSystem;
+        this._ray = this._view.camera.screenPointToRay(input.mouseX, input.mouseY);
+        let screenPos = new Vector2(input.mouseX, input.mouseY);
+        const canvas = this._view.engine?.context.canvas ?? webGPUContext.canvas;
+        let screenSize = new Vector2(canvas.clientWidth, canvas.clientHeight);
 
         let hitInfo: GUIHitInfo;
         for (const iterator of colliders) {

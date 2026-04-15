@@ -1,6 +1,7 @@
 import { Scene3D } from '../../../core/Scene3D';
 import { View3D } from '../../../core/View3D';
 import { Engine3D } from '../../../Engine3D';
+import { EngineContext } from '../../../util/EngineContext';
 import { PickFire } from '../../../io/PickFire';
 import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { ShadowLightsCollect } from '../collect/ShadowLightsCollect';
@@ -104,7 +105,7 @@ export class RendererJob {
 
         this.reflectionRenderer = this.addRenderer(ReflectionRenderer, view);
 
-        if (Engine3D.setting.render.zPrePass) {
+        if ((view.engine ?? EngineContext.current)?.setting.render.zPrePass) {
             this.depthPassRenderer = this.addRenderer(PreDepthPassRenderer);
         }
 
@@ -226,7 +227,7 @@ export class RendererJob {
             this.depthPassRenderer.render(view, this.occlusionSystem);
         }
 
-        if (Engine3D.setting.gi.enable && this.ddgiProbeRenderer) {
+        if ((view.engine ?? EngineContext.current)?.setting.gi.enable && this.ddgiProbeRenderer) {
             this.ddgiProbeRenderer.compute(view, this.occlusionSystem);
             this.ddgiProbeRenderer.render(view, this.occlusionSystem);
         }

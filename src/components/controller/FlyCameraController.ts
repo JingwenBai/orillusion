@@ -77,20 +77,22 @@ export class FlyCameraController extends ComponentBase {
         this.Reset();
     }
 
+    private get _input() {
+        return this.transform?.view3D?.engine?.inputSystem ?? Engine3D.inputSystem;
+    }
+
     /**
      * @internal
      */
     public start(): void {
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
+        this._input.addEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
+        this._input.addEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
+        this._input.addEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
 
-        Engine3D.inputSystem.addEventListener(KeyEvent.KEY_UP, this.keyUp, this);
-        Engine3D.inputSystem.addEventListener(KeyEvent.KEY_DOWN, this.keyDown, this);
+        this._input.addEventListener(KeyEvent.KEY_UP, this.keyUp, this);
+        this._input.addEventListener(KeyEvent.KEY_DOWN, this.keyDown, this);
 
         this.transform.lookAt(this.targetPos, this.lookAtPos);
-
-
     }
 
     private mouseWheel(e: PointerEvent3D) { }
@@ -155,8 +157,8 @@ export class FlyCameraController extends ComponentBase {
     }
 
     private Reset() {
-        this._lastPos.x = Engine3D.inputSystem.mouseLastX;
-        this._lastPos.y = Engine3D.inputSystem.mouseLastY;
+        this._lastPos.x = this._input.mouseLastX;
+        this._lastPos.y = this._input.mouseLastY;
     }
 
     private mouseDown(e: PointerEvent3D) {
@@ -220,8 +222,8 @@ export class FlyCameraController extends ComponentBase {
         if (this._mouseDown) {
             // let rX = Lerp(transform.rotationY, transform.rotationY + (inputSystem.mouseLastX - this._lastPos.x) * 0.25, Time.detail * this._mouseFactory);
             // let rY = Lerp(transform.rotationX, transform.rotationX + (inputSystem.mouseLastY - this._lastPos.y) * 0.25, Time.detail * this._mouseFactory);
-            transform.rotationY -= this.internal(transform.rotationY + (Engine3D.inputSystem.mouseLastX - this._lastPos.x) * 0.25, transform.rotationY, dt * this._mouseFactory);
-            transform.rotationX -= this.internal(transform.rotationX + (Engine3D.inputSystem.mouseLastY - this._lastPos.y) * 0.25, transform.rotationX, dt * this._mouseFactory);
+            transform.rotationY -= this.internal(transform.rotationY + (this._input.mouseLastX - this._lastPos.x) * 0.25, transform.rotationY, dt * this._mouseFactory);
+            transform.rotationX -= this.internal(transform.rotationX + (this._input.mouseLastY - this._lastPos.y) * 0.25, transform.rotationX, dt * this._mouseFactory);
             this.Reset();
         }
 
@@ -272,12 +274,12 @@ export class FlyCameraController extends ComponentBase {
      * @internal
      */
     public destroy(force?: boolean): void {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
+        this._input.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
+        this._input.removeEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
+        this._input.removeEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
 
-        Engine3D.inputSystem.removeEventListener(KeyEvent.KEY_UP, this.keyUp, this);
-        Engine3D.inputSystem.removeEventListener(KeyEvent.KEY_DOWN, this.keyDown, this);
+        this._input.removeEventListener(KeyEvent.KEY_UP, this.keyUp, this);
+        this._input.removeEventListener(KeyEvent.KEY_DOWN, this.keyDown, this);
         super.destroy(force);
     }
 }

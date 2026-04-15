@@ -28,8 +28,8 @@ export class GlobalIlluminationComponent extends ComponentBase {
     private _debugMr: MeshRenderer[] = [];
 
     public init(scene: Scene3D): void {
-        scene ||= Engine3D.views[0]?.scene;
-        Engine3D.setting.gi.enable = true;
+        scene ||= (this.transform?.view3D?.engine ?? Engine3D.instances[0])?.views[0]?.scene;
+        (this.transform?.view3D?.engine ?? Engine3D.instances[0]).setting.gi.enable = true;
         this._volume = GlobalBindGroup.getLightEntries(scene).irradianceVolume;
         this.initProbe(scene);
     }
@@ -92,7 +92,7 @@ export class GlobalIlluminationComponent extends ComponentBase {
     }
 
     private debugProbeRay(probeIndex: number, array: Float32Array) {
-        const rayNumber = Engine3D.setting.gi.rayNumber;
+        const rayNumber = (this.transform?.view3D?.engine ?? Engine3D.instances[0])?.setting.gi.rayNumber;
         let quat = new Quaternion(0.0, -0.7071067811865475, 0.7071067811865475, 0.0);
         for (let i = 0; i < rayNumber; i++) {
             let ii = probeIndex * rayNumber + i;

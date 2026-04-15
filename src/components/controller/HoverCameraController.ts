@@ -133,15 +133,19 @@ export class HoverCameraController extends ComponentBase {
         this._targetPos = new Object3D();
     }
 
+    private get _input() {
+        return this.transform?.view3D?.engine?.inputSystem ?? Engine3D.inputSystem;
+    }
+
     /**
      * @internal
      */
     public start(): void {
         this.camera = this.object3D.getOrAddComponent(Camera3D);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this, null, 10);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this, null, 10);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this);
+        this._input.addEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
+        this._input.addEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this, null, 10);
+        this._input.addEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this, null, 10);
+        this._input.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this);
     }
 
     public flowTarget(target: Object3D, offset: Vector3 = Vector3.ZERO) {
@@ -196,7 +200,7 @@ export class HoverCameraController extends ComponentBase {
     private onMouseWheel(e: PointerEvent3D) {
         if (!this.enable) return;
         this._wheelStep = (this.wheelStep * Vector3Ex.distance(this._currentPos.transform.worldPosition, this.camera.transform.worldPosition)) / 10;
-        this.distance -= Engine3D.inputSystem.wheelDelta * this._wheelStep;
+        this.distance -= this._input.wheelDelta * this._wheelStep;
         this.distance = clamp(this.distance, this.minDistance, this.maxDistance);
         //console.log("distance", this.transform.view3D.camera.far, this.distance);
     }
@@ -290,10 +294,10 @@ export class HoverCameraController extends ComponentBase {
      * @internal
      */
     public destroy(force?: boolean) {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this);
+        this._input.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
+        this._input.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this);
+        this._input.removeEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this);
+        this._input.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this);
         super.destroy(force);
         this.camera = null;
         this._flowTarget = null;
