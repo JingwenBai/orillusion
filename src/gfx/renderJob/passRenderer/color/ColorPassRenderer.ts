@@ -63,12 +63,13 @@ export class ColorPassRenderer extends RendererBase {
                 renderPassEncoder.executeBundles(op_bundleList);
             }
 
-            if (!maskTr && EntityCollect.instance.sky) {
+            let _sky = EntityCollect.instance.getSky(view.scene);
+            if (!maskTr && _sky) {
                 GPUContext.bindCamera(renderPassEncoder, camera);
-                if (!EntityCollect.instance.sky.preInit(this._rendererType)) {
-                    EntityCollect.instance.sky.nodeUpdate(view, this._rendererType, this.rendererPassState, clusterLightingBuffer);
+                if (!_sky.preInit(this._rendererType)) {
+                    _sky.nodeUpdate(view, this._rendererType, this.rendererPassState, clusterLightingBuffer);
                 }
-                EntityCollect.instance.sky.renderPass2(view, this._rendererType, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
+                _sky.renderPass2(view, this._rendererType, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
             }
 
             if (collectInfo.opaqueList) {

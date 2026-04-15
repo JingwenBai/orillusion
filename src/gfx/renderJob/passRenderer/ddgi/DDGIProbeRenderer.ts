@@ -214,11 +214,12 @@ export class DDGIProbeRenderer extends RendererBase {
             }
         }
 
-        if (EntityCollect.instance.sky) {
-            if (!EntityCollect.instance.sky.preInit(this.passType)) {
-                EntityCollect.instance.sky.nodeUpdate(view, this.passType, this.rendererPassState, null);
+        let _sky = EntityCollect.instance.getSky(view.scene);
+        if (_sky) {
+            if (!_sky.preInit(this.passType)) {
+                _sky.nodeUpdate(view, this.passType, this.rendererPassState, null);
             }
-            EntityCollect.instance.sky.renderPass2(view, this.passType, this.rendererPassState, null, encoder);
+            _sky.renderPass2(view, this.passType, this.rendererPassState, null, encoder);
         }
 
         drawMin = Math.max(0, Engine3D.setting.render.drawTrMin);

@@ -314,11 +314,15 @@ export class Entity extends CEventDispatcher {
             this.components.clear();
         } else {
             ComponentCollect.waitStartComponent.forEach((v, k) => {
+                // Only process components belonging to this scene so that
+                // multiple Engine3D instances don't start each other's
+                // components with the wrong active WebGPU context.
+                if (k.transform?.scene3D !== this) return;
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();
-                    ComponentCollect.waitStartComponent.delete(element.object3D);
                 }
+                ComponentCollect.waitStartComponent.delete(k);
             });
         }
     }
