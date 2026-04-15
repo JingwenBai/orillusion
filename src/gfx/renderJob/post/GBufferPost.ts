@@ -134,7 +134,8 @@ export class GBufferPost extends PostBase {
         let reflectionsGBufferFrame = GBufferFrame.getGBufferFrame(GBufferFrame.reflections_GBuffer, reflectionSetting.width, reflectionSetting.height);
         let reflectionsGBufferTexture = reflectionsGBufferFrame.getCompressGBufferTexture();
 
-        let envMap = Engine3D.renderJobs.get(this.view).reflectionRenderer.outTexture;
+        const jobs = (this.view.engine as any)?.renderJobs ?? Engine3D.renderJobs;
+        let envMap = jobs?.get(this.view)?.reflectionRenderer?.outTexture;
 
         this.testCompute = new ComputeShader(TestComputeLoadBuffer);
         this.testCompute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);

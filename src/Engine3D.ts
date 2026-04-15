@@ -398,6 +398,12 @@ export class Engine3D {
 
         this.inputSystem = new InputSystem();
         this.inputSystem.initCanvas(this._context.canvas);
+
+        // Re-activate at the very end so all global statics (webGPUContext,
+        // ComponentCollect, etc.) correctly reflect THIS engine after init()
+        // returns, even if a concurrent engine's RAF fired during the async
+        // awaits above and temporarily switched the active context.
+        this._activateContext();
     }
 
     // ─── Rendering control ────────────────────────────────────────────────────
@@ -618,11 +624,41 @@ export class Engine3D {
     /** @internal The last engine instance that called init() */
     private static _active: Engine3D;
 
+    /**
+     * @internal
+     * Fallback setting returned before any engine is initialised.
+     * Module-level code (e.g. OutlinePostData, OutlineManager) may import
+     * Engine3D and read Engine3D.setting at module-evaluation time, before
+     * any Engine3D.init() / new Engine3D().init() call.  Without this fallback
+     * those accesses throw "Cannot read properties of undefined".
+     */
+    private static _defaultSetting: EngineSetting;
+    private static _getDefaultSetting(): EngineSetting {
+        if (!Engine3D._defaultSetting) {
+            // A bare `new Engine3D()` is cheap — no WebGPU, just the JS object.
+            Engine3D._defaultSetting = new Engine3D().setting;
+        }
+        return Engine3D._defaultSetting;
+    }
+
     // ── Static property proxies ───────────────────────────────────────────────
 
-    /** Global engine setting (delegates to the active engine instance) */
-    public static get setting(): EngineSetting { return this._active?.setting; }
-    public static set setting(v: EngineSetting) { if (this._active) this._active.setting = v; }
+    /**
+     * Global engine setting.
+     * Returns the active engine's setting when an engine is running,
+     * or a shared default setting object before any engine is initialised
+     * (so module-level code that reads Engine3D.setting at import time works).
+     */
+    public static get setting(): EngineSetting {
+        return this._active?.setting ?? Engine3D._getDefaultSetting();
+    }
+    public static set setting(v: EngineSetting) {
+        if (this._active) {
+            this._active.setting = v;
+        } else {
+            Engine3D._defaultSetting = v;
+        }
+    }
 
     /** Resource manager of the active engine */
     public static get res(): Res { return this._active?.res; }
