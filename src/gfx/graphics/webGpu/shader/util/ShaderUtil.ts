@@ -24,6 +24,8 @@ export class ShaderUtil {
     public static renderShader: Map<string, RenderShaderPass>;
 
     public static init() {
+        // Shader pools are shared across all Engine3D instances — only initialise once.
+        if (this.renderShaderModulePool) return;
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
         this.renderShader = new Map<string, RenderShaderPass>();
     }

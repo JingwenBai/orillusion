@@ -21,10 +21,18 @@ import { RenderShaderCollect } from './RenderShaderCollect';
 
 /**
  * @internal
+ * Per-engine entity/render-node collection.
+ *
+ * Use `EntityCollect.instance` to access the active engine's instance
+ * (backward-compatible static accessor, set by Engine3D).
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    /**
+     * @internal
+     * Active-instance pointer set by Engine3D.
+     */
+    public static _current: EntityCollect | null = null;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,11 +64,12 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
+    /**
+     * Returns the active engine's EntityCollect instance.
+     * Backward-compatible with existing call sites.
+     */
+    public static get instance(): EntityCollect {
+        return EntityCollect._current;
     }
 
     constructor() {

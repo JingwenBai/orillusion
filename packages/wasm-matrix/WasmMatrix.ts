@@ -24,6 +24,8 @@ export class WasmMatrix {
     static useDoublePrecision: boolean = false;
 
     public static async init(count: number, useDoublePrecision: boolean = false) {
+        // WASM matrix is a shared singleton — only initialise once.
+        if (this.wasm) return;
         this.wasm = await matrix();
         this.useDoublePrecision = useDoublePrecision;
         this.wasm._initialize(count, useDoublePrecision, 0);
