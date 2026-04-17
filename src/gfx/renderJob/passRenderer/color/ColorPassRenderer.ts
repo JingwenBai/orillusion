@@ -63,12 +63,13 @@ export class ColorPassRenderer extends RendererBase {
                 renderPassEncoder.executeBundles(op_bundleList);
             }
 
-            if (!maskTr && EntityCollect.instance.sky) {
+            let sky = EntityCollect.instance.getSky(scene);
+            if (!maskTr && sky) {
                 GPUContext.bindCamera(renderPassEncoder, camera);
-                if (!EntityCollect.instance.sky.preInit(this._rendererType)) {
-                    EntityCollect.instance.sky.nodeUpdate(view, this._rendererType, this.rendererPassState, clusterLightingBuffer);
+                if (!sky.preInit(this._rendererType)) {
+                    sky.nodeUpdate(view, this._rendererType, this.rendererPassState, clusterLightingBuffer);
                 }
-                EntityCollect.instance.sky.renderPass2(view, this._rendererType, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
+                sky.renderPass2(view, this._rendererType, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
             }
 
             if (collectInfo.opaqueList) {
@@ -93,7 +94,7 @@ export class ColorPassRenderer extends RendererBase {
                 this.drawNodes(view, this.renderContext, collectInfo.transparentList, occlusionSystem, clusterLightingBuffer);
             }
 
-            let graphicsList = EntityCollect.instance.getGraphicList();
+            let graphicsList = EntityCollect.instance.getGraphicList(scene);
             for (let i = 0; i < graphicsList.length; i++) {
                 const graphic3DRenderNode = graphicsList[i];
                 graphic3DRenderNode.nodeUpdate(view, this._rendererType, this.splitRendererPassState, clusterLightingBuffer);

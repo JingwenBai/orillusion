@@ -13,7 +13,6 @@ import { Vector3 } from '../../../math/Vector3';
 import { zSorterUtil } from '../../../util/ZSorterUtil';
 import { RenderLayerUtil, RenderLayer } from '../config/RenderLayer';
 import { Probe } from '../passRenderer/ddgi/Probe';
-// import { Graphic3DBatchRenderer } from '../passRenderer/graphic/Graphic3DBatchRenderer';
 import { RendererMask } from '../passRenderer/state/RendererMask';
 import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
@@ -26,7 +25,6 @@ import { RenderShaderCollect } from './RenderShaderCollect';
 export class EntityCollect {
     private static _instance: EntityCollect;
 
-    // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
     private _sceneGIProbes: Map<Scene3D, Probe[]>;
 
@@ -35,7 +33,11 @@ export class EntityCollect {
     private _octreeRenderNodes: Map<Scene3D, Octree>;
     private _reflections: Map<Scene3D, Reflection[]>;
 
-    private _graphics: RenderNode[];
+    /** Sky render node keyed per scene so multiple engines can each have their own sky. */
+    private _skyMap: Map<Scene3D, RenderNode>;
+
+    /** Graphic3D render nodes keyed per scene. */
+    private _graphicsMap: Map<Scene3D, RenderNode[]>;
 
     private _op_renderGroup: Map<Scene3D, EntityBatchCollect>;
     private _tr_renderGroup: Map<Scene3D, EntityBatchCollect>;
@@ -43,19 +45,15 @@ export class EntityCollect {
     private _renderShaderCollect: RenderShaderCollect;
 
     public state: {
-        /**
-         * gi effect lighting change
-         */
         giLightingChange: boolean
     } = {
             giLightingChange: true
         }
 
-    public sky: RenderNode;
-
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
+
     public static get instance() {
         if (!this._instance) {
             this._instance = new EntityCollect();
@@ -64,7 +62,6 @@ export class EntityCollect {
     }
 
     constructor() {
-        // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
         this._sceneLights = new Map<Scene3D, ILight[]>();
         this._sceneGIProbes = new Map<Scene3D, Probe[]>();
 
@@ -72,7 +69,8 @@ export class EntityCollect {
         this._tr_RenderNodes = new Map<Scene3D, RenderNode[]>();
         this._reflections = new Map<Scene3D, Reflection[]>();
 
-        this._graphics = [];
+        this._skyMap = new Map<Scene3D, RenderNode>();
+        this._graphicsMap = new Map<Scene3D, RenderNode[]>();
 
         this._op_renderGroup = new Map<Scene3D, EntityBatchCollect>();
         this._tr_renderGroup = new Map<Scene3D, EntityBatchCollect>();
@@ -82,10 +80,26 @@ export class EntityCollect {
         this._octreeRenderNodes = new Map<Scene3D, Octree>();
     }
 
+    // ── Sky accessor (per scene) ───────────────────────────────────────
+
+    public getSky(scene: Scene3D): RenderNode | null {
+        return this._skyMap.get(scene) ?? null;
+    }
+
+    public setSky(scene: Scene3D, node: RenderNode | null): void {
+        if (node) {
+            this._skyMap.set(scene, node);
+        } else {
+            this._skyMap.delete(scene);
+        }
+    }
+
+    // ── Private helpers ───────────────────────────────────────────────
+
     private getPashList(root: Scene3D, renderNode: RenderNode) {
         if (renderNode.renderOrder < 3000) {
             return this._op_RenderNodes.get(root);
-        } else if (renderNode.renderOrder >= 3000) {
+        } else {
             return this._tr_RenderNodes.get(root);
         }
     }
@@ -105,7 +119,7 @@ export class EntityCollect {
         if (!root) return;
         let isTransparent: boolean = renderNode.renderOrder >= 3000;
         if (renderNode.hasMask(RendererMask.Sky)) {
-            this.sky = renderNode;
+            this._skyMap.set(root, renderNode);
         } else if (renderNode.hasMask(RendererMask.Reflection)) {
             this.removeRenderNode(root, renderNode);
             let maps = this._reflections.get(root);
@@ -118,8 +132,13 @@ export class EntityCollect {
                 maps.push(renderNode as Reflection);
             }
         } else if (renderNode.hasMask(RendererMask.Graphic3D)) {
-            if (this._graphics.indexOf(renderNode) == -1) {
-                this._graphics.push(renderNode);
+            let graphics = this._graphicsMap.get(root);
+            if (!graphics) {
+                graphics = [];
+                this._graphicsMap.set(root, graphics);
+            }
+            if (graphics.indexOf(renderNode) === -1) {
+                graphics.push(renderNode);
             }
         } else if (!RenderLayerUtil.hasMask(renderNode.renderLayer, RenderLayer.None)) {
             this.removeRenderNode(root, renderNode);
@@ -142,7 +161,7 @@ export class EntityCollect {
 
             let list = this.getPashList(root, renderNode);
             let index = list.indexOf(renderNode);
-            if (index == -1) {
+            if (index === -1) {
                 this.sortRenderNode(list, renderNode);
             }
         }
@@ -170,22 +189,24 @@ export class EntityCollect {
     public removeRenderNode(root: Scene3D, renderNode: RenderNode) {
         renderNode.detachSceneOctree();
         if (renderNode.hasMask(RendererMask.Sky)) {
-            this.sky = null;
+            if (this._skyMap.get(root) === renderNode) {
+                this._skyMap.delete(root);
+            }
         } else if (renderNode.hasMask(RendererMask.Reflection)) {
             let maps = this._reflections.get(root);
             if (maps) {
                 let index = maps.indexOf(renderNode as Reflection);
-                if (index != -1) {
+                if (index !== -1) {
                     maps.splice(index, 1);
                 }
             }
         } else if (!RenderLayerUtil.hasMask(renderNode.renderLayer, RenderLayer.None)) {
-
+            // batch group removal handled elsewhere
         } else {
             let list = this.getPashList(root, renderNode);
             if (list) {
                 let index = list.indexOf(renderNode);
-                if (index != -1) {
+                if (index !== -1) {
                     list.splice(index, 1);
                 }
             }
@@ -203,7 +224,7 @@ export class EntityCollect {
                 console.warn('Alreay meet maxmium light number:', Engine3D.setting.light.maxLight)
                 return
             }
-            let hasLight = lights.indexOf(light) != -1;
+            let hasLight = lights.indexOf(light) !== -1;
             if (!hasLight) {
                 lights.push(light);
             }
@@ -214,11 +235,12 @@ export class EntityCollect {
         if (this._sceneLights.has(root)) {
             let list = this._sceneLights.get(root);
             let index = list.indexOf(light);
-            if (index != -1) {
+            if (index !== -1) {
                 list.splice(index, 1);
             }
         }
     }
+
     public getLights(root: Scene3D): ILight[] {
         let list = this._sceneLights.get(root);
         return list ? list : [];
@@ -236,7 +258,7 @@ export class EntityCollect {
         if (this._sceneGIProbes.has(root)) {
             let list = this._sceneGIProbes.get(root);
             let index = list.indexOf(probe);
-            if (index != -1) {
+            if (index !== -1) {
                 list.splice(index, 1);
             }
         }
@@ -252,7 +274,6 @@ export class EntityCollect {
         return list ? list : [];
     }
 
-    // sort renderers by renderOrder and camera depth
     public autoSortRenderNodes(scene: Scene3D): this {
         let renderList: RenderNode[] = this._tr_RenderNodes.get(scene);
         if (!renderList)
@@ -271,11 +292,10 @@ export class EntityCollect {
                 let __renderOrder = renderNode.renderOrder;
                 if (renderNode.needSortOnCameraZ) {
                     let cameraDepth = zSorterUtil.worldToCameraDepth(renderNode.object3D);
-                    cameraDepth = 1 - Math.max(0, Math.min(1, cameraDepth));//clamp to [0, 1]
+                    cameraDepth = 1 - Math.max(0, Math.min(1, cameraDepth));
                     __renderOrder += cameraDepth;
                 }
                 renderNode['__renderOrder'] = __renderOrder;
-                //resume unchange status
                 renderNode.isRenderOrderChange = false;
             }
             renderList.sort((a: RenderNode, b: RenderNode) => {
@@ -289,7 +309,7 @@ export class EntityCollect {
     public getRenderNodes(scene: Scene3D, camera: Camera3D): CollectInfo {
         this.autoSortRenderNodes(scene);
         this._collectInfo.clean();
-        this._collectInfo.sky = this.sky;
+        this._collectInfo.sky = this.getSky(scene);
 
         if (Engine3D.setting.occlusionQuery.octree) {
             this.rendererOctree = this.getOctree(scene);
@@ -315,8 +335,9 @@ export class EntityCollect {
         return this._tr_renderGroup.get(scene);
     }
 
-    public getGraphicList(): RenderNode[] {
-        return this._graphics;
+    /** Returns the Graphic3D render nodes for the given scene. */
+    public getGraphicList(scene: Scene3D): RenderNode[] {
+        return this._graphicsMap.get(scene) ?? [];
     }
 
     public getRenderShaderCollect(view: View3D) {
