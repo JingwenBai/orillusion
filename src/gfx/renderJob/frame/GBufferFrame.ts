@@ -1,6 +1,7 @@
 
 import { RenderTexture } from "../../../textures/RenderTexture";
 import { webGPUContext } from "../../graphics/webGpu/Context3D";
+import { getActiveEngine } from "../../../EngineRegistry";
 import { GPUTextureFormat } from "../../graphics/webGpu/WebGPUConst";
 import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
@@ -11,8 +12,16 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    /**
+     * Per-engine GBuffer map, stored on the active Engine3D instance.
+     * Using a getter routed through EngineRegistry avoids circular imports
+     * while keeping the public API identical.
+     * @internal
+     */
+    private static get gBufferMap(): Map<string, GBufferFrame> {
+        return getActiveEngine()?.gBufferMap as Map<string, GBufferFrame>;
+    }
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
