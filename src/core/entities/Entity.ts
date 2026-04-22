@@ -314,11 +314,14 @@ export class Entity extends CEventDispatcher {
             this.components.clear();
         } else {
             ComponentCollect.waitStartComponent.forEach((v, k) => {
+                // Only start components that belong to this scene (multi-instance isolation).
+                // Transform.scene3D is set before appendWaitStart is called, so the check is safe.
+                if (k.transform?.scene3D !== this) return;
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();
-                    ComponentCollect.waitStartComponent.delete(element.object3D);
                 }
+                ComponentCollect.waitStartComponent.delete(k);
             });
         }
     }
