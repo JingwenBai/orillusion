@@ -1,6 +1,6 @@
 
 import { RenderTexture } from "../../../textures/RenderTexture";
-import { webGPUContext } from "../../graphics/webGpu/Context3D";
+import { getCurrentEngineId, webGPUContext } from "../../graphics/webGpu/Context3D";
 import { GPUTextureFormat } from "../../graphics/webGpu/WebGPUConst";
 import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
@@ -11,7 +11,18 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    // Per-engine GBuffer map: engineId → key → GBufferFrame
+    private static _engineGBufferMaps: Map<number, Map<string, GBufferFrame>> = new Map();
+
+    /** GBuffer cache for the currently-active engine. */
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        const id = getCurrentEngineId();
+        if (!this._engineGBufferMaps.has(id)) {
+            this._engineGBufferMaps.set(id, new Map<string, GBufferFrame>());
+        }
+        return this._engineGBufferMaps.get(id)!;
+    }
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;

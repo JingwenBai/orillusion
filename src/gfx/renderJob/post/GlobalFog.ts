@@ -49,7 +49,7 @@ export class GlobalFog extends PostBase {
         let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
         this.fogCompute.setSamplerTexture('gBufferTexture', rtFrame.getCompressGBufferTexture());
         this.fogCompute.setSamplerTexture('inTex', rtFrame.getColorTexture());
-        this._lastSkyTexture = this.getSkyTexture();
+        this._lastSkyTexture = this.getSkyTexture(view);
         this.fogCompute.setSamplerTexture(`prefilterMap`, this._lastSkyTexture);
         this.fogCompute.setStorageTexture(`outTex`, this.fogOpTexture);
 
@@ -216,10 +216,11 @@ export class GlobalFog extends PostBase {
 
 
     private _lastSkyTexture: Texture;
-    private getSkyTexture(): Texture {
+    private getSkyTexture(view: View3D): Texture {
         let texture = Engine3D.res.defaultSky as Texture;
-        if (EntityCollect.instance.sky instanceof SkyRenderer) {
-            texture = EntityCollect.instance.sky.map;
+        const sky = EntityCollect.instance.getSky(view.scene);
+        if (sky instanceof SkyRenderer) {
+            texture = sky.map;
         }
         return texture;
     }

@@ -147,7 +147,43 @@ export class Context3D extends CEventDispatcher {
     }
 }
 
-/**
- * @internal
- */
-export let webGPUContext = new Context3D();
+// ── Multi-instance support ────────────────────────────────────────────────────
+// The webGPUContext export is a transparent Proxy that forwards every property
+// access / mutation to whichever Context3D is currently "active".  Before each
+// engine's render frame, Engine3D calls setActiveWebGPUContext() to register
+// its own Context3D as the active one.  This keeps all existing call-sites
+// (e.g. `webGPUContext.device`, `webGPUContext.presentationSize`) working
+// without modification while supporting multiple Engine3D instances.
+
+let _activeContext: Context3D | null = null;
+let _currentEngineId: number = 0;
+
+/** @internal – called by Engine3D before rendering each frame */
+export function setActiveWebGPUContext(ctx: Context3D, engineId: number): void {
+    _activeContext = ctx;
+    _currentEngineId = engineId;
+}
+
+/** @internal – returns the numeric ID of the currently-active engine */
+export function getCurrentEngineId(): number {
+    return _currentEngineId;
+}
+
+export const webGPUContext: Context3D = new Proxy(Object.create(null) as Context3D, {
+    get(_target, prop: string | symbol, _receiver) {
+        if (!_activeContext) {
+            throw new Error(`No active WebGPU context. Call engine.init() first.`);
+        }
+        const value = Reflect.get(_activeContext, prop, _activeContext);
+        return typeof value === 'function' ? (value as Function).bind(_activeContext) : value;
+    },
+    set(_target, prop: string | symbol, value: unknown, _receiver) {
+        if (!_activeContext) {
+            throw new Error(`No active WebGPU context. Call engine.init() first.`);
+        }
+        return Reflect.set(_activeContext, prop, value, _activeContext);
+    },
+    has(_target, prop: string | symbol) {
+        return _activeContext ? prop in _activeContext : false;
+    },
+});

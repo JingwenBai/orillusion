@@ -35,7 +35,10 @@ export class EntityCollect {
     private _octreeRenderNodes: Map<Scene3D, Octree>;
     private _reflections: Map<Scene3D, Reflection[]>;
 
-    private _graphics: RenderNode[];
+    // sky and graphics are stored per-scene so multiple Engine3D instances
+    // (each with their own scene) don't overwrite each other's state.
+    private _skyPerScene: Map<Scene3D, RenderNode> = new Map<Scene3D, RenderNode>();
+    private _sceneGraphics: Map<Scene3D, RenderNode[]> = new Map<Scene3D, RenderNode[]>();
 
     private _op_renderGroup: Map<Scene3D, EntityBatchCollect>;
     private _tr_renderGroup: Map<Scene3D, EntityBatchCollect>;
@@ -51,8 +54,6 @@ export class EntityCollect {
             giLightingChange: true
         }
 
-    public sky: RenderNode;
-
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
@@ -64,7 +65,6 @@ export class EntityCollect {
     }
 
     constructor() {
-        // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
         this._sceneLights = new Map<Scene3D, ILight[]>();
         this._sceneGIProbes = new Map<Scene3D, Probe[]>();
 
@@ -72,14 +72,26 @@ export class EntityCollect {
         this._tr_RenderNodes = new Map<Scene3D, RenderNode[]>();
         this._reflections = new Map<Scene3D, Reflection[]>();
 
-        this._graphics = [];
-
         this._op_renderGroup = new Map<Scene3D, EntityBatchCollect>();
         this._tr_renderGroup = new Map<Scene3D, EntityBatchCollect>();
 
         this._collectInfo = new CollectInfo();
         this._renderShaderCollect = new RenderShaderCollect();
         this._octreeRenderNodes = new Map<Scene3D, Octree>();
+    }
+
+    /** Returns the sky render-node for the given scene, or null if none. */
+    public getSky(scene: Scene3D): RenderNode | null {
+        return this._skyPerScene.get(scene) ?? null;
+    }
+
+    /** Sets (or clears) the sky render-node for the given scene. */
+    public setSky(scene: Scene3D, sky: RenderNode | null): void {
+        if (sky === null) {
+            this._skyPerScene.delete(scene);
+        } else {
+            this._skyPerScene.set(scene, sky);
+        }
     }
 
     private getPashList(root: Scene3D, renderNode: RenderNode) {
@@ -105,7 +117,7 @@ export class EntityCollect {
         if (!root) return;
         let isTransparent: boolean = renderNode.renderOrder >= 3000;
         if (renderNode.hasMask(RendererMask.Sky)) {
-            this.sky = renderNode;
+            this._skyPerScene.set(root, renderNode);
         } else if (renderNode.hasMask(RendererMask.Reflection)) {
             this.removeRenderNode(root, renderNode);
             let maps = this._reflections.get(root);
@@ -118,8 +130,12 @@ export class EntityCollect {
                 maps.push(renderNode as Reflection);
             }
         } else if (renderNode.hasMask(RendererMask.Graphic3D)) {
-            if (this._graphics.indexOf(renderNode) == -1) {
-                this._graphics.push(renderNode);
+            if (!this._sceneGraphics.has(root)) {
+                this._sceneGraphics.set(root, []);
+            }
+            const gfxList = this._sceneGraphics.get(root)!;
+            if (gfxList.indexOf(renderNode) === -1) {
+                gfxList.push(renderNode);
             }
         } else if (!RenderLayerUtil.hasMask(renderNode.renderLayer, RenderLayer.None)) {
             this.removeRenderNode(root, renderNode);
@@ -170,7 +186,7 @@ export class EntityCollect {
     public removeRenderNode(root: Scene3D, renderNode: RenderNode) {
         renderNode.detachSceneOctree();
         if (renderNode.hasMask(RendererMask.Sky)) {
-            this.sky = null;
+            this._skyPerScene.delete(root);
         } else if (renderNode.hasMask(RendererMask.Reflection)) {
             let maps = this._reflections.get(root);
             if (maps) {
@@ -289,7 +305,7 @@ export class EntityCollect {
     public getRenderNodes(scene: Scene3D, camera: Camera3D): CollectInfo {
         this.autoSortRenderNodes(scene);
         this._collectInfo.clean();
-        this._collectInfo.sky = this.sky;
+        this._collectInfo.sky = this._skyPerScene.get(scene) ?? null;
 
         if (Engine3D.setting.occlusionQuery.octree) {
             this.rendererOctree = this.getOctree(scene);
@@ -315,8 +331,9 @@ export class EntityCollect {
         return this._tr_renderGroup.get(scene);
     }
 
-    public getGraphicList(): RenderNode[] {
-        return this._graphics;
+    /** Returns the list of Graphic3D render-nodes belonging to the given scene. */
+    public getGraphicList(scene: Scene3D): RenderNode[] {
+        return this._sceneGraphics.get(scene) ?? [];
     }
 
     public getRenderShaderCollect(view: View3D) {
