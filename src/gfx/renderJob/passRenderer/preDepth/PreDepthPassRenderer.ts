@@ -57,7 +57,7 @@ export class PreDepthPassRenderer extends RendererBase {
         let scene3D = scene;
 
         this.rendererPassState.camera3D = camera;
-        let collectInfo = EntityCollect.instance.getRenderNodes(scene3D, camera);
+        let collectInfo = EntityCollect.getForView(view)?.getRenderNodes(scene3D, camera);
         this.compute(view, occlusionSystem);
 
         let op_bundleList = this.renderBundleOp(view, collectInfo, occlusionSystem);
@@ -74,7 +74,7 @@ export class PreDepthPassRenderer extends RendererBase {
         //     GPUContext.bindCamera(encoder, camera);
         //     EntityCollect.instance.sky.renderPass2(this._rendererType, this.rendererPassState, scene, this.clusterLightingRender, encoder);
         // }
-        let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+        let viewRenderList = EntityCollect.getForView(view)?.getRenderShaderCollect(view);
         for (const renderList of viewRenderList) {
             let nodeMap = renderList[1];
             for (const iterator of nodeMap) {

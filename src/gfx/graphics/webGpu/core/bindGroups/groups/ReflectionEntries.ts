@@ -37,7 +37,7 @@ export class ReflectionEntries {
         // GPUContext.endCommandEncoder(command);
 
         this.storageGPUBuffer.clean();
-        let reflections = EntityCollect.instance.getReflections(view.scene);
+        let reflections = EntityCollect.getForView(view)?.getReflections(view.scene) ?? [];
         for (let i = 0; i < reflections.length; i++) {
             const reflection = reflections[i];
             reflection.gid = i;

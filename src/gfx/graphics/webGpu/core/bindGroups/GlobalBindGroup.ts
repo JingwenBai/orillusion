@@ -17,6 +17,11 @@ export class GlobalBindGroup {
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
+        // Idempotent: shared GPU state only needs to be created once across all
+        // Engine3D instances.  The Maps are keyed by Camera3D / Scene3D objects
+        // so per-engine isolation is achieved naturally (each engine has its own
+        // Camera3D and Scene3D instances).
+        if (this.modelMatrixBindGroup) return;
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();

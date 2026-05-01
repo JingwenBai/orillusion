@@ -15,6 +15,7 @@ import { webGPUContext } from '../gfx/graphics/webGpu/Context3D';
 import { FrustumCSM } from './csm/FrustumCSM';
 import { CSM } from './csm/CSM';
 import { CResizeEvent } from '../event/CResizeEvent';
+import { View3D } from './View3D';
 
 /**
  * Camera components
@@ -100,6 +101,9 @@ export class Camera3D extends ComponentBase {
      * this camera is shadow camera
      */
     public isShadowCamera: boolean = false;
+
+    /** The View3D this camera is assigned to; set by View3D. @internal */
+    public view3D: View3D = null;
 
     /**
    * @internal

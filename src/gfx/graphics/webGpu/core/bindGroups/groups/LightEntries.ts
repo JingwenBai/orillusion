@@ -38,7 +38,7 @@ export class LightEntries {
     public update(view: View3D) {
         this.storageGPUBuffer.clean();
 
-        let lights = EntityCollect.instance.getLights(view.scene);
+        let lights = EntityCollect.getForView(view)?.getLights(view.scene) ?? [];
         for (let i = 0; i < lights.length; i++) {
             const light = lights[i].lightData;
             light.index = i;

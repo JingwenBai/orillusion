@@ -25,7 +25,7 @@ export class Scene3D extends Object3D {
         this.skyObject = new Object3D();
         this.addChild(this.skyObject);
         this._isScene3D = true;
-        this.envMap ||= Engine3D.res.defaultSky;
+        this.envMap ||= Engine3D.res?.defaultSky;
     }
 
     /**
@@ -44,26 +44,18 @@ export class Scene3D extends Object3D {
             this.envMapChange = true;
         }
         this._envMap = value;
-        if (EntityCollect.instance.sky && `map` in EntityCollect.instance.sky)
-            EntityCollect.instance.sky.map = value;
-
-        // let reflection = new Object3D();
-        // let ref = reflection.addComponent(SphereReflection);
-        // ref.autoUpdate = true;
-        // ref.debug(0, 5);
-        // reflection.x = 0;
-        // reflection.y = 300;
-        // reflection.z = 0;
-        // this.addChild(reflection);
+        const ec = EntityCollect.getForScene(this);
+        if (ec?.sky && `map` in ec.sky)
+            ec.sky.map = value;
     }
 
     /**
-     * Exposure of Sky Box. A larger value produces a sky box with stronger exposure and a brighter appearance.
-     *  A smaller value produces a sky box with weaker exposure and a darker appearance.
+     * Exposure of Sky Box.
      */
     public get exposure(): number {
-        if (EntityCollect.instance.sky && `exposure` in EntityCollect.instance.sky)
-            return EntityCollect.instance.sky.exposure as number;
+        const ec = EntityCollect.getForScene(this);
+        if (ec?.sky && `exposure` in ec.sky)
+            return ec.sky.exposure as number;
         return 0;
     }
 
@@ -71,9 +63,14 @@ export class Scene3D extends Object3D {
      * Set the exposure of the Sky Box.
      */
     public set exposure(value: number) {
-        if (EntityCollect.instance.sky && `exposure` in EntityCollect.instance.sky) {
-            EntityCollect.instance.sky.exposure = value;
-            Engine3D.setting.sky.skyExposure = value;
+        const ec = EntityCollect.getForScene(this);
+        if (ec?.sky && `exposure` in ec.sky) {
+            ec.sky.exposure = value;
+            if (this.view?.engine) {
+                this.view.engine.setting.sky.skyExposure = value;
+            } else {
+                Engine3D.setting && (Engine3D.setting.sky.skyExposure = value);
+            }
         }
     }
 
@@ -81,8 +78,9 @@ export class Scene3D extends Object3D {
      * Get the roughness of the Sky Box.
      */
     public get roughness(): number {
-        if (EntityCollect.instance.sky && `roughness` in EntityCollect.instance.sky) {
-            return EntityCollect.instance.sky.roughness as number;
+        const ec = EntityCollect.getForScene(this);
+        if (ec?.sky && `roughness` in ec.sky) {
+            return ec.sky.roughness as number;
         }
     }
 
@@ -90,8 +88,9 @@ export class Scene3D extends Object3D {
      * Set the roughness of the Sky Box.
      */
     public set roughness(value: number) {
-        if (EntityCollect.instance.sky && `roughness` in EntityCollect.instance.sky) {
-            EntityCollect.instance.sky.roughness = value;
+        const ec = EntityCollect.getForScene(this);
+        if (ec?.sky && `roughness` in ec.sky) {
+            ec.sky.roughness = value;
         }
     }
 }

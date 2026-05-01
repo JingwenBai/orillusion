@@ -66,7 +66,8 @@ export class LightBase extends ComponentBase implements ILight {
         if (this.bindOnChange) this.bindOnChange();
         this.transform.object3D.bound.setFromCenterAndSize(this.transform.worldPosition, new Vector3(this.size, this.size, this.size));
         if (this._castGI) {
-            EntityCollect.instance.state.giLightingChange = true;
+            const ec = EntityCollect.getForScene(this.transform.scene3D);
+            if (ec) ec.state.giLightingChange = true;
         }
 
         if (this._castShadow) {
@@ -113,12 +114,12 @@ export class LightBase extends ComponentBase implements ILight {
 
     public onEnable(): void {
         this.onChange();
-        EntityCollect.instance.addLight(this.transform.scene3D, this);
+        EntityCollect.getForScene(this.transform.scene3D)?.addLight(this.transform.scene3D, this);
     }
 
     public onDisable(): void {
         this.onChange();
-        EntityCollect.instance.removeLight(this.transform.scene3D, this);
+        EntityCollect.getForScene(this.transform.scene3D)?.removeLight(this.transform.scene3D, this);
         ShadowLightsCollect.removeShadowLight(this);
     }
 
@@ -280,7 +281,7 @@ export class LightBase extends ComponentBase implements ILight {
 
     public destroy(force?: boolean): void {
         this.bindOnChange = null;
-        EntityCollect.instance.removeLight(this.transform.scene3D, this);
+        EntityCollect.getForScene(this.transform.scene3D)?.removeLight(this.transform.scene3D, this);
         ShadowLightsCollect.removeShadowLight(this);
         this.transform.eventDispatcher.removeEventListener(Transform.ROTATION_ONCHANGE, this.onRotChange, this);
         this.transform.eventDispatcher.removeEventListener(Transform.SCALE_ONCHANGE, this.onScaleChange, this);

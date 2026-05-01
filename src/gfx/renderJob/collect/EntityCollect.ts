@@ -24,7 +24,21 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+
+    /**
+     * Return the EntityCollect for a given scene, routed via the scene's view → engine.
+     * Returns null when the scene is not yet attached to a view.
+     */
+    public static getForScene(scene: Scene3D): EntityCollect | null {
+        return scene?.view?.engine?.entityCollect ?? null;
+    }
+
+    /**
+     * Return the EntityCollect for a given view's engine.
+     */
+    public static getForView(view: View3D): EntityCollect | null {
+        return view?.engine?.entityCollect ?? null;
+    }
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,12 +70,6 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
-    }
 
     constructor() {
         // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();

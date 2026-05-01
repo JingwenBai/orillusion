@@ -18,6 +18,11 @@ export class View3D extends CEventListener {
     public guiPick: GUIPick;
     public readonly canvasList: GUICanvas[];
 
+    /**
+     * The Engine3D instance that owns this view, set by Engine3D.startRenderView().
+     */
+    public engine: any = null;
+
     constructor(x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
         super();
         this.canvasList = [];
@@ -67,6 +72,9 @@ export class View3D extends CEventListener {
 
     public set camera(value: Camera3D) {
         this._camera = value;
+        if (value) {
+            value.view3D = this;
+        }
     }
 
     public get viewPort(): Vector4 {

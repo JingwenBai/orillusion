@@ -83,7 +83,7 @@ export class ShadowMapPassRenderer extends RendererBase {
             this.rendererPassState = this.rendererPassStates[shadowIndex];
             shadowSize = this.rendererPassState.depthTexture.width;
 
-            let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+            let viewRenderList = EntityCollect.getForView(view)?.getRenderShaderCollect(view);
             for (const renderList of viewRenderList) {
                 let nodeMap = renderList[1];
                 for (const iterator of nodeMap) {
@@ -160,7 +160,7 @@ export class ShadowMapPassRenderer extends RendererBase {
     }
 
     private renderShadow(view: View3D, shadowCamera: Camera3D, occlusionSystem: OcclusionSystem, state: RendererPassState) {
-        let collectInfo = EntityCollect.instance.getRenderNodes(view.scene, shadowCamera);
+        let collectInfo = EntityCollect.getForView(view)?.getRenderNodes(view.scene, shadowCamera);
         let command = GPUContext.beginCommandEncoder();
         let encoder = GPUContext.beginRenderPass(command, state);
 
@@ -189,7 +189,7 @@ export class ShadowMapPassRenderer extends RendererBase {
     }
 
     protected renderShadowBundleOp(view: View3D, shadowCamera: Camera3D, state: RendererPassState) {
-        let entityBatchCollect = EntityCollect.instance.getOpRenderGroup(view.scene);
+        let entityBatchCollect = EntityCollect.getForView(view)?.getOpRenderGroup(view.scene);
         if (entityBatchCollect) {
             let bundlerList = [];
             entityBatchCollect.renderGroup.forEach((v) => {
@@ -209,7 +209,7 @@ export class ShadowMapPassRenderer extends RendererBase {
     }
 
     protected renderShadowBundleTr(view: View3D, shadowCamera: Camera3D, state: RendererPassState) {
-        let entityBatchCollect = EntityCollect.instance.getTrRenderGroup(view.scene);
+        let entityBatchCollect = EntityCollect.getForView(view)?.getTrRenderGroup(view.scene);
         if (entityBatchCollect) {
             let bundlerList = [];
             entityBatchCollect.renderGroup.forEach((v) => {

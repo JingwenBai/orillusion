@@ -70,7 +70,7 @@ export class DDGIIrradianceComputePass {
     public compute(view: View3D, renderPassState: RendererPassState) {
         let setting = this.volume.setting;
         let command = GPUContext.beginCommandEncoder();
-        let probes = EntityCollect.instance.getProbes(view.scene);
+        let probes = EntityCollect.getForView(view)?.getProbes(view.scene) ?? [];
 
         this.computeShader.workerSizeX = setting.octRTSideSize / 8;
         this.computeShader.workerSizeY = setting.octRTSideSize / 8;

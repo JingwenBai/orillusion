@@ -238,14 +238,14 @@ export class RenderNode extends ComponentBase {
             this.initPipeline();
         }
 
-        EntityCollect.instance.addRenderNode(this.transform.scene3D, this);
+        EntityCollect.getForScene(this.transform.scene3D)?.addRenderNode(this.transform.scene3D, this);
 
         this.updateOctreeEntity();
     }
 
     public onDisable(): void {
         this._enable = false;
-        EntityCollect.instance.removeRenderNode(this.transform.scene3D, this);
+        EntityCollect.getForScene(this.transform.scene3D)?.removeRenderNode(this.transform.scene3D, this);
         super.onDisable?.();
     }
 
@@ -294,7 +294,7 @@ export class RenderNode extends ComponentBase {
             this.renderOrder = sort;
 
             if (this.enable && this.transform && this.transform.scene3D) {
-                EntityCollect.instance.addRenderNode(this.transform.scene3D, this);
+                EntityCollect.getForScene(this.transform.scene3D)?.addRenderNode(this.transform.scene3D, this);
             }
 
         }

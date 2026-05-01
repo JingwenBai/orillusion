@@ -45,8 +45,8 @@ export class SkyRenderer extends MeshRenderer {
             this.castNeedPass();
 
             if (!this._inRenderer && this.transform.scene3D) {
-                EntityCollect.instance.sky = this;
-                this._inRenderer = true;
+                const ec = EntityCollect.getForScene(this.transform.scene3D);
+                if (ec) { ec.sky = this; this._inRenderer = true; }
             }
         }
     }
@@ -54,7 +54,8 @@ export class SkyRenderer extends MeshRenderer {
     public onDisable(): void {
         if (this._inRenderer && this.transform.scene3D) {
             this._inRenderer = false;
-            EntityCollect.instance.sky = null;
+            const ec = EntityCollect.getForScene(this.transform.scene3D);
+            if (ec) ec.sky = null;
         }
         super.onDisable();
     }

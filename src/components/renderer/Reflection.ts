@@ -32,11 +32,11 @@ export class Reflection extends RenderNode {
     }
 
     public onEnable(): void {
-        EntityCollect.instance.addRenderNode(this.transform.scene3D, this);
+        EntityCollect.getForScene(this.transform.scene3D)?.addRenderNode(this.transform.scene3D, this);
     }
 
     public onDisable(): void {
-        EntityCollect.instance.removeRenderNode(this.transform.scene3D, this);
+        EntityCollect.getForScene(this.transform.scene3D)?.removeRenderNode(this.transform.scene3D, this);
     }
 
     public renderPass2(view: View3D, passType: PassType, rendererPassState: RendererPassState, clusterLightingBuffer: ClusterLightingBuffer, encoder: GPURenderPassEncoder, useBundle: boolean = false) {

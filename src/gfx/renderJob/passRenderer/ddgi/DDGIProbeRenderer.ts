@@ -115,7 +115,7 @@ export class DDGIProbeRenderer extends RendererBase {
 
 
     public updateProbe(view: View3D, probe: Probe, encoder: GPURenderPassEncoder,) {
-        let lights = EntityCollect.instance.getLights(view.scene);
+        let lights = EntityCollect.getForView(view)?.getLights(view.scene) ?? [];
         let cubeSize = this.volume.setting.probeSize; // cubeSize * 2 * 2 * 2;
         probe.drawCallFrame += 1;
 
@@ -186,13 +186,13 @@ export class DDGIProbeRenderer extends RendererBase {
     private renderSceneOnce(view: View3D, probeCamera: Camera3D, encoder: GPURenderPassEncoder, lights: ILight[]) {
         this.volume.uploadBuffer();
 
-        let collectInfo = EntityCollect.instance.getRenderNodes(view.scene, probeCamera);
+        let collectInfo = EntityCollect.getForView(view)?.getRenderNodes(view.scene, probeCamera);
         GPUContext.bindCamera(encoder, probeCamera);
 
         let drawMin = Math.max(0, Engine3D.setting.render.drawOpMin);
         let drawMax = Math.min(Engine3D.setting.render.drawOpMax, collectInfo.opaqueList.length);
 
-        let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+        let viewRenderList = EntityCollect.getForView(view)?.getRenderShaderCollect(view);
         for (const renderList of viewRenderList) {
             let nodeMap = renderList[1];
             for (const iterator of nodeMap) {
@@ -214,11 +214,12 @@ export class DDGIProbeRenderer extends RendererBase {
             }
         }
 
-        if (EntityCollect.instance.sky) {
-            if (!EntityCollect.instance.sky.preInit(this.passType)) {
-                EntityCollect.instance.sky.nodeUpdate(view, this.passType, this.rendererPassState, null);
+        const _sky = EntityCollect.getForView(view)?.sky;
+        if (_sky) {
+            if (!_sky.preInit(this.passType)) {
+                _sky.nodeUpdate(view, this.passType, this.rendererPassState, null);
             }
-            EntityCollect.instance.sky.renderPass2(view, this.passType, this.rendererPassState, null, encoder);
+            _sky.renderPass2(view, this.passType, this.rendererPassState, null, encoder);
         }
 
         drawMin = Math.max(0, Engine3D.setting.render.drawTrMin);
@@ -250,8 +251,9 @@ export class DDGIProbeRenderer extends RendererBase {
         this.rendProbe(view);
         let probeBeRendered = this.probeRenderResult.count > 0;
 
-        if (EntityCollect.instance.state.giLightingChange || probeBeRendered || Engine3D.setting.gi.realTimeGI) {
-            EntityCollect.instance.state.giLightingChange = false;
+        const _ecRender = EntityCollect.getForView(view);
+        if (_ecRender?.state.giLightingChange || probeBeRendered || Engine3D.setting.gi.realTimeGI) {
+            if (_ecRender) _ecRender.state.giLightingChange = false;
             this.lightingPass.compute(view, this.rendererPassState);
             this.bouncePass.compute(view, this.rendererPassState);
             this.irradianceComputePass.compute(view, this.rendererPassState);
@@ -296,7 +298,7 @@ export class DDGIProbeRenderer extends RendererBase {
         this.probeRenderResult.complete = false;
         //On demand rendering probe
         if (execRender) {
-            let probeList = EntityCollect.instance.getProbes(view.scene);
+            let probeList = EntityCollect.getForView(view)?.getProbes(view.scene) ?? [];
             this.renderContext.clean();
             this.renderContext.beginOpaqueRenderPass();
             this.tempProbeList.length = 0;

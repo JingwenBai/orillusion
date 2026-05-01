@@ -118,7 +118,7 @@ export class GlobalUniformGroup {
         this.uniformGPUBuffer.setFloat32Array(`shadowLights`, this.shadowLights);
 
         let reflectionSetting = Engine3D.setting.reflectionSetting;
-        let reflectionCount = EntityCollect.instance.getReflections(camera.transform.scene3D).length;
+        let reflectionCount = EntityCollect.getForScene(camera.transform.scene3D)?.getReflections(camera.transform.scene3D)?.length ?? 0;
         this.uniformGPUBuffer.setFloat(`reflectionProbeSize`, reflectionSetting.reflectionProbeSize);
         this.uniformGPUBuffer.setFloat(`reflectionProbeMaxCount`, reflectionSetting.reflectionProbeMaxCount);
         this.uniformGPUBuffer.setFloat(`reflectionMapWidth`, reflectionSetting.width);

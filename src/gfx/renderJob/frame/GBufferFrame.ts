@@ -12,7 +12,6 @@ export class GBufferFrame extends RTFrame {
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -65,39 +64,48 @@ export class GBufferFrame extends RTFrame {
     }
 
     /**
+     * Get (or create) a GBufferFrame for the given key.
+     * Keys are automatically prefixed with the current Engine3D instance id so
+     * that multiple Engine3D instances never share the same framebuffer textures.
      * @internal
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
-        let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        const scopedKey = GBufferFrame._scopedKey(key);
+        let gBuffer = GBufferFrame.gBufferMap.get(scopedKey);
+        if (!gBuffer) {
             gBuffer = new GBufferFrame();
-            let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
+            const size = webGPUContext.presentationSize;
             gBuffer.createGBuffer(
                 key,
-                fixedWidth == 0 ? size[0] : fixedWidth,
-                fixedHeight == 0 ? size[1] : fixedHeight,
-                fixedWidth != 0 && fixedHeight != 0,
+                fixedWidth === 0 ? size[0] : fixedWidth,
+                fixedHeight === 0 ? size[1] : fixedHeight,
+                fixedWidth !== 0 && fixedHeight !== 0,
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
-        } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            GBufferFrame.gBufferMap.set(scopedKey, gBuffer);
         }
         return gBuffer;
     }
 
-
     public static getGUIBufferFrame() {
-        let colorRTFrame = this.getGBufferFrame(this.colorPass_GBuffer);
-        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.gui_GBuffer, 0, 0, true, colorRTFrame.depthTexture);
-        return rtFrame;
+        const colorRTFrame = this.getGBufferFrame(this.colorPass_GBuffer);
+        return GBufferFrame.getGBufferFrame(GBufferFrame.gui_GBuffer, 0, 0, true, colorRTFrame.depthTexture);
     }
 
     public clone() {
-        let gBufferFrame = new GBufferFrame();
+        const gBufferFrame = new GBufferFrame();
         this.clone2Frame(gBufferFrame);
         return gBufferFrame;
+    }
+
+    /** Prefix map keys with the current engine id to isolate per-engine framebuffers. */
+    private static _engineModule: any = null;
+    private static _scopedKey(key: string): string {
+        if (!GBufferFrame._engineModule) {
+            GBufferFrame._engineModule = require('../../../Engine3D').Engine3D;
+        }
+        const id = GBufferFrame._engineModule?._currentEngine?._id ?? 0;
+        return `e${id}_${key}`;
     }
 }

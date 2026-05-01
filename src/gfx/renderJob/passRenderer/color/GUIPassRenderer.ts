@@ -44,7 +44,7 @@ export class GUIPassRenderer extends RendererBase {
 
         this.rendererPassState.camera3D = camera;
 
-        let collectInfo = EntityCollect.instance.getRenderNodes(scene, camera);
+        let collectInfo = EntityCollect.getForView(view)?.getRenderNodes(scene, camera);
 
         {
             this.renderContext.specialtRenderPass();
@@ -73,7 +73,7 @@ export class GUIPassRenderer extends RendererBase {
     }
 
     public drawNodes(view: View3D, renderContext: RenderContext, nodes: RenderNode[], occlusionSystem: OcclusionSystem, clusterLightingBuffer: ClusterLightingBuffer) {
-        let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+        let viewRenderList = EntityCollect.getForView(view)?.getRenderShaderCollect(view);
         if (viewRenderList) {
             for (const renderList of viewRenderList) {
                 let nodeMap = renderList[1];
