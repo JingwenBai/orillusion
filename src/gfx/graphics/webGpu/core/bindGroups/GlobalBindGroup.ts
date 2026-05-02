@@ -11,12 +11,15 @@ import { MatrixBindGroup } from "./MatrixBindGroup";
  * @group GFX
  */
 export class GlobalBindGroup {
+    private static _inited: boolean = false;
     private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
     private static _lightEntriesMap: Map<Scene3D, LightEntries>;
     private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
+        if (this._inited) return;
+        this._inited = true;
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();

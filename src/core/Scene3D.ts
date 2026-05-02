@@ -25,7 +25,9 @@ export class Scene3D extends Object3D {
         this.skyObject = new Object3D();
         this.addChild(this.skyObject);
         this._isScene3D = true;
-        this.envMap ||= Engine3D.res.defaultSky;
+        // Engine3D.res may not be ready yet (e.g. scene created before init).
+        // The view setter or the first render will set a proper sky if still null.
+        this.envMap ||= Engine3D.res?.defaultSky ?? null;
     }
 
     /**
@@ -73,7 +75,8 @@ export class Scene3D extends Object3D {
     public set exposure(value: number) {
         if (EntityCollect.instance.sky && `exposure` in EntityCollect.instance.sky) {
             EntityCollect.instance.sky.exposure = value;
-            Engine3D.setting.sky.skyExposure = value;
+            const engine = this.view?.engine ?? Engine3D.getActiveOrDefault?.() ?? null;
+            if (engine) engine.setting.sky.skyExposure = value;
         }
     }
 

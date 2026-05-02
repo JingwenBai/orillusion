@@ -104,7 +104,9 @@ export class RendererJob {
 
         this.reflectionRenderer = this.addRenderer(ReflectionRenderer, view);
 
-        if (Engine3D.setting.render.zPrePass) {
+        // Prefer the per-instance setting when a multi-instance engine is in use.
+        const setting = (view.engine ?? Engine3D).setting;
+        if (setting.render.zPrePass) {
             this.depthPassRenderer = this.addRenderer(PreDepthPassRenderer);
         }
 
