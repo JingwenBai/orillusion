@@ -1,7 +1,5 @@
 import { Camera3D } from '../../../../core/Camera3D';
 import { CubeCamera } from '../../../../core/CubeCamera';
-import { Engine3D } from '../../../../Engine3D';
-import { EntityCollect } from '../../collect/EntityCollect';
 import { GPUContext } from '../../GPUContext';
 import { OcclusionSystem } from '../../occlusion/OcclusionSystem';
 import { RendererBase } from '../RendererBase';
@@ -44,7 +42,7 @@ export class ReflectionRenderer extends RendererBase {
      * 
      * @param volume 
      */
-    constructor() {
+    constructor(view: View3D) {
         super();
 
         this.passType = PassType.REFLECTION;
@@ -52,12 +50,12 @@ export class ReflectionRenderer extends RendererBase {
         this.cubeCamera = new CubeCamera(0.01, 5000);
         let mipmap = 1;// TextureMipmapGenerator.getMipmapCount(this.sizeW, this.sizeH);
 
-        this.probeSize = Engine3D.setting.reflectionSetting.reflectionProbeSize;
-        this.probeCount = Engine3D.setting.reflectionSetting.reflectionProbeMaxCount;
-        this.sizeW = Engine3D.setting.reflectionSetting.width;
-        this.sizeH = Engine3D.setting.reflectionSetting.height;
+        this.probeSize = view.engine.setting.reflectionSetting.reflectionProbeSize;
+        this.probeCount = view.engine.setting.reflectionSetting.reflectionProbeMaxCount;
+        this.sizeW = view.engine.setting.reflectionSetting.width;
+        this.sizeH = view.engine.setting.reflectionSetting.height;
 
-        this.gBuffer = GBufferFrame.getGBufferFrame(GBufferFrame.reflections_GBuffer, this.sizeW, this.sizeH, false);
+        this.gBuffer = view.engine.getGBufferFrame(GBufferFrame.reflections_GBuffer, this.sizeW, this.sizeH, false);
         this.setRenderStates(this.gBuffer);
 
         this.outTexture = new VirtualTexture(this.probeSize * this.mipCount, this.sizeH, GPUTextureFormat.rgba16float, false, GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC | GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING, 1, 0, mipmap);
@@ -106,7 +104,7 @@ export class ReflectionRenderer extends RendererBase {
         let spaceX = this.probeSize;
         let spaceY = this.probeSize;
 
-        let reflections = EntityCollect.instance.getReflections(view.scene);
+        let reflections = view.scene.entityCollect?.getReflections(view.scene) ?? [];
 
         for (let i = 0; i < reflections.length; i++) {
             let reflection = reflections[i];
@@ -154,17 +152,17 @@ export class ReflectionRenderer extends RendererBase {
         let scene = view.scene;
         camera.transform.scene3D = scene;
         this.rendererPassState.camera3D = camera;
-        let collectInfo = EntityCollect.instance.getRenderNodes(scene, camera);
+        let collectInfo = scene.entityCollect?.getRenderNodes(scene, camera);
         {
             let renderPassEncoder = encoder;
             GlobalBindGroup.updateCameraGroup(camera);
 
-            if (!maskTr && EntityCollect.instance.sky) {
+            if (!maskTr && view.scene.entityCollect?.sky) {
                 GPUContext.bindCamera(renderPassEncoder, camera);
-                if (!EntityCollect.instance.sky.preInit(PassType.REFLECTION)) {
-                    EntityCollect.instance.sky.nodeUpdate(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer);
+                if (!view.scene.entityCollect.sky.preInit(PassType.REFLECTION)) {
+                    view.scene.entityCollect.sky.nodeUpdate(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer);
                 }
-                EntityCollect.instance.sky.renderPass2(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
+                view.scene.entityCollect.sky.renderPass2(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
             }
 
             if (collectInfo.opaqueList) {
@@ -180,7 +178,7 @@ export class ReflectionRenderer extends RendererBase {
     }
 
     public drawNodes(view: View3D, renderContext: RenderContext, nodes: RenderNode[], occlusionSystem: OcclusionSystem, clusterLightingBuffer: ClusterLightingBuffer) {
-        let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+        let viewRenderList = view.scene.entityCollect?.getRenderShaderCollect(view);
         if (viewRenderList) {
             for (const renderList of viewRenderList) {
                 let nodeMap = renderList[1];

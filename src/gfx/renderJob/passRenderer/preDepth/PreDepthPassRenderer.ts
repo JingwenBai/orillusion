@@ -7,10 +7,8 @@ import { webGPUContext } from "../../../graphics/webGpu/Context3D";
 import { GPUTextureFormat } from "../../../graphics/webGpu/WebGPUConst";
 import { RTDescriptor } from "../../../graphics/webGpu/descriptor/RTDescriptor";
 import { GPUContext } from "../../GPUContext";
-import { EntityCollect } from "../../collect/EntityCollect";
 import { RTResourceConfig } from "../../config/RTResourceConfig";
 import { RTFrame } from "../../frame/RTFrame";
-import { RTResourceMap } from "../../frame/RTResourceMap";
 import { OcclusionSystem } from "../../occlusion/OcclusionSystem";
 import { RendererBase } from "../RendererBase";
 import { ClusterLightingBuffer } from "../cluster/ClusterLightingBuffer";
@@ -26,13 +24,14 @@ export class PreDepthPassRenderer extends RendererBase {
     public useRenderBundle: boolean = false;
     shadowPassCount: number;
     zCullingCompute: ZCullingCompute;
-    constructor() {
+    constructor(view: View3D) {
         super();
         this.passType = PassType.DEPTH;
 
+        let rtResourceMap = view.engine.rtResourceMap;
         let size = webGPUContext.presentationSize;
         let scale = 1;
-        this.zBufferTexture = RTResourceMap.createRTTexture(RTResourceConfig.zBufferTexture_NAME, Math.floor(size[0] * scale), Math.floor(size[1] * scale), GPUTextureFormat.rgba16float, false);
+        this.zBufferTexture = rtResourceMap.createRTTexture(RTResourceConfig.zBufferTexture_NAME, Math.floor(size[0] * scale), Math.floor(size[1] * scale), GPUTextureFormat.rgba16float, false);
         let rtDec = new RTDescriptor()
         rtDec.clearValue = [0, 0, 0, 0];
         rtDec.loadOp = `clear`;
@@ -40,7 +39,7 @@ export class PreDepthPassRenderer extends RendererBase {
         ], [
             // new RTDescriptor()
         ],
-            RTResourceMap.createRTTexture(RTResourceConfig.zPreDepthTexture_NAME, Math.floor(size[0]), Math.floor(size[1]), GPUTextureFormat.depth32float, false),
+            rtResourceMap.createRTTexture(RTResourceConfig.zPreDepthTexture_NAME, Math.floor(size[0]), Math.floor(size[1]), GPUTextureFormat.depth32float, false),
             null,
             false
         );
@@ -57,7 +56,7 @@ export class PreDepthPassRenderer extends RendererBase {
         let scene3D = scene;
 
         this.rendererPassState.camera3D = camera;
-        let collectInfo = EntityCollect.instance.getRenderNodes(scene3D, camera);
+        let collectInfo = scene3D.entityCollect?.getRenderNodes(scene3D, camera);
         this.compute(view, occlusionSystem);
 
         let op_bundleList = this.renderBundleOp(view, collectInfo, occlusionSystem);
@@ -74,7 +73,7 @@ export class PreDepthPassRenderer extends RendererBase {
         //     GPUContext.bindCamera(encoder, camera);
         //     EntityCollect.instance.sky.renderPass2(this._rendererType, this.rendererPassState, scene, this.clusterLightingRender, encoder);
         // }
-        let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+        let viewRenderList = view.scene.entityCollect?.getRenderShaderCollect(view);
         for (const renderList of viewRenderList) {
             let nodeMap = renderList[1];
             for (const iterator of nodeMap) {

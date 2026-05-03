@@ -166,7 +166,7 @@ export class GTAOPost extends PostBase {
 
         this.aoBuffer = new StorageGPUBuffer(this.gtaoTexture.width * this.gtaoTexture.height);
         this.gtaoCompute.setStorageBuffer('aoBuffer', this.aoBuffer);
-        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+        let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
         this.gtaoCompute.setSamplerTexture(`gBufferTexture`, rtFrame.getCompressGBufferTexture());
         this.autoSetColorTexture('inTex', this.gtaoCompute);
         this.gtaoCompute.setStorageTexture(`outTex`, this.gtaoTexture);

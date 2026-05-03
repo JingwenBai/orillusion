@@ -2,7 +2,6 @@ import { View3D } from '../../../../core/View3D';
 import { GlobalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { ComputeShader } from '../../../graphics/webGpu/shader/ComputeShader';
 import { webGPUContext } from '../../../graphics/webGpu/Context3D';
-import { EntityCollect } from '../../collect/EntityCollect';
 import { GPUContext } from '../../GPUContext';
 import { OcclusionSystem } from '../../occlusion/OcclusionSystem';
 import { RendererBase } from '../RendererBase';
@@ -105,7 +104,7 @@ export class ClusterLightingRender extends RendererBase {
 
     render(view: View3D, occlusionSystem: OcclusionSystem) {
         let scene = view.scene;
-        let lights: ILight[] = EntityCollect.instance.getLights(scene);
+        let lights: ILight[] = scene.entityCollect?.getLights(scene) ?? [];
 
         if (this._useCamera != view.camera) {
             this._useCamera = view.camera;

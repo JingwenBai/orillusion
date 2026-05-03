@@ -1,5 +1,5 @@
 import { GPUContext } from "../../gfx/renderJob/GPUContext";
-import { RTResourceMap } from "../../gfx/renderJob/frame/RTResourceMap";
+import { currentEngine } from "../../Engine3D";
 import { RenderContext } from "../../gfx/renderJob/passRenderer/RenderContext";
 import { MeshRenderer } from "./MeshRenderer";
 import { RenderNode } from "./RenderNode";
@@ -117,7 +117,7 @@ export class InstanceDrawComponent extends RenderNode {
                 const renderShader = matPass;
                 if (renderShader.shaderState.splitTexture) {
                     renderContext.endRenderPass();
-                    RTResourceMap.WriteSplitColorTexture(renderNode.instanceID);
+                    currentEngine?.rtResourceMap?.WriteSplitColorTexture(renderNode.instanceID);
                     renderContext.beginOpaqueRenderPass();
 
                     GPUContext.bindCamera(renderContext.encoder, view.camera);

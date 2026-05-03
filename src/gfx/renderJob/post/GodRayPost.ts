@@ -106,7 +106,7 @@ export class GodRayPost extends PostBase {
         this.historyGodRayData = new StorageGPUBuffer(4 * this.godRayTexture.width * this.godRayTexture.height);
         this.godRayCompute.setStorageBuffer('historyGodRayData', this.historyGodRayData);
 
-        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+        let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
         this.godRayCompute.setSamplerTexture(`gBufferTexture`, rtFrame.getCompressGBufferTexture());
         this.autoSetColorTexture('inTex', this.godRayCompute);
         this.godRayCompute.setStorageTexture(`outTex`, this.godRayTexture);

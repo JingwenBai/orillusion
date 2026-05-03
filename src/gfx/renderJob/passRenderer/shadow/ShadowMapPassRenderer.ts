@@ -9,7 +9,6 @@ import { Time } from "../../../../util/Time";
 import { GPUTextureFormat } from "../../../graphics/webGpu/WebGPUConst";
 import { WebGPUDescriptorCreator } from "../../../graphics/webGpu/descriptor/WebGPUDescriptorCreator";
 import { GPUContext } from "../../GPUContext";
-import { EntityCollect } from "../../collect/EntityCollect";
 import { ShadowLightsCollect } from "../../collect/ShadowLightsCollect";
 import { RTFrame } from "../../frame/RTFrame";
 import { OcclusionSystem } from "../../occlusion/OcclusionSystem";
@@ -83,7 +82,7 @@ export class ShadowMapPassRenderer extends RendererBase {
             this.rendererPassState = this.rendererPassStates[shadowIndex];
             shadowSize = this.rendererPassState.depthTexture.width;
 
-            let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+            let viewRenderList = view.scene.entityCollect?.getRenderShaderCollect(view);
             for (const renderList of viewRenderList) {
                 let nodeMap = renderList[1];
                 for (const iterator of nodeMap) {
@@ -160,7 +159,7 @@ export class ShadowMapPassRenderer extends RendererBase {
     }
 
     private renderShadow(view: View3D, shadowCamera: Camera3D, occlusionSystem: OcclusionSystem, state: RendererPassState) {
-        let collectInfo = EntityCollect.instance.getRenderNodes(view.scene, shadowCamera);
+        let collectInfo = view.scene.entityCollect?.getRenderNodes(view.scene, shadowCamera);
         let command = GPUContext.beginCommandEncoder();
         let encoder = GPUContext.beginRenderPass(command, state);
 
@@ -189,7 +188,7 @@ export class ShadowMapPassRenderer extends RendererBase {
     }
 
     protected renderShadowBundleOp(view: View3D, shadowCamera: Camera3D, state: RendererPassState) {
-        let entityBatchCollect = EntityCollect.instance.getOpRenderGroup(view.scene);
+        let entityBatchCollect = view.scene.entityCollect?.getOpRenderGroup(view.scene);
         if (entityBatchCollect) {
             let bundlerList = [];
             entityBatchCollect.renderGroup.forEach((v) => {
@@ -209,7 +208,7 @@ export class ShadowMapPassRenderer extends RendererBase {
     }
 
     protected renderShadowBundleTr(view: View3D, shadowCamera: Camera3D, state: RendererPassState) {
-        let entityBatchCollect = EntityCollect.instance.getTrRenderGroup(view.scene);
+        let entityBatchCollect = view.scene.entityCollect?.getTrRenderGroup(view.scene);
         if (entityBatchCollect) {
             let bundlerList = [];
             entityBatchCollect.renderGroup.forEach((v) => {

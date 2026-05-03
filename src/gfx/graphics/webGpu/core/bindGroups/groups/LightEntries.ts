@@ -6,7 +6,6 @@ import { Engine3D } from "../../../../../../Engine3D";
 import { LightData } from "../../../../../../components/lights/LightData";
 import { View3D } from "../../../../../../core/View3D";
 import { MemoryInfo } from "../../../../../../core/pool/memory/MemoryInfo";
-import { EntityCollect } from "../../../../../renderJob/collect/EntityCollect";
 import { DDGIIrradianceVolume } from "../../../../../renderJob/passRenderer/ddgi/DDGIIrradianceVolume";
 import { StorageGPUBuffer } from "../../buffer/StorageGPUBuffer";
 
@@ -38,7 +37,7 @@ export class LightEntries {
     public update(view: View3D) {
         this.storageGPUBuffer.clean();
 
-        let lights = EntityCollect.instance.getLights(view.scene);
+        let lights = view.scene.entityCollect?.getLights(view.scene) ?? [];
         for (let i = 0; i < lights.length; i++) {
             const light = lights[i].lightData;
             light.index = i;

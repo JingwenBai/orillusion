@@ -5,10 +5,6 @@ import { ColorPassRenderer } from '../passRenderer/color/ColorPassRenderer';
 import { GBufferFrame } from '../frame/GBufferFrame';
 import { RendererJob } from './RendererJob';
 import { DDGIProbeRenderer } from '../passRenderer/ddgi/DDGIProbeRenderer';
-import { webGPUContext } from '../../graphics/webGpu/Context3D';
-import { RTResourceConfig } from '../config/RTResourceConfig';
-import { RTResourceMap } from '../frame/RTResourceMap';
-import { GPUTextureFormat } from '../../graphics/webGpu/WebGPUConst';
 import { GUIPassRenderer } from '../passRenderer/color/GUIPassRenderer';
 /**
  * Forward+
@@ -28,15 +24,15 @@ export class ForwardRenderJob extends RendererJob {
         super.start();
         {
             let colorPassRenderer = new ColorPassRenderer();
-            let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+            let rtFrame = this._view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
 
-            if (Engine3D.setting.render.zPrePass) {
+            if (this._view.engine.setting.render.zPrePass) {
                 rtFrame.zPreTexture = this.depthPassRenderer.rendererPassState.depthTexture;
             }
 
             colorPassRenderer.setRenderStates(rtFrame);
 
-            if (Engine3D.setting.gi.enable) {
+            if (this._view.engine.setting.gi.enable) {
                 let lightEntries = GlobalBindGroup.getLightEntries(this.view.scene);
                 this.ddgiProbeRenderer = new DDGIProbeRenderer(lightEntries.irradianceVolume);
                 this.ddgiProbeRenderer.setInputTexture([
@@ -51,7 +47,7 @@ export class ForwardRenderJob extends RendererJob {
         }
 
         {
-            let guiFrame = GBufferFrame.getGUIBufferFrame();
+            let guiFrame = this._view.engine.getGUIBufferFrame();
             let guiPassRenderer = new GUIPassRenderer();
             guiPassRenderer.setRenderStates(guiFrame);
             this.rendererMap.addRenderer(guiPassRenderer);

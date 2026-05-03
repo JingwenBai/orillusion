@@ -1,5 +1,4 @@
 import { BoundingBox } from '../../core/bound/BoundingBox';
-import { EntityCollect } from '../../gfx/renderJob/collect/EntityCollect';
 import { Color } from '../../math/Color';
 import { Vector3 } from '../../math/Vector3';
 import { ComponentBase } from '../ComponentBase';
@@ -66,7 +65,7 @@ export class LightBase extends ComponentBase implements ILight {
         if (this.bindOnChange) this.bindOnChange();
         this.transform.object3D.bound.setFromCenterAndSize(this.transform.worldPosition, new Vector3(this.size, this.size, this.size));
         if (this._castGI) {
-            EntityCollect.instance.state.giLightingChange = true;
+            this.transform.scene3D?.entityCollect && (this.transform.scene3D.entityCollect.state.giLightingChange = true);
         }
 
         if (this._castShadow) {
@@ -113,12 +112,12 @@ export class LightBase extends ComponentBase implements ILight {
 
     public onEnable(): void {
         this.onChange();
-        EntityCollect.instance.addLight(this.transform.scene3D, this);
+        this.transform.scene3D?.entityCollect?.addLight(this.transform.scene3D, this);
     }
 
     public onDisable(): void {
         this.onChange();
-        EntityCollect.instance.removeLight(this.transform.scene3D, this);
+        this.transform.scene3D?.entityCollect?.removeLight(this.transform.scene3D, this);
         ShadowLightsCollect.removeShadowLight(this);
     }
 
@@ -280,7 +279,7 @@ export class LightBase extends ComponentBase implements ILight {
 
     public destroy(force?: boolean): void {
         this.bindOnChange = null;
-        EntityCollect.instance.removeLight(this.transform.scene3D, this);
+        this.transform.scene3D?.entityCollect?.removeLight(this.transform.scene3D, this);
         ShadowLightsCollect.removeShadowLight(this);
         this.transform.eventDispatcher.removeEventListener(Transform.ROTATION_ONCHANGE, this.onRotChange, this);
         this.transform.eventDispatcher.removeEventListener(Transform.SCALE_ONCHANGE, this.onScaleChange, this);

@@ -9,7 +9,6 @@ import { Texture } from "../../graphics/webGpu/core/texture/Texture";
 import { WebGPUDescriptorCreator } from "../../graphics/webGpu/descriptor/WebGPUDescriptorCreator";
 import { GPUContext } from "../GPUContext";
 import { CollectInfo } from "../collect/CollectInfo";
-import { EntityCollect } from "../collect/EntityCollect";
 import { RTFrame } from "../frame/RTFrame";
 import { OcclusionSystem } from "../occlusion/OcclusionSystem";
 import { RendererPassState } from "./state/RendererPassState";
@@ -94,7 +93,7 @@ export class RendererBase extends CEventDispatcher {
 
         this.rendererPassState.camera3D = camera;
 
-        let collectInfo = EntityCollect.instance.getRenderNodes(scene, camera);
+        let collectInfo = scene.entityCollect?.getRenderNodes(scene, camera);
         // this.compute(collectInfo, scene, occlusionSystem);
 
         let op_bundleList = this.renderBundleOp(view, collectInfo, occlusionSystem, clusterLightingBuffer);
@@ -108,9 +107,9 @@ export class RendererBase extends CEventDispatcher {
                 renderPassEncoder.executeBundles(op_bundleList);
             }
 
-            if (!maskTr && EntityCollect.instance.sky) {
+            if (!maskTr && view.scene.entityCollect?.sky) {
                 GPUContext.bindCamera(renderPassEncoder, camera);
-                EntityCollect.instance.sky.renderPass2(view, this._rendererType, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
+                view.scene.entityCollect.sky.renderPass2(view, this._rendererType, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
             }
 
             this.drawRenderNodes(view, renderPassEncoder, command, collectInfo.opaqueList, occlusionSystem);
@@ -148,7 +147,7 @@ export class RendererBase extends CEventDispatcher {
     protected renderTr(encoder: GPURenderPassEncoder, command: GPUCommandEncoder, collectInfo: CollectInfo, scene: Scene3D, occlusionSystem: OcclusionSystem) { }
 
     protected renderBundleOp(view: View3D, collectInfo: CollectInfo, occlusionSystem: OcclusionSystem, clusterLightingBuffer?: ClusterLightingBuffer) {
-        let entityBatchCollect = EntityCollect.instance.getOpRenderGroup(view.scene);
+        let entityBatchCollect = view.scene.entityCollect?.getOpRenderGroup(view.scene);
         if (entityBatchCollect) {
             let bundlerList = [];
             entityBatchCollect.renderGroup.forEach((v) => {
@@ -168,7 +167,7 @@ export class RendererBase extends CEventDispatcher {
     }
 
     protected renderBundleTr(view: View3D, collectInfo: CollectInfo, occlusionSystem: OcclusionSystem, clusterLightingBuffer?: ClusterLightingBuffer) {
-        let entityBatchCollect = EntityCollect.instance.getTrRenderGroup(view.scene);
+        let entityBatchCollect = view.scene.entityCollect?.getTrRenderGroup(view.scene);
         if (entityBatchCollect) {
             let bundlerList = [];
             entityBatchCollect.renderGroup.forEach((v) => {

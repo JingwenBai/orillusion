@@ -18,7 +18,11 @@ export class ShadowLightsCollect {
     public static pointLightList: Map<Scene3D, ILight[]>;
     public static shadowLights: Map<Scene3D, Float32Array>;
 
+    private static _initialized: boolean = false;
+
     public static init() {
+        if (this._initialized) return;
+        this._initialized = true;
         this.directionLightList = new Map<Scene3D, ILight[]>();
         this.pointLightList = new Map<Scene3D, ILight[]>();
         this.shadowLights = new Map<Scene3D, Float32Array>();
@@ -190,13 +194,17 @@ export class ShadowLightsCollect {
             nPointShadowEnd = nPointShadowStart + pointLightList.length;
         }
 
+        // Only update cameras that belong to this view's scene to prevent
+        // cross-instance contamination when multiple Engine3D instances coexist.
         let cameraGroup = GlobalBindGroup.getAllCameraGroup();
-        cameraGroup.forEach((group: GlobalUniformGroup) => {
-            group.dirShadowStart = nDirShadowStart;
-            group.dirShadowEnd = nDirShadowEnd;
-            group.pointShadowStart = nPointShadowStart;
-            group.pointShadowEnd = nPointShadowEnd;
-            group.shadowLights = shadowLights;
+        cameraGroup.forEach((group: GlobalUniformGroup, camera) => {
+            if (camera.transform && camera.transform.scene3D === view.scene) {
+                group.dirShadowStart = nDirShadowStart;
+                group.dirShadowEnd = nDirShadowEnd;
+                group.pointShadowStart = nPointShadowStart;
+                group.pointShadowEnd = nPointShadowEnd;
+                group.shadowLights = shadowLights;
+            }
         });
     }
 }

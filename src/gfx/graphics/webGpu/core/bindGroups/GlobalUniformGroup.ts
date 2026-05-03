@@ -1,4 +1,4 @@
-import { EntityCollect, Vector3, Vector4 } from "../../../../..";
+import { Vector3, Vector4 } from "../../../../..";
 import { Engine3D } from "../../../../../Engine3D";
 import { Camera3D } from "../../../../../core/Camera3D";
 import { CSM } from "../../../../../core/csm/CSM";
@@ -118,7 +118,7 @@ export class GlobalUniformGroup {
         this.uniformGPUBuffer.setFloat32Array(`shadowLights`, this.shadowLights);
 
         let reflectionSetting = Engine3D.setting.reflectionSetting;
-        let reflectionCount = EntityCollect.instance.getReflections(camera.transform.scene3D).length;
+        let reflectionCount = camera.transform.scene3D?.entityCollect?.getReflections(camera.transform.scene3D).length ?? 0;
         this.uniformGPUBuffer.setFloat(`reflectionProbeSize`, reflectionSetting.reflectionProbeSize);
         this.uniformGPUBuffer.setFloat(`reflectionProbeMaxCount`, reflectionSetting.reflectionProbeMaxCount);
         this.uniformGPUBuffer.setFloat(`reflectionMapWidth`, reflectionSetting.width);

@@ -5,7 +5,6 @@ import { RenderTexture } from '../../../../textures/RenderTexture';
 import { GlobalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { StorageGPUBuffer } from '../../../graphics/webGpu/core/buffer/StorageGPUBuffer';
 import { ComputeShader } from '../../../graphics/webGpu/shader/ComputeShader';
-import { EntityCollect } from '../../collect/EntityCollect';
 import { GPUContext } from '../../GPUContext';
 import { RendererPassState } from '../state/RendererPassState';
 import { DDGIIrradianceVolume } from './DDGIIrradianceVolume';
@@ -70,7 +69,7 @@ export class DDGIIrradianceComputePass {
     public compute(view: View3D, renderPassState: RendererPassState) {
         let setting = this.volume.setting;
         let command = GPUContext.beginCommandEncoder();
-        let probes = EntityCollect.instance.getProbes(view.scene);
+        let probes = view.scene.entityCollect?.getProbes(view.scene) ?? [];
 
         this.computeShader.workerSizeX = setting.octRTSideSize / 8;
         this.computeShader.workerSizeY = setting.octRTSideSize / 8;

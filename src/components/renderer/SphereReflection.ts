@@ -11,6 +11,7 @@ import { Reflection } from './Reflection';
 import { Object3D } from '../../core/entities/Object3D';
 import { MeshRenderer } from './MeshRenderer';
 import { GBufferFrame } from '../../gfx/renderJob/frame/GBufferFrame';
+import { Engine3D, currentEngine } from '../../Engine3D';
 import { ReflectionMaterial } from '../../materials/ReflectionMaterial';
 import { BoundingSphere } from '../../core/bound/BoundingSphere';
 import { Engine3D } from '../../Engine3D';
@@ -40,7 +41,7 @@ export class SphereReflection extends Reflection {
         // mr.material = new LitMaterial();
 
         let reflectionSetting = Engine3D.setting.reflectionSetting;
-        let reflectionsGBufferFrame = GBufferFrame.getGBufferFrame(GBufferFrame.reflections_GBuffer, reflectionSetting.width, reflectionSetting.height);
+        let reflectionsGBufferFrame = (this.transform.scene3D?.view?.engine ?? currentEngine).getGBufferFrame(GBufferFrame.reflections_GBuffer, reflectionSetting.width, reflectionSetting.height);
         let mat = new ReflectionMaterial();
         mat.reflectionIndex = index;
         mat.baseMap = reflectionsGBufferFrame.getCompressGBufferTexture();

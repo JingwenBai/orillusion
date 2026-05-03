@@ -152,7 +152,7 @@ export class SSGIPost extends PostBase {
 
 
     private createResource() {
-        let rtFrame = GBufferFrame.getGBufferFrame("ColorPassGBuffer");
+        let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
         this.gBufferTexture = rtFrame.getCompressGBufferTexture();
 
         let presentationSize = webGPUContext.presentationSize;

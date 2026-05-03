@@ -165,7 +165,7 @@ export class OutlinePost extends PostBase {
     }
 
     private createCompute() {
-        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+        let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
 
         this.calcWeightCompute = new ComputeShader(OutlineCalcOutline_cs);
 

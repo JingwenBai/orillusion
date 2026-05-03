@@ -16,7 +16,17 @@ export class GlobalBindGroup {
     private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
     public static modelMatrixBindGroup: MatrixBindGroup;
 
+    private static _initialized: boolean = false;
+
+    /**
+     * Initialise shared GPU bind-group resources. Safe to call multiple times
+     * (subsequent calls are no-ops) so that multiple Engine3D instances can each
+     * call init() without overwriting the shared matrix buffer.
+     */
     public static init() {
+        if (this._initialized) return;
+        this._initialized = true;
+
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();
@@ -79,7 +89,4 @@ export class GlobalBindGroup {
         }
         return this._reflectionEntriesMap.get(scene);
     }
-
-
-
 }

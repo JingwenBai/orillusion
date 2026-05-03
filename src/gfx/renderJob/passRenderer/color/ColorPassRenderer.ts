@@ -4,7 +4,6 @@ import { View3D } from "../../../../core/View3D";
 import { ProfilerUtil } from "../../../../util/ProfilerUtil";
 import { GlobalBindGroup } from "../../../graphics/webGpu/core/bindGroups/GlobalBindGroup";
 import { GPUContext } from "../../GPUContext";
-import { EntityCollect } from "../../collect/EntityCollect";
 import { OcclusionSystem } from "../../occlusion/OcclusionSystem";
 import { RenderContext } from "../RenderContext";
 import { RendererBase } from "../RendererBase";
@@ -35,7 +34,7 @@ export class ColorPassRenderer extends RendererBase {
 
         this.rendererPassState.camera3D = camera;
 
-        let collectInfo = EntityCollect.instance.getRenderNodes(scene, camera);
+        let collectInfo = scene.entityCollect?.getRenderNodes(scene, camera);
 
         let op_bundleList = this.renderBundleOp(view, collectInfo, occlusionSystem, clusterLightingBuffer);
         let tr_bundleList = maskTr ? [] : this.renderBundleTr(view, collectInfo, occlusionSystem, clusterLightingBuffer);
@@ -52,7 +51,7 @@ export class ColorPassRenderer extends RendererBase {
 
             if (op_bundleList.length > 0) {
                 //  GPUContext.bindCamera(renderPassEncoder,camera);
-                let entityBatchCollect = EntityCollect.instance.getOpRenderGroup(scene);
+                let entityBatchCollect = scene.entityCollect?.getOpRenderGroup(scene);
                 // entityBatchCollect.renderGroup.forEach((group) => {
                 //     for (let i = 0; i < group.renderNodes.length; i++) {
                 //         const node = group.renderNodes[i];
@@ -63,12 +62,12 @@ export class ColorPassRenderer extends RendererBase {
                 renderPassEncoder.executeBundles(op_bundleList);
             }
 
-            if (!maskTr && EntityCollect.instance.sky) {
+            if (!maskTr && view.scene.entityCollect?.sky) {
                 GPUContext.bindCamera(renderPassEncoder, camera);
-                if (!EntityCollect.instance.sky.preInit(this._rendererType)) {
-                    EntityCollect.instance.sky.nodeUpdate(view, this._rendererType, this.rendererPassState, clusterLightingBuffer);
+                if (!view.scene.entityCollect?.sky.preInit(this._rendererType)) {
+                    view.scene.entityCollect?.sky.nodeUpdate(view, this._rendererType, this.rendererPassState, clusterLightingBuffer);
                 }
-                EntityCollect.instance.sky.renderPass2(view, this._rendererType, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
+                view.scene.entityCollect?.sky.renderPass2(view, this._rendererType, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
             }
 
             if (collectInfo.opaqueList) {
@@ -93,7 +92,7 @@ export class ColorPassRenderer extends RendererBase {
                 this.drawNodes(view, this.renderContext, collectInfo.transparentList, occlusionSystem, clusterLightingBuffer);
             }
 
-            let graphicsList = EntityCollect.instance.getGraphicList();
+            let graphicsList = view.scene.entityCollect?.getGraphicList() ?? [];
             for (let i = 0; i < graphicsList.length; i++) {
                 const graphic3DRenderNode = graphicsList[i];
                 graphic3DRenderNode.nodeUpdate(view, this._rendererType, this.splitRendererPassState, clusterLightingBuffer);
@@ -111,7 +110,7 @@ export class ColorPassRenderer extends RendererBase {
     }
 
     public drawNodes(view: View3D, renderContext: RenderContext, nodes: RenderNode[], occlusionSystem: OcclusionSystem, clusterLightingBuffer: ClusterLightingBuffer) {
-        let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+        let viewRenderList = view.scene.entityCollect?.getRenderShaderCollect(view);
         if (viewRenderList) {
             for (const renderList of viewRenderList) {
                 let nodeMap = renderList[1];

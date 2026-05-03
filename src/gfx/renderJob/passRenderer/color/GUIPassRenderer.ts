@@ -3,9 +3,6 @@ import { RenderNode } from "../../../../components/renderer/RenderNode";
 import { View3D } from "../../../../core/View3D";
 import { GlobalBindGroup } from "../../../graphics/webGpu/core/bindGroups/GlobalBindGroup";
 import { GPUContext } from "../../GPUContext";
-import { EntityCollect } from "../../collect/EntityCollect";
-import { GBufferFrame } from "../../frame/GBufferFrame";
-import { RTFrame } from "../../frame/RTFrame";
 import { OcclusionSystem } from "../../occlusion/OcclusionSystem";
 import { RenderContext } from "../RenderContext";
 import { RendererBase } from "../RendererBase";
@@ -28,7 +25,7 @@ export class GUIPassRenderer extends RendererBase {
     public compute(view: View3D, occlusionSystem: OcclusionSystem): void {
         let command = GPUContext.beginCommandEncoder();
         let src = GPUContext.lastRenderPassState.getLastRenderTexture();
-        let dest = GBufferFrame.getGUIBufferFrame().getColorTexture();
+        let dest = view.engine.getGUIBufferFrame().getColorTexture();
         GPUContext.copyTexture(command, src, dest);
         GPUContext.endCommandEncoder(command);
     }
@@ -44,7 +41,7 @@ export class GUIPassRenderer extends RendererBase {
 
         this.rendererPassState.camera3D = camera;
 
-        let collectInfo = EntityCollect.instance.getRenderNodes(scene, camera);
+        let collectInfo = scene.entityCollect?.getRenderNodes(scene, camera);
 
         {
             this.renderContext.specialtRenderPass();
@@ -73,7 +70,7 @@ export class GUIPassRenderer extends RendererBase {
     }
 
     public drawNodes(view: View3D, renderContext: RenderContext, nodes: RenderNode[], occlusionSystem: OcclusionSystem, clusterLightingBuffer: ClusterLightingBuffer) {
-        let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+        let viewRenderList = view.scene.entityCollect?.getRenderShaderCollect(view);
         if (viewRenderList) {
             for (const renderList of viewRenderList) {
                 let nodeMap = renderList[1];

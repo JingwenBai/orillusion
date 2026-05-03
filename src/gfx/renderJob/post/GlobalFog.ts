@@ -9,7 +9,6 @@ import { PostBase } from './PostBase';
 import { View3D } from '../../../core/View3D';
 import { GBufferFrame } from '../frame/GBufferFrame';
 import { SkyRenderer } from '../../../components/renderer/SkyRenderer';
-import { EntityCollect } from '../collect/EntityCollect';
 import { GlobalFogSetting } from '../../../setting/post/GlobalFogSetting';
 import { Texture } from '../../graphics/webGpu/core/texture/Texture';
 import { RTDescriptor } from '../../graphics/webGpu/descriptor/RTDescriptor';
@@ -46,10 +45,10 @@ export class GlobalFog extends PostBase {
         this.fogUniform = new UniformGPUBuffer(4 * 5); //vector4 * 5
         this.fogCompute.setUniformBuffer('fogUniform', this.fogUniform);
 
-        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+        let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
         this.fogCompute.setSamplerTexture('gBufferTexture', rtFrame.getCompressGBufferTexture());
         this.fogCompute.setSamplerTexture('inTex', rtFrame.getColorTexture());
-        this._lastSkyTexture = this.getSkyTexture();
+        this._lastSkyTexture = this.getSkyTexture(view);
         this.fogCompute.setSamplerTexture(`prefilterMap`, this._lastSkyTexture);
         this.fogCompute.setStorageTexture(`outTex`, this.fogOpTexture);
 
@@ -216,10 +215,10 @@ export class GlobalFog extends PostBase {
 
 
     private _lastSkyTexture: Texture;
-    private getSkyTexture(): Texture {
+    private getSkyTexture(view?: View3D): Texture {
         let texture = Engine3D.res.defaultSky as Texture;
-        if (EntityCollect.instance.sky instanceof SkyRenderer) {
-            texture = EntityCollect.instance.sky.map;
+        if (view?.scene.entityCollect?.sky instanceof SkyRenderer) {
+            texture = view.scene.entityCollect.sky.map;
         }
         return texture;
     }
@@ -238,7 +237,7 @@ export class GlobalFog extends PostBase {
             this.fogCompute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);
         }
 
-        let skyTexture = this.getSkyTexture();
+        let skyTexture = this.getSkyTexture(view);
         if (skyTexture != this._lastSkyTexture) {
             this._lastSkyTexture = skyTexture;
             this.fogCompute.setSamplerTexture(`prefilterMap`, this._lastSkyTexture);

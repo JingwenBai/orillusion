@@ -7,13 +7,11 @@ import { ComputeShader } from '../../graphics/webGpu/shader/ComputeShader';
 import { GPUTextureFormat } from '../../graphics/webGpu/WebGPUConst';
 import { webGPUContext } from '../../graphics/webGpu/Context3D';
 import { GPUContext } from '../GPUContext';
-import { RTResourceMap } from '../frame/RTResourceMap';
 import { RendererPassState } from '../passRenderer/state/RendererPassState';
 import { PostBase } from './PostBase';
 import { Engine3D } from '../../../Engine3D';
 import { View3D } from '../../../core/View3D';
 import { RTDescriptor } from '../../graphics/webGpu/descriptor/RTDescriptor';
-import { RTResourceConfig } from '../config/RTResourceConfig';
 import { GBufferFrame } from '../frame/GBufferFrame';
 import { RTFrame } from '../frame/RTFrame';
 import { DepthOfView_cs } from '../../../assets/shader/compute/DepthOfView_cs';
@@ -123,7 +121,7 @@ export class DepthOfFieldPost extends PostBase {
             this.blurSettings.push(blurSetting);
 
             blurCompute.setUniformBuffer('blurSetting', blurSetting);
-            let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+            let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
             blurCompute.setSamplerTexture(`gBufferTexture`, rtFrame.getCompressGBufferTexture());
 
             let input = i % 2 == 0 ? this.blurTexture1 : this.blurTexture2;
