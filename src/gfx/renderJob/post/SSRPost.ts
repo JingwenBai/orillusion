@@ -161,13 +161,13 @@ export class SSRPost extends PostBase {
         this.SSR_RayTraceCompute.setStorageBuffer(`rayTraceBuffer`, this.rayTraceData);
         this.SSR_RayTraceCompute.setStorageBuffer(`historyPosition`, this.historyPosition);
 
-        let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+        let rtFrame = this.view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
         let gBufferTexture = rtFrame.getCompressGBufferTexture();
 
         this.SSR_RayTraceCompute.setSamplerTexture("gBufferTexture", gBufferTexture);
 
-        if (view.scene.entityCollect?.sky instanceof SkyRenderer)
-            this.SSR_RayTraceCompute.setSamplerTexture(`prefilterMap`, view.scene.entityCollect?.sky.map);
+        if (this.view.scene.entityCollect?.sky instanceof SkyRenderer)
+            this.SSR_RayTraceCompute.setSamplerTexture(`prefilterMap`, this.view.scene.entityCollect?.sky.map);
 
         this.SSR_RayTraceCompute.workerSizeX = Math.ceil(this.isRetTexture.width / 8);
         this.SSR_RayTraceCompute.workerSizeY = Math.ceil(this.isRetTexture.height / 8);
@@ -197,7 +197,7 @@ export class SSRPost extends PostBase {
         this.SSR_Blend_Compute.setStorageBuffer(`rayTraceBuffer`, this.rayTraceData);
         this.SSR_Blend_Compute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);
 
-        let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+        let rtFrame = this.view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
         let gBufferTexture = rtFrame.getCompressGBufferTexture();
 
         this.SSR_Blend_Compute.setSamplerTexture("gBufferTexture", gBufferTexture);

@@ -104,7 +104,7 @@ export class GBufferPost extends PostBase {
     }
 
     private createResource() {
-        let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+        let rtFrame = this.view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
         this.currentRenderTexture = rtFrame.getColorTexture();
         this.gBufferTexture = rtFrame.getCompressGBufferTexture();
 
@@ -127,11 +127,11 @@ export class GBufferPost extends PostBase {
         this.uniformBuffer.setInt32("state", this._state);
 
         let globalUniform = GlobalBindGroup.getCameraGroup(this.view.camera);
-        let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+        let rtFrame = this.view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
         let gBufferTexture = rtFrame.getCompressGBufferTexture();
 
         let reflectionSetting = Engine3D.setting.reflectionSetting;
-        let reflectionsGBufferFrame = view.engine.getGBufferFrame(GBufferFrame.reflections_GBuffer, reflectionSetting.width, reflectionSetting.height);
+        let reflectionsGBufferFrame = this.view.engine.getGBufferFrame(GBufferFrame.reflections_GBuffer, reflectionSetting.width, reflectionSetting.height);
         let reflectionsGBufferTexture = reflectionsGBufferFrame.getCompressGBufferTexture();
 
         let envMap = Engine3D.renderJobs.get(this.view).reflectionRenderer.outTexture;

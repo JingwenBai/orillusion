@@ -14,7 +14,6 @@ import { GBufferFrame } from '../../gfx/renderJob/frame/GBufferFrame';
 import { Engine3D, currentEngine } from '../../Engine3D';
 import { ReflectionMaterial } from '../../materials/ReflectionMaterial';
 import { BoundingSphere } from '../../core/bound/BoundingSphere';
-import { Engine3D } from '../../Engine3D';
 
 
 /**

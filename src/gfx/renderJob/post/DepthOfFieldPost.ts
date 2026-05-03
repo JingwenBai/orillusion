@@ -109,7 +109,7 @@ export class DepthOfFieldPost extends PostBase {
         setting.far = value;
     }
 
-    private createBlurCompute() {
+    private createBlurCompute(view: View3D) {
         this.blurSettings = [];
         this.blurComputes = [];
         let cfg = Engine3D.setting.render.postProcessing.depthOfView;
@@ -169,7 +169,7 @@ export class DepthOfFieldPost extends PostBase {
     render(view: View3D, command: GPUCommandEncoder) {
         if (!this.blurComputes) {
             this.createResource();
-            this.createBlurCompute();
+            this.createBlurCompute(view);
             let standUniform = GlobalBindGroup.getCameraGroup(view.camera);
             for (let i = 0; i < this.blurComputes.length; i++) {
                 const blurCompute = this.blurComputes[i];
