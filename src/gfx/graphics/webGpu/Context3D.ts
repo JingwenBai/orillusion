@@ -75,41 +75,48 @@ export class Context3D extends CEventDispatcher {
             throw new Error('Your browser does not support WebGPU!');
         }
 
-        // request adapter
-        this.adapter = await navigator.gpu.requestAdapter({
-            powerPreference: 'high-performance',
-            // powerPreference: 'low-power',
-        });
+        // Reuse the shared adapter/device across all Engine3D instances so that
+        // GPU pipelines, shader modules, and other device-bound resources can be
+        // shared without re-creation overhead.
+        if (!_sharedAdapter || !_sharedDevice) {
+            _sharedAdapter = await navigator.gpu.requestAdapter({
+                powerPreference: 'high-performance',
+            });
 
-        if (this.adapter == null) {
-            throw new Error('Your browser does not support WebGPU!');
-        }
-
-        // request device
-        this.device = await this.adapter.requestDevice({
-            requiredFeatures: [
-                "bgra8unorm-storage",
-                "depth-clip-control",
-                "depth32float-stencil8",
-                "indirect-first-instance",
-                "rg11b10ufloat-renderable",
-            ],
-            requiredLimits: {
-                minUniformBufferOffsetAlignment: 256,
-                maxStorageBufferBindingSize: this.adapter.limits.maxStorageBufferBindingSize
+            if (_sharedAdapter == null) {
+                throw new Error('Your browser does not support WebGPU!');
             }
-        });
 
-        if (this.device == null) {
-            throw new Error('Your browser does not support WebGPU!');
+            _sharedDevice = await _sharedAdapter.requestDevice({
+                requiredFeatures: [
+                    "bgra8unorm-storage",
+                    "depth-clip-control",
+                    "depth32float-stencil8",
+                    "indirect-first-instance",
+                    "rg11b10ufloat-renderable",
+                ],
+                requiredLimits: {
+                    minUniformBufferOffsetAlignment: 256,
+                    maxStorageBufferBindingSize: _sharedAdapter.limits.maxStorageBufferBindingSize
+                }
+            });
+
+            if (_sharedDevice == null) {
+                throw new Error('Your browser does not support WebGPU!');
+            }
+
+            _sharedDevice.label = 'device';
+            _sharedPresentationFormat = navigator.gpu.getPreferredCanvasFormat();
         }
+
+        this.adapter = _sharedAdapter;
+        this.device = _sharedDevice;
 
         this._pixelRatio = this.canvasConfig?.devicePixelRatio || window.devicePixelRatio || 1;
         this._pixelRatio = Math.min(this._pixelRatio, 2.0);
 
         // configure webgpu context
-        this.device.label = 'device';
-        this.presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+        this.presentationFormat = _sharedPresentationFormat;
         this.context = this.canvas.getContext('webgpu');
         this.context.configure({
             device: this.device,
@@ -149,5 +156,24 @@ export class Context3D extends CEventDispatcher {
 
 /**
  * @internal
+ * Shared GPUAdapter and GPUDevice across all Engine3D instances.
+ * Multiple canvases can share one device, which avoids pipeline/shader cache conflicts.
  */
-export let webGPUContext = new Context3D();
+let _sharedAdapter: GPUAdapter | null = null;
+let _sharedDevice: GPUDevice | null = null;
+let _sharedPresentationFormat: GPUTextureFormat | null = null;
+
+/**
+ * @internal
+ * The currently active Context3D, swapped by Engine3D before each frame.
+ */
+export let webGPUContext: Context3D;
+
+/**
+ * @internal
+ * Set the active WebGPU context. Called by Engine3D at the start of each frame
+ * and during init to support multiple Engine3D instances.
+ */
+export function setActiveContext(ctx: Context3D): void {
+    webGPUContext = ctx;
+}
