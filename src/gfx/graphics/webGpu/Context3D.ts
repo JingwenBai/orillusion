@@ -2,6 +2,7 @@ import { CEvent, Texture } from '../../..';
 import { CEventDispatcher } from '../../../event/CEventDispatcher';
 import { CResizeEvent } from '../../../event/CResizeEvent';
 import { CanvasConfig } from './CanvasConfig';
+import { getActiveContext } from './contextRegistry';
 
 /**
  * @internal
@@ -149,5 +150,20 @@ export class Context3D extends CEventDispatcher {
 
 /**
  * @internal
+ * Proxy that always delegates to the currently active engine's Context3D instance.
+ * Activated by Engine3D when a frame begins or an engine is initialized.
+ * Access the raw instance via `Engine3D.current.context`.
  */
-export let webGPUContext = new Context3D();
+export const webGPUContext: Context3D = new Proxy({} as Context3D, {
+    get(_target, prop: string | symbol) {
+        const ctx: Context3D | null = getActiveContext();
+        if (!ctx) return undefined;
+        const val = (ctx as any)[prop];
+        return typeof val === 'function' ? (val as Function).bind(ctx) : val;
+    },
+    set(_target, prop: string | symbol, value: any) {
+        const ctx: Context3D | null = getActiveContext();
+        if (ctx) (ctx as any)[prop] = value;
+        return true;
+    },
+});

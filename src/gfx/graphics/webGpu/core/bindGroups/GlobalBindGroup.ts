@@ -4,82 +4,115 @@ import { GlobalUniformGroup } from "./GlobalUniformGroup";
 import { LightEntries } from "./groups/LightEntries";
 import { ReflectionEntries } from "./groups/ReflectionEntries";
 import { MatrixBindGroup } from "./MatrixBindGroup";
+import { getCurrentEngine } from "../../../../../engineRegistry";
 
 /**
+ * Per-engine GPU bind group manager (camera uniforms, lights, reflections, matrix buffer).
+ * Static methods are compatibility shims that delegate to the active engine instance.
  * @internal
- * Use Global DO Matrix ArrayBuffer Descriptor
  * @group GFX
  */
 export class GlobalBindGroup {
-    private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
-    private static _lightEntriesMap: Map<Scene3D, LightEntries>;
-    private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
-    public static modelMatrixBindGroup: MatrixBindGroup;
 
-    public static init() {
+    // ── Instance fields ────────────────────────────────────────────────────
+
+    public modelMatrixBindGroup: MatrixBindGroup;
+    private _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
+    private _lightEntriesMap: Map<Scene3D, LightEntries>;
+    private _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
+
+    // ── Instance methods ───────────────────────────────────────────────────
+
+    init() {
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();
         this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
     }
 
-    public static getAllCameraGroup() {
+    getAllCameraGroup() {
         return this._cameraBindGroups;
     }
 
-    public static getCameraGroup(camera: Camera3D) {
-        let cameraBindGroup = this._cameraBindGroups.get(camera);
-        if (!cameraBindGroup) {
-            cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
-            this._cameraBindGroups.set(camera, cameraBindGroup);
+    getCameraGroup(camera: Camera3D): GlobalUniformGroup {
+        let group = this._cameraBindGroups.get(camera);
+        if (!group) {
+            group = new GlobalUniformGroup(this.modelMatrixBindGroup);
+            this._cameraBindGroups.set(camera, group);
         }
         if (camera.isShadowCamera) {
-            cameraBindGroup.setShadowCamera(camera);
+            group.setShadowCamera(camera);
         } else {
-            cameraBindGroup.setCamera(camera);
+            group.setCamera(camera);
         }
-        return cameraBindGroup;
+        return group;
     }
 
+    updateCameraGroup(camera: Camera3D) {
+        let group = this._cameraBindGroups.get(camera);
+        if (!group) {
+            group = new GlobalUniformGroup(this.modelMatrixBindGroup);
+            this._cameraBindGroups.set(camera, group);
+        }
+        if (camera.isShadowCamera) {
+            group.setShadowCamera(camera);
+        } else {
+            group.setCamera(camera);
+        }
+    }
+
+    getLightEntries(scene: Scene3D): LightEntries {
+        if (!scene) console.log(`getLightEntries scene is null`);
+        let entries = this._lightEntriesMap.get(scene);
+        if (!entries) {
+            entries = new LightEntries();
+            this._lightEntriesMap.set(scene, entries);
+        }
+        return entries;
+    }
+
+    getReflectionEntries(scene: Scene3D): ReflectionEntries {
+        if (!scene) console.log(`getReflectionEntries scene is null`);
+        let entries = this._reflectionEntriesMap.get(scene);
+        if (!entries) {
+            entries = new ReflectionEntries();
+            this._reflectionEntriesMap.set(scene, entries);
+        }
+        return entries;
+    }
+
+    // ── Static compatibility shims ─────────────────────────────────────────
+
+    /** @internal */
+    public static init() {
+        GlobalBindGroup._get()?.init();
+    }
+    /** @internal */
+    public static getAllCameraGroup() {
+        return GlobalBindGroup._get()?.getAllCameraGroup();
+    }
+    /** @internal */
+    public static getCameraGroup(camera: Camera3D): GlobalUniformGroup {
+        return GlobalBindGroup._get()?.getCameraGroup(camera);
+    }
+    /** @internal */
     public static updateCameraGroup(camera: Camera3D) {
-        let cameraBindGroup = this._cameraBindGroups.get(camera);
-        if (!cameraBindGroup) {
-            cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
-            this._cameraBindGroups.set(camera, cameraBindGroup);
-        }
-        if (camera.isShadowCamera) {
-            cameraBindGroup.setShadowCamera(camera);
-        } else {
-            cameraBindGroup.setCamera(camera);
-        }
+        GlobalBindGroup._get()?.updateCameraGroup(camera);
     }
-
+    /** @internal */
+    public static get modelMatrixBindGroup(): MatrixBindGroup {
+        return GlobalBindGroup._get()?.modelMatrixBindGroup;
+    }
+    /** @internal */
     public static getLightEntries(scene: Scene3D): LightEntries {
-        if (!scene) {
-            console.log(`getLightEntries scene is null`);
-        }
-
-        let lightEntries = this._lightEntriesMap.get(scene);
-        if (!lightEntries) {
-            lightEntries = new LightEntries();
-            this._lightEntriesMap.set(scene, lightEntries);
-        }
-        return this._lightEntriesMap.get(scene);
+        return GlobalBindGroup._get()?.getLightEntries(scene);
     }
-
+    /** @internal */
     public static getReflectionEntries(scene: Scene3D): ReflectionEntries {
-        if (!scene) {
-            console.log(`getLightEntries scene is null`);
-        }
-
-        let reflectionEntries = this._reflectionEntriesMap.get(scene);
-        if (!reflectionEntries) {
-            reflectionEntries = new ReflectionEntries();
-            this._reflectionEntriesMap.set(scene, reflectionEntries);
-        }
-        return this._reflectionEntriesMap.get(scene);
+        return GlobalBindGroup._get()?.getReflectionEntries(scene);
     }
 
-
-
+    private static _get(): GlobalBindGroup | null {
+        return getCurrentEngine()?.globalBindGroup ?? null;
+    }
 }
