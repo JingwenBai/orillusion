@@ -1,4 +1,4 @@
-import { ComponentCollect, View3D } from "..";
+import { View3D } from "..";
 import { Engine3D } from "../Engine3D";
 import { Ray } from "../math/Ray";
 import { Vector3 } from "../math/Vector3";
@@ -27,11 +27,11 @@ export class ColliderComponent extends ComponentBase {
     }
 
     public onEnable(view?: View3D) {
-        ComponentCollect.bindEnablePick(view, this, null);
+        view?.engine?.componentCollect.bindEnablePick(view, this, null);
     }
 
     public onDisable(view?: View3D) {
-        ComponentCollect.unBindEnablePick(view, this);
+        view?.engine?.componentCollect.unBindEnablePick(view, this);
     }
 
     /**

@@ -149,5 +149,13 @@ export class Context3D extends CEventDispatcher {
 
 /**
  * @internal
+ * Active WebGPU context – updated by Engine3D before each render frame.
  */
-export let webGPUContext = new Context3D();
+export let webGPUContext: Context3D;
+
+/**
+ * @internal
+ */
+export function setWebGPUContext(ctx: Context3D) {
+    webGPUContext = ctx;
+}

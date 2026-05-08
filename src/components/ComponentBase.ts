@@ -137,10 +137,13 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onUpdate(call: Function) {
+        const view = this.transform.view3D;
+        const cc = view?.engine?.componentCollect;
+        if (!cc) return;
         if (call != null) {
-            ComponentCollect.bindUpdate(this.transform.view3D, this, call);
+            cc.bindUpdate(view, this, call);
         } else {
-            ComponentCollect.unBindUpdate(this.transform.view3D, this);
+            cc.unBindUpdate(view, this);
         }
     }
 
@@ -149,10 +152,13 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onLateUpdate(call: Function) {
+        const view = this.transform.view3D;
+        const cc = view?.engine?.componentCollect;
+        if (!cc) return;
         if (call != null) {
-            ComponentCollect.bindLateUpdate(this.transform.view3D, this, call);
+            cc.bindLateUpdate(view, this, call);
         } else {
-            ComponentCollect.unBindLateUpdate(this.transform.view3D, this);
+            cc.unBindLateUpdate(view, this);
         }
     }
 
@@ -161,10 +167,13 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onBeforeUpdate(call: Function) {
+        const view = this.transform.view3D;
+        const cc = view?.engine?.componentCollect;
+        if (!cc) return;
         if (call != null) {
-            ComponentCollect.bindBeforeUpdate(this.transform.view3D, this, call);
+            cc.bindBeforeUpdate(view, this, call);
         } else {
-            ComponentCollect.unBindBeforeUpdate(this.transform.view3D, this);
+            cc.unBindBeforeUpdate(view, this);
         }
     }
 
@@ -174,10 +183,13 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onCompute(call: Function) {
+        const view = this.transform.view3D;
+        const cc = view?.engine?.componentCollect;
+        if (!cc) return;
         if (call != null) {
-            ComponentCollect.bindCompute(this.transform.view3D, this, call);
+            cc.bindCompute(view, this, call);
         } else {
-            ComponentCollect.unBindCompute(this.transform.view3D, this);
+            cc.unBindCompute(view, this);
         }
     }
 
@@ -186,10 +198,13 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onGraphic(call: Function) {
+        const view = this.transform.view3D;
+        const cc = view?.engine?.componentCollect;
+        if (!cc) return;
         if (call != null) {
-            ComponentCollect.bindGraphic(this.transform.view3D, this, call);
+            cc.bindGraphic(view, this, call);
         } else {
-            ComponentCollect.unBindGraphic(this.transform.view3D, this);
+            cc.unBindGraphic(view, this);
         }
     }
 

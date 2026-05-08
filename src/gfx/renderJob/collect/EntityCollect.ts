@@ -19,12 +19,28 @@ import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
 import { RenderShaderCollect } from './RenderShaderCollect';
 
+/** @internal – updated by Engine3D._updateFrame before every render */
+let _activeInstance: EntityCollect | null = null;
+
+/** @internal */
+export function setActiveEntityCollect(ec: EntityCollect | null) {
+    _activeInstance = ec;
+}
+
 /**
  * @internal
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    /**
+     * @internal
+     * Returns the EntityCollect for the currently-active Engine3D instance.
+     * Kept for backward compatibility; code inside the render pipeline can
+     * use this safely because Engine3D sets the active instance before rendering.
+     */
+    public static get instance(): EntityCollect {
+        return _activeInstance;
+    }
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
