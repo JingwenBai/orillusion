@@ -12,8 +12,11 @@ export class RTResourceMap {
 
     public static rtTextureMap: Map<string, RenderTexture>;
     public static rtViewQuad: Map<string, ViewQuad>;
+    private static _initialized: boolean = false;
 
     public static init() {
+        if (this._initialized) return;
+        this._initialized = true;
         this.rtTextureMap = new Map<string, RenderTexture>();
         this.rtViewQuad = new Map<string, ViewQuad>();
     }

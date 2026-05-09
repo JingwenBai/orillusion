@@ -23,7 +23,11 @@ export class WasmMatrix {
     static stateStruct: number = 4;
     static useDoublePrecision: boolean = false;
 
+    private static _initialized: boolean = false;
+
     public static async init(count: number, useDoublePrecision: boolean = false) {
+        if (this._initialized) return;
+        this._initialized = true;
         this.wasm = await matrix();
         this.useDoublePrecision = useDoublePrecision;
         this.wasm._initialize(count, useDoublePrecision, 0);
