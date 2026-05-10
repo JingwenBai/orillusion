@@ -13,7 +13,6 @@ import { Vector3 } from '../../../math/Vector3';
 import { zSorterUtil } from '../../../util/ZSorterUtil';
 import { RenderLayerUtil, RenderLayer } from '../config/RenderLayer';
 import { Probe } from '../passRenderer/ddgi/Probe';
-// import { Graphic3DBatchRenderer } from '../passRenderer/graphic/Graphic3DBatchRenderer';
 import { RendererMask } from '../passRenderer/state/RendererMask';
 import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
@@ -24,9 +23,15 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
 
-    // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
+    /**
+     * Backward-compatible static accessor: returns the current active engine's EntityCollect.
+     * For multi-instance usage, access the collect directly via engine.entityCollect.
+     */
+    public static get instance(): EntityCollect {
+        return Engine3D._current?.entityCollect;
+    }
+
     private _sceneLights: Map<Scene3D, ILight[]>;
     private _sceneGIProbes: Map<Scene3D, Probe[]>;
 
@@ -43,9 +48,6 @@ export class EntityCollect {
     private _renderShaderCollect: RenderShaderCollect;
 
     public state: {
-        /**
-         * gi effect lighting change
-         */
         giLightingChange: boolean
     } = {
             giLightingChange: true
@@ -56,15 +58,8 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
-    }
 
     constructor() {
-        // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
         this._sceneLights = new Map<Scene3D, ILight[]>();
         this._sceneGIProbes = new Map<Scene3D, Probe[]>();
 
@@ -252,7 +247,6 @@ export class EntityCollect {
         return list ? list : [];
     }
 
-    // sort renderers by renderOrder and camera depth
     public autoSortRenderNodes(scene: Scene3D): this {
         let renderList: RenderNode[] = this._tr_RenderNodes.get(scene);
         if (!renderList)
@@ -271,11 +265,10 @@ export class EntityCollect {
                 let __renderOrder = renderNode.renderOrder;
                 if (renderNode.needSortOnCameraZ) {
                     let cameraDepth = zSorterUtil.worldToCameraDepth(renderNode.object3D);
-                    cameraDepth = 1 - Math.max(0, Math.min(1, cameraDepth));//clamp to [0, 1]
+                    cameraDepth = 1 - Math.max(0, Math.min(1, cameraDepth));
                     __renderOrder += cameraDepth;
                 }
                 renderNode['__renderOrder'] = __renderOrder;
-                //resume unchange status
                 renderNode.isRenderOrderChange = false;
             }
             renderList.sort((a: RenderNode, b: RenderNode) => {
