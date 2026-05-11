@@ -21,12 +21,22 @@ export class Context3D extends CEventDispatcher {
     private _pixelRatio: number = 1.0;
     private _resizeEvent: CEvent;
 
+    /**
+     * Shared GPUAdapter and GPUDevice across all engine instances.
+     * Multiple Engine3D canvases can share a single device so GPU resources
+     * (buffers, textures) are accessible from all of them.
+     */
+    private static _sharedAdapter: GPUAdapter | null = null;
+    private static _sharedDevice: GPUDevice | null = null;
+
     public get pixelRatio() {
         return this._pixelRatio;
     }
 
     /**
-     * Configure canvas by CanvasConfig
+     * Configure canvas by CanvasConfig.
+     * Reuses the shared GPUAdapter / GPUDevice when one already exists so that
+     * multiple Engine3D instances share the same GPU device.
      * @param canvasConfig
      * @returns
      */
@@ -75,33 +85,40 @@ export class Context3D extends CEventDispatcher {
             throw new Error('Your browser does not support WebGPU!');
         }
 
-        // request adapter
-        this.adapter = await navigator.gpu.requestAdapter({
-            powerPreference: 'high-performance',
-            // powerPreference: 'low-power',
-        });
+        if (Context3D._sharedAdapter && Context3D._sharedDevice) {
+            // Reuse the existing adapter/device for subsequent engine instances.
+            this.adapter = Context3D._sharedAdapter;
+            this.device = Context3D._sharedDevice;
+        } else {
+            // First engine: request adapter and device, then cache them.
+            this.adapter = await navigator.gpu.requestAdapter({
+                powerPreference: 'high-performance',
+            });
 
-        if (this.adapter == null) {
-            throw new Error('Your browser does not support WebGPU!');
-        }
-
-        // request device
-        this.device = await this.adapter.requestDevice({
-            requiredFeatures: [
-                "bgra8unorm-storage",
-                "depth-clip-control",
-                "depth32float-stencil8",
-                "indirect-first-instance",
-                "rg11b10ufloat-renderable",
-            ],
-            requiredLimits: {
-                minUniformBufferOffsetAlignment: 256,
-                maxStorageBufferBindingSize: this.adapter.limits.maxStorageBufferBindingSize
+            if (this.adapter == null) {
+                throw new Error('Your browser does not support WebGPU!');
             }
-        });
 
-        if (this.device == null) {
-            throw new Error('Your browser does not support WebGPU!');
+            this.device = await this.adapter.requestDevice({
+                requiredFeatures: [
+                    "bgra8unorm-storage",
+                    "depth-clip-control",
+                    "depth32float-stencil8",
+                    "indirect-first-instance",
+                    "rg11b10ufloat-renderable",
+                ],
+                requiredLimits: {
+                    minUniformBufferOffsetAlignment: 256,
+                    maxStorageBufferBindingSize: this.adapter.limits.maxStorageBufferBindingSize
+                }
+            });
+
+            if (this.device == null) {
+                throw new Error('Your browser does not support WebGPU!');
+            }
+
+            Context3D._sharedAdapter = this.adapter;
+            Context3D._sharedDevice = this.device;
         }
 
         this._pixelRatio = this.canvasConfig?.devicePixelRatio || window.devicePixelRatio || 1;
@@ -148,6 +165,17 @@ export class Context3D extends CEventDispatcher {
 }
 
 /**
+ * Module-level live binding for the currently active GPU context.
+ * Updated by Engine3D when a new engine is initialised or a render frame begins.
+ * All existing imports receive the updated value because ES module bindings are live.
  * @internal
  */
-export let webGPUContext = new Context3D();
+export let webGPUContext: Context3D = null;
+
+/**
+ * Replace the active webGPUContext binding.  Called by Engine3D.
+ * @internal
+ */
+export function setWebGPUContext(ctx: Context3D): void {
+    webGPUContext = ctx;
+}
