@@ -6,28 +6,37 @@ import { ReflectionEntries } from "./groups/ReflectionEntries";
 import { MatrixBindGroup } from "./MatrixBindGroup";
 
 /**
+ * Active GlobalBindGroup instance for the currently-rendering Engine3D.
+ * Set automatically by Engine3D before each render frame.
+ * @internal
+ */
+let _active: GlobalBindGroup | null = null;
+
+/**
  * @internal
  * Use Global DO Matrix ArrayBuffer Descriptor
  * @group GFX
  */
 export class GlobalBindGroup {
-    private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
-    private static _lightEntriesMap: Map<Scene3D, LightEntries>;
-    private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
-    public static modelMatrixBindGroup: MatrixBindGroup;
+    private _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
+    private _lightEntriesMap: Map<Scene3D, LightEntries>;
+    private _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
+    public modelMatrixBindGroup: MatrixBindGroup;
 
-    public static init() {
+    constructor() {
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();
         this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
     }
 
-    public static getAllCameraGroup() {
+    // ── Instance API ────────────────────────────────────────────────────────
+
+    public getAllCameraGroupInstance() {
         return this._cameraBindGroups;
     }
 
-    public static getCameraGroup(camera: Camera3D) {
+    public getCameraGroupInstance(camera: Camera3D) {
         let cameraBindGroup = this._cameraBindGroups.get(camera);
         if (!cameraBindGroup) {
             cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
@@ -41,7 +50,7 @@ export class GlobalBindGroup {
         return cameraBindGroup;
     }
 
-    public static updateCameraGroup(camera: Camera3D) {
+    public updateCameraGroupInstance(camera: Camera3D) {
         let cameraBindGroup = this._cameraBindGroups.get(camera);
         if (!cameraBindGroup) {
             cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
@@ -54,11 +63,10 @@ export class GlobalBindGroup {
         }
     }
 
-    public static getLightEntries(scene: Scene3D): LightEntries {
+    public getLightEntriesInstance(scene: Scene3D): LightEntries {
         if (!scene) {
             console.log(`getLightEntries scene is null`);
         }
-
         let lightEntries = this._lightEntriesMap.get(scene);
         if (!lightEntries) {
             lightEntries = new LightEntries();
@@ -67,11 +75,10 @@ export class GlobalBindGroup {
         return this._lightEntriesMap.get(scene);
     }
 
-    public static getReflectionEntries(scene: Scene3D): ReflectionEntries {
+    public getReflectionEntriesInstance(scene: Scene3D): ReflectionEntries {
         if (!scene) {
-            console.log(`getLightEntries scene is null`);
+            console.log(`getReflectionEntries scene is null`);
         }
-
         let reflectionEntries = this._reflectionEntriesMap.get(scene);
         if (!reflectionEntries) {
             reflectionEntries = new ReflectionEntries();
@@ -80,6 +87,39 @@ export class GlobalBindGroup {
         return this._reflectionEntriesMap.get(scene);
     }
 
+    // ── Static API (delegates to active instance — backward compatible) ─────
 
+    /** @internal Set the active GlobalBindGroup for the currently-rendering engine. */
+    public static setActive(bg: GlobalBindGroup) {
+        _active = bg;
+    }
 
+    /** @deprecated Initialization is now handled by Engine3D constructor. */
+    public static init() {
+        // no-op: each Engine3D creates its own GlobalBindGroup instance
+    }
+
+    public static getAllCameraGroup() {
+        return _active!.getAllCameraGroupInstance();
+    }
+
+    public static getCameraGroup(camera: Camera3D) {
+        return _active!.getCameraGroupInstance(camera);
+    }
+
+    public static updateCameraGroup(camera: Camera3D) {
+        return _active!.updateCameraGroupInstance(camera);
+    }
+
+    public static getLightEntries(scene: Scene3D): LightEntries {
+        return _active!.getLightEntriesInstance(scene);
+    }
+
+    public static getReflectionEntries(scene: Scene3D): ReflectionEntries {
+        return _active!.getReflectionEntriesInstance(scene);
+    }
+
+    public static get modelMatrixBindGroup(): MatrixBindGroup {
+        return _active!.modelMatrixBindGroup;
+    }
 }

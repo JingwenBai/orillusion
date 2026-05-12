@@ -7,11 +7,22 @@ import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
 
+/**
+ * Active per-engine GBuffer map. Set automatically by Engine3D before each render frame.
+ * @internal
+ */
+let _activeGBufferMap: Map<string, GBufferFrame> | null = null;
+
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /** @internal Set the active GBuffer map for the currently-rendering engine. */
+    public static setActiveGBufferMap(map: Map<string, GBufferFrame>) {
+        _activeGBufferMap = map;
+    }
+
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
@@ -69,10 +80,9 @@ export class GBufferFrame extends RTFrame {
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!_activeGBufferMap!.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -81,9 +91,9 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            _activeGBufferMap!.set(key, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = _activeGBufferMap!.get(key);
         }
         return gBuffer;
     }
