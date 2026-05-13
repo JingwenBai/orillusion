@@ -24,7 +24,9 @@ export class ShaderUtil {
     public static renderShader: Map<string, RenderShaderPass>;
 
     public static init() {
-        this.renderShaderModulePool = new Map<string, GPUShaderModule>();
-        this.renderShader = new Map<string, RenderShaderPass>();
+        // Shader modules are device-specific; since all engines share the same GPU
+        // device, the pools are initialised only once and reused across engines.
+        this.renderShaderModulePool ||= new Map<string, GPUShaderModule>();
+        this.renderShader ||= new Map<string, RenderShaderPass>();
     }
 }

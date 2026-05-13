@@ -14,14 +14,16 @@ export class ShadowLightsCollect {
     public static maxNumDirectionShadow = 8;
     public static maxNumPointShadow = 8;
 
+    // Maps are keyed by Scene3D so distinct engine instances never conflict
     public static directionLightList: Map<Scene3D, ILight[]>;
     public static pointLightList: Map<Scene3D, ILight[]>;
     public static shadowLights: Map<Scene3D, Float32Array>;
 
     public static init() {
-        this.directionLightList = new Map<Scene3D, ILight[]>();
-        this.pointLightList = new Map<Scene3D, ILight[]>();
-        this.shadowLights = new Map<Scene3D, Float32Array>();
+        // Initialise only once; multiple engines share these maps (keyed by Scene3D)
+        this.directionLightList ||= new Map<Scene3D, ILight[]>();
+        this.pointLightList ||= new Map<Scene3D, ILight[]>();
+        this.shadowLights ||= new Map<Scene3D, Float32Array>();
     }
 
     public static createBuffer(view: View3D) {
