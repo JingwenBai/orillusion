@@ -24,7 +24,10 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    // Per-engine-instance storage. Using Engine3D.current as the key ensures
+    // that entities, lights and render nodes from separate engine instances
+    // cannot bleed into each other's render pipelines.
+    private static _engineInstances: Map<Engine3D, EntityCollect> = new Map();
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,11 +59,14 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
+    public static get instance(): EntityCollect {
+        const engine = Engine3D.current;
+        let inst = this._engineInstances.get(engine);
+        if (!inst) {
+            inst = new EntityCollect();
+            this._engineInstances.set(engine, inst);
         }
-        return this._instance;
+        return inst;
     }
 
     constructor() {
