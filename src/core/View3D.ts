@@ -7,8 +7,10 @@ import { PickFire } from "../io/PickFire";
 import { Vector4 } from "../math/Vector4";
 import { Camera3D } from "./Camera3D";
 import { Scene3D } from "./Scene3D";
+import type { Engine3D } from '../Engine3D';
 
 export class View3D extends CEventListener {
+    public engine: Engine3D | null = null;
     private _camera: Camera3D;
     private _scene: Scene3D;
     private _viewPort: Vector4;

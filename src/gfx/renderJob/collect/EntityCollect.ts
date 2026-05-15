@@ -24,7 +24,16 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    private static _current: EntityCollect | null = null;
+
+    public static get instance(): EntityCollect {
+        if (!this._current) throw new Error('[EntityCollect] No engine context active. Call Engine3D.init() first.');
+        return this._current;
+    }
+
+    public static setCurrent(ec: EntityCollect | null): void {
+        this._current = ec;
+    }
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,12 +65,6 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
-    }
 
     constructor() {
         // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
