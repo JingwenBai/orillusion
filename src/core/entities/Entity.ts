@@ -313,12 +313,17 @@ export class Entity extends CEventDispatcher {
             });
             this.components.clear();
         } else {
+            // Only start components whose object belongs to THIS scene,
+            // so multiple engine instances don't cross-start each other's components.
+            // For Scene3D: this.transform.scene3D === this (it sets itself in constructor).
+            const thisScene = this.transform?.scene3D ?? this;
             ComponentCollect.waitStartComponent.forEach((v, k) => {
+                if (k.transform?.scene3D !== thisScene) return;
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();
-                    ComponentCollect.waitStartComponent.delete(element.object3D);
                 }
+                ComponentCollect.waitStartComponent.delete(k);
             });
         }
     }

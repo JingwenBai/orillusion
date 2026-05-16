@@ -123,7 +123,6 @@ export class ComponentBase implements IComponent {
     public onRemoveChild?(child: Object3D);
 
     /**
-     *
      * clone component data to target object3D
      * @param obj target object3D
      */
@@ -132,69 +131,74 @@ export class ComponentBase implements IComponent {
     public copyComponent(from: this): this { return this; }
 
     /**
-     * internal
+     * @internal
      * Add update function. Will be executed at every frame update.
-     * @param call callback
      */
     private _onUpdate(call: Function) {
+        const view = this.transform?.view3D;
+        if (!view?.engine) return;
         if (call != null) {
-            ComponentCollect.bindUpdate(this.transform.view3D, this, call);
+            view.engine.componentCollect.bindUpdate(view, this, call);
         } else {
-            ComponentCollect.unBindUpdate(this.transform.view3D, this);
+            view.engine.componentCollect.unBindUpdate(view, this);
         }
     }
 
     /**
      * Add a delayed update function.
-     * @param call callback
      */
     private _onLateUpdate(call: Function) {
+        const view = this.transform?.view3D;
+        if (!view?.engine) return;
         if (call != null) {
-            ComponentCollect.bindLateUpdate(this.transform.view3D, this, call);
+            view.engine.componentCollect.bindLateUpdate(view, this, call);
         } else {
-            ComponentCollect.unBindLateUpdate(this.transform.view3D, this);
+            view.engine.componentCollect.unBindLateUpdate(view, this);
         }
     }
 
     /**
      * The function executed before adding frame updates.
-     * @param call callback
      */
     private _onBeforeUpdate(call: Function) {
+        const view = this.transform?.view3D;
+        if (!view?.engine) return;
         if (call != null) {
-            ComponentCollect.bindBeforeUpdate(this.transform.view3D, this, call);
+            view.engine.componentCollect.bindBeforeUpdate(view, this, call);
         } else {
-            ComponentCollect.unBindBeforeUpdate(this.transform.view3D, this);
+            view.engine.componentCollect.unBindBeforeUpdate(view, this);
         }
     }
 
     /**
      * @internal
-     * Add individual execution compute capability
-     * @param call callback
+     * Add individual execution compute capability.
      */
     private _onCompute(call: Function) {
+        const view = this.transform?.view3D;
+        if (!view?.engine) return;
         if (call != null) {
-            ComponentCollect.bindCompute(this.transform.view3D, this, call);
+            view.engine.componentCollect.bindCompute(view, this, call);
         } else {
-            ComponentCollect.unBindCompute(this.transform.view3D, this);
+            view.engine.componentCollect.unBindCompute(view, this);
         }
     }
 
     /**
-     * Add individual execution drawing ability
-     * @param call callback
+     * Add individual execution drawing ability.
      */
     private _onGraphic(call: Function) {
+        const view = this.transform?.view3D;
+        if (!view?.engine) return;
         if (call != null) {
-            ComponentCollect.bindGraphic(this.transform.view3D, this, call);
+            view.engine.componentCollect.bindGraphic(view, this, call);
         } else {
-            ComponentCollect.unBindGraphic(this.transform.view3D, this);
+            view.engine.componentCollect.unBindGraphic(view, this);
         }
     }
 
     /**
-     * before release this component, object refrences are not be set null now.
+     * before release this component, object references are not set to null yet.
      */
     public beforeDestroy(force?: boolean) {
         ComponentCollect.removeWaitStart(this.object3D, this);
@@ -221,5 +225,4 @@ export class ComponentBase implements IComponent {
         this.onCompute = null;
         this.onGraphic = null;
     }
-
 }
