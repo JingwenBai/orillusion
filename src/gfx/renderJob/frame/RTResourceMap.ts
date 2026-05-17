@@ -13,9 +13,28 @@ export class RTResourceMap {
     public static rtTextureMap: Map<string, RenderTexture>;
     public static rtViewQuad: Map<string, ViewQuad>;
 
+    /** Per-instance backing maps. Swapped into the static refs via activate(). */
+    private _rtTextureMap: Map<string, RenderTexture>;
+    private _rtViewQuad: Map<string, ViewQuad>;
+
+    constructor() {
+        this._rtTextureMap = new Map<string, RenderTexture>();
+        this._rtViewQuad = new Map<string, ViewQuad>();
+    }
+
+    /**
+     * Make this instance the active one. All static methods will operate on
+     * this instance's maps until another instance is activated.
+     */
+    public activate() {
+        RTResourceMap.rtTextureMap = this._rtTextureMap;
+        RTResourceMap.rtViewQuad = this._rtViewQuad;
+    }
+
+    /** @deprecated Use `new RTResourceMap().activate()` instead */
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        const instance = new RTResourceMap();
+        instance.activate();
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {

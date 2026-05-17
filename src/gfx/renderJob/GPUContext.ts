@@ -93,6 +93,20 @@ export class GPUContext {
     }
 
     /**
+     * Reset all per-frame state. Called by Engine3D.setAsActive() when
+     * switching between multiple engine instances.
+     * @internal
+     */
+    public static reset() {
+        this.lastGeometry = null;
+        this.lastPipeline = null;
+        this.lastShader = null;
+        this.LastCommand = null;
+        this.drawCount = 0;
+        this.renderPassCount = 0;
+    }
+
+    /**
      * create a render pipeline
      * @param gpuRenderPipeline {@link GPURenderPipelineDescriptor}
      * @returns 
