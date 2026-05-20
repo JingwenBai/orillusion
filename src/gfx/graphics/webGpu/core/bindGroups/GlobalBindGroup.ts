@@ -1,9 +1,17 @@
 import { Camera3D } from "../../../../../core/Camera3D";
+import { EngineContext } from "../../../../../core/EngineContext";
 import { Scene3D } from "../../../../../core/Scene3D";
 import { GlobalUniformGroup } from "./GlobalUniformGroup";
 import { LightEntries } from "./groups/LightEntries";
 import { ReflectionEntries } from "./groups/ReflectionEntries";
 import { MatrixBindGroup } from "./MatrixBindGroup";
+
+interface GlobalBindGroupData {
+    modelMatrixBindGroup: MatrixBindGroup;
+    cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
+    lightEntriesMap: Map<Scene3D, LightEntries>;
+    reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
+}
 
 /**
  * @internal
@@ -11,27 +19,37 @@ import { MatrixBindGroup } from "./MatrixBindGroup";
  * @group GFX
  */
 export class GlobalBindGroup {
-    private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
-    private static _lightEntriesMap: Map<Scene3D, LightEntries>;
-    private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
-    public static modelMatrixBindGroup: MatrixBindGroup;
+    private static _store = new Map<any, GlobalBindGroupData>();
+
+    private static get _data(): GlobalBindGroupData {
+        return this._store.get(EngineContext.current);
+    }
+
+    public static get modelMatrixBindGroup(): MatrixBindGroup {
+        return this._data?.modelMatrixBindGroup;
+    }
 
     public static init() {
-        this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        const data: GlobalBindGroupData = {
+            modelMatrixBindGroup: new MatrixBindGroup(),
+            cameraBindGroups: new Map<Camera3D, GlobalUniformGroup>(),
+            lightEntriesMap: new Map<Scene3D, LightEntries>(),
+            reflectionEntriesMap: new Map<Scene3D, ReflectionEntries>(),
+        };
+        this._store.set(EngineContext.current, data);
     }
 
     public static getAllCameraGroup() {
-        return this._cameraBindGroups;
+        return this._data?.cameraBindGroups;
     }
 
     public static getCameraGroup(camera: Camera3D) {
-        let cameraBindGroup = this._cameraBindGroups.get(camera);
+        const data = this._data;
+        if (!data) return null;
+        let cameraBindGroup = data.cameraBindGroups.get(camera);
         if (!cameraBindGroup) {
-            cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
-            this._cameraBindGroups.set(camera, cameraBindGroup);
+            cameraBindGroup = new GlobalUniformGroup(data.modelMatrixBindGroup);
+            data.cameraBindGroups.set(camera, cameraBindGroup);
         }
         if (camera.isShadowCamera) {
             cameraBindGroup.setShadowCamera(camera);
@@ -42,44 +60,39 @@ export class GlobalBindGroup {
     }
 
     public static updateCameraGroup(camera: Camera3D) {
-        let cameraBindGroup = this._cameraBindGroups.get(camera);
-        if (!cameraBindGroup) {
-            cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
-            this._cameraBindGroups.set(camera, cameraBindGroup);
-        }
+        let cameraBindGroup = this.getCameraGroup(camera);
         if (camera.isShadowCamera) {
-            cameraBindGroup.setShadowCamera(camera);
+            cameraBindGroup?.setShadowCamera(camera);
         } else {
-            cameraBindGroup.setCamera(camera);
+            cameraBindGroup?.setCamera(camera);
         }
     }
 
     public static getLightEntries(scene: Scene3D): LightEntries {
+        const data = this._data;
+        if (!data) return null;
         if (!scene) {
             console.log(`getLightEntries scene is null`);
         }
-
-        let lightEntries = this._lightEntriesMap.get(scene);
+        let lightEntries = data.lightEntriesMap.get(scene);
         if (!lightEntries) {
             lightEntries = new LightEntries();
-            this._lightEntriesMap.set(scene, lightEntries);
+            data.lightEntriesMap.set(scene, lightEntries);
         }
-        return this._lightEntriesMap.get(scene);
+        return data.lightEntriesMap.get(scene);
     }
 
     public static getReflectionEntries(scene: Scene3D): ReflectionEntries {
+        const data = this._data;
+        if (!data) return null;
         if (!scene) {
-            console.log(`getLightEntries scene is null`);
+            console.log(`getReflectionEntries scene is null`);
         }
-
-        let reflectionEntries = this._reflectionEntriesMap.get(scene);
+        let reflectionEntries = data.reflectionEntriesMap.get(scene);
         if (!reflectionEntries) {
             reflectionEntries = new ReflectionEntries();
-            this._reflectionEntriesMap.set(scene, reflectionEntries);
+            data.reflectionEntriesMap.set(scene, reflectionEntries);
         }
-        return this._reflectionEntriesMap.get(scene);
+        return data.reflectionEntriesMap.get(scene);
     }
-
-
-
 }
