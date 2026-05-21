@@ -19,12 +19,13 @@ import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
 import { RenderShaderCollect } from './RenderShaderCollect';
 
+let _entityCollect: EntityCollect = null;
+
 /**
  * @internal
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -57,10 +58,11 @@ export class EntityCollect {
 
     private rendererOctree: Octree;
     public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
+        return _entityCollect;
+    }
+
+    public static setActive(inst: EntityCollect): void {
+        _entityCollect = inst;
     }
 
     constructor() {
