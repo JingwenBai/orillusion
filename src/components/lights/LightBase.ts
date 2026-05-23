@@ -66,7 +66,8 @@ export class LightBase extends ComponentBase implements ILight {
         if (this.bindOnChange) this.bindOnChange();
         this.transform.object3D.bound.setFromCenterAndSize(this.transform.worldPosition, new Vector3(this.size, this.size, this.size));
         if (this._castGI) {
-            EntityCollect.instance.state.giLightingChange = true;
+            const ec = this.transform.view3D?.engine?.entityCollect;
+            if (ec) ec.state.giLightingChange = true;
         }
 
         if (this._castShadow) {
@@ -76,10 +77,11 @@ export class LightBase extends ComponentBase implements ILight {
             ShadowLightsCollect.removeShadowLight(this);
         }
 
-        if (this.transform.view3D && Engine3D.renderJobs) {
-            let renderer = Engine3D.renderJobs.get(this.transform.view3D).reflectionRenderer;
+        const view3D = this.transform.view3D;
+        if (view3D) {
+            const renderer = view3D.engine?.renderJobs?.get(view3D)?.reflectionRenderer;
             if (renderer)
-                Engine3D.renderJobs.get(this.transform.view3D).reflectionRenderer.forceUpdate();
+                renderer.forceUpdate();
         }
     }
 
@@ -113,12 +115,12 @@ export class LightBase extends ComponentBase implements ILight {
 
     public onEnable(): void {
         this.onChange();
-        EntityCollect.instance.addLight(this.transform.scene3D, this);
+        this.transform.view3D?.engine?.entityCollect?.addLight(this.transform.scene3D, this);
     }
 
     public onDisable(): void {
         this.onChange();
-        EntityCollect.instance.removeLight(this.transform.scene3D, this);
+        this.transform.view3D?.engine?.entityCollect?.removeLight(this.transform.scene3D, this);
         ShadowLightsCollect.removeShadowLight(this);
     }
 
@@ -280,7 +282,7 @@ export class LightBase extends ComponentBase implements ILight {
 
     public destroy(force?: boolean): void {
         this.bindOnChange = null;
-        EntityCollect.instance.removeLight(this.transform.scene3D, this);
+        this.transform.view3D?.engine?.entityCollect?.removeLight(this.transform.scene3D, this);
         ShadowLightsCollect.removeShadowLight(this);
         this.transform.eventDispatcher.removeEventListener(Transform.ROTATION_ONCHANGE, this.onRotChange, this);
         this.transform.eventDispatcher.removeEventListener(Transform.SCALE_ONCHANGE, this.onScaleChange, this);

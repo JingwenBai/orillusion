@@ -76,8 +76,11 @@ export class GlobalIlluminationComponent extends ComponentBase {
             }
         }
 
-        for (let i = 0; i < this._probes.length; i++) {
-            EntityCollect.instance.addGIProbe(scene, this._probes[i]);
+        const entityCollect = this.transform.view3D?.engine?.entityCollect;
+        if (entityCollect) {
+            for (let i = 0; i < this._probes.length; i++) {
+                entityCollect.addGIProbe(scene, this._probes[i]);
+            }
         }
 
         this.object3D.transform.enable = false;

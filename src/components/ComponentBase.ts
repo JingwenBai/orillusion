@@ -4,6 +4,7 @@ import { CEventDispatcher } from "../event/CEventDispatcher";
 import { ComponentCollect } from "../gfx/renderJob/collect/ComponentCollect";
 import { IComponent } from "./IComponent";
 import { Transform } from "./Transform";
+import type { EngineContext } from "../EngineContext";
 
 /**
  * Components are used to attach functionality to object3D, it has an owner object3D.
@@ -131,70 +132,79 @@ export class ComponentBase implements IComponent {
 
     public copyComponent(from: this): this { return this; }
 
+    private get _engineContext(): EngineContext | undefined {
+        return this.transform?.view3D?.engine;
+    }
+
     /**
-     * internal
+     * @internal
      * Add update function. Will be executed at every frame update.
-     * @param call callback
      */
     private _onUpdate(call: Function) {
+        const view = this.transform?.view3D;
+        const cc = view?.engine?.componentCollect;
         if (call != null) {
-            ComponentCollect.bindUpdate(this.transform.view3D, this, call);
+            cc?.bindUpdate(view, this, call);
         } else {
-            ComponentCollect.unBindUpdate(this.transform.view3D, this);
+            cc?.unBindUpdate(view, this);
         }
     }
 
     /**
      * Add a delayed update function.
-     * @param call callback
      */
     private _onLateUpdate(call: Function) {
+        const view = this.transform?.view3D;
+        const cc = view?.engine?.componentCollect;
         if (call != null) {
-            ComponentCollect.bindLateUpdate(this.transform.view3D, this, call);
+            cc?.bindLateUpdate(view, this, call);
         } else {
-            ComponentCollect.unBindLateUpdate(this.transform.view3D, this);
+            cc?.unBindLateUpdate(view, this);
         }
     }
 
     /**
      * The function executed before adding frame updates.
-     * @param call callback
      */
     private _onBeforeUpdate(call: Function) {
+        const view = this.transform?.view3D;
+        const cc = view?.engine?.componentCollect;
         if (call != null) {
-            ComponentCollect.bindBeforeUpdate(this.transform.view3D, this, call);
+            cc?.bindBeforeUpdate(view, this, call);
         } else {
-            ComponentCollect.unBindBeforeUpdate(this.transform.view3D, this);
+            cc?.unBindBeforeUpdate(view, this);
         }
     }
 
     /**
      * @internal
-     * Add individual execution compute capability
-     * @param call callback
+     * Add individual execution compute capability.
      */
     private _onCompute(call: Function) {
+        const view = this.transform?.view3D;
+        const cc = view?.engine?.componentCollect;
         if (call != null) {
-            ComponentCollect.bindCompute(this.transform.view3D, this, call);
+            cc?.bindCompute(view, this, call);
         } else {
-            ComponentCollect.unBindCompute(this.transform.view3D, this);
+            cc?.unBindCompute(view, this);
         }
     }
 
     /**
-     * Add individual execution drawing ability
-     * @param call callback
+     * Add individual execution drawing ability.
      */
     private _onGraphic(call: Function) {
+        const view = this.transform?.view3D;
+        const cc = view?.engine?.componentCollect;
         if (call != null) {
-            ComponentCollect.bindGraphic(this.transform.view3D, this, call);
+            cc?.bindGraphic(view, this, call);
         } else {
-            ComponentCollect.unBindGraphic(this.transform.view3D, this);
+            cc?.unBindGraphic(view, this);
         }
     }
 
     /**
-     * before release this component, object refrences are not be set null now.
+     * before release this component, object references are not be set null now.
      */
     public beforeDestroy(force?: boolean) {
         ComponentCollect.removeWaitStart(this.object3D, this);

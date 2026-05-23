@@ -7,6 +7,7 @@ import { PickFire } from "../io/PickFire";
 import { Vector4 } from "../math/Vector4";
 import { Camera3D } from "./Camera3D";
 import { Scene3D } from "./Scene3D";
+import type { EngineContext } from "../EngineContext";
 
 export class View3D extends CEventListener {
     private _camera: Camera3D;
@@ -17,6 +18,12 @@ export class View3D extends CEventListener {
     public pickFire: PickFire;
     public guiPick: GUIPick;
     public readonly canvasList: GUICanvas[];
+
+    /**
+     * The engine context that owns this view.
+     * Set automatically by EngineContext.startRenderView / Engine3D.startRenderView.
+     */
+    public engine: EngineContext;
 
     constructor(x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
         super();

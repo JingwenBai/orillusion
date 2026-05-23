@@ -1,7 +1,6 @@
 import { Camera3D } from '../../../../core/Camera3D';
 import { CubeCamera } from '../../../../core/CubeCamera';
 import { Engine3D } from '../../../../Engine3D';
-import { EntityCollect } from '../../collect/EntityCollect';
 import { GPUContext } from '../../GPUContext';
 import { OcclusionSystem } from '../../occlusion/OcclusionSystem';
 import { RendererBase } from '../RendererBase';
@@ -106,7 +105,7 @@ export class ReflectionRenderer extends RendererBase {
         let spaceX = this.probeSize;
         let spaceY = this.probeSize;
 
-        let reflections = EntityCollect.instance.getReflections(view.scene);
+        let reflections = view.engine?.entityCollect?.getReflections(view.scene) ?? [];
 
         for (let i = 0; i < reflections.length; i++) {
             let reflection = reflections[i];
@@ -154,17 +153,18 @@ export class ReflectionRenderer extends RendererBase {
         let scene = view.scene;
         camera.transform.scene3D = scene;
         this.rendererPassState.camera3D = camera;
-        let collectInfo = EntityCollect.instance.getRenderNodes(scene, camera);
+        let collectInfo = view.engine?.entityCollect?.getRenderNodes(scene, camera);
         {
             let renderPassEncoder = encoder;
             GlobalBindGroup.updateCameraGroup(camera);
 
-            if (!maskTr && EntityCollect.instance.sky) {
+            const sky = view.engine?.entityCollect?.sky;
+            if (!maskTr && sky) {
                 GPUContext.bindCamera(renderPassEncoder, camera);
-                if (!EntityCollect.instance.sky.preInit(PassType.REFLECTION)) {
-                    EntityCollect.instance.sky.nodeUpdate(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer);
+                if (!sky.preInit(PassType.REFLECTION)) {
+                    sky.nodeUpdate(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer);
                 }
-                EntityCollect.instance.sky.renderPass2(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
+                sky.renderPass2(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
             }
 
             if (collectInfo.opaqueList) {
@@ -180,7 +180,7 @@ export class ReflectionRenderer extends RendererBase {
     }
 
     public drawNodes(view: View3D, renderContext: RenderContext, nodes: RenderNode[], occlusionSystem: OcclusionSystem, clusterLightingBuffer: ClusterLightingBuffer) {
-        let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+        let viewRenderList = view.engine?.entityCollect?.getRenderShaderCollect(view);
         if (viewRenderList) {
             for (const renderList of viewRenderList) {
                 let nodeMap = renderList[1];
