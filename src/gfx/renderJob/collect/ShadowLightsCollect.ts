@@ -19,6 +19,9 @@ export class ShadowLightsCollect {
     public static shadowLights: Map<Scene3D, Float32Array>;
 
     public static init() {
+        // Guard against double-initialisation from multiple Engine3D instances.
+        // Maps are keyed by Scene3D so engines with separate scenes never conflict.
+        if (this.directionLightList) return;
         this.directionLightList = new Map<Scene3D, ILight[]>();
         this.pointLightList = new Map<Scene3D, ILight[]>();
         this.shadowLights = new Map<Scene3D, Float32Array>();

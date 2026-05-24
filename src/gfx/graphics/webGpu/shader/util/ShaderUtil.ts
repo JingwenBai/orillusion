@@ -24,6 +24,9 @@ export class ShaderUtil {
     public static renderShader: Map<string, RenderShaderPass>;
 
     public static init() {
+        // Guard against double-initialisation from multiple Engine3D instances.
+        // Shader module and pass caches are shared because the GPU device is shared.
+        if (this.renderShaderModulePool) return;
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
         this.renderShader = new Map<string, RenderShaderPass>();
     }

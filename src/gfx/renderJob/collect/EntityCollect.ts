@@ -24,7 +24,23 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    // Active instance set by Engine3D.activate() before every render frame.
+    // Components always call EntityCollect.instance during the render loop,
+    // so this correctly resolves to the owning engine's collect.
+    private static _active: EntityCollect | null = null;
+
+    public static get instance(): EntityCollect {
+        if (!this._active) {
+            throw new Error(
+                'No active EntityCollect — Engine3D.init() must be called before using the scene.'
+            );
+        }
+        return this._active;
+    }
+
+    public static setActive(ec: EntityCollect): void {
+        this._active = ec;
+    }
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,12 +72,6 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
-    }
 
     constructor() {
         // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();

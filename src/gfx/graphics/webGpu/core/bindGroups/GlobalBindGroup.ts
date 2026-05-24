@@ -17,6 +17,10 @@ export class GlobalBindGroup {
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
+        // Guard against double-initialisation from multiple Engine3D instances.
+        // modelMatrixBindGroup holds a shared GPU buffer backed by the global
+        // WASM matrix pool, so it must only be created once.
+        if (this.modelMatrixBindGroup) return;
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();

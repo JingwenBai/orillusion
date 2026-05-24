@@ -4,22 +4,58 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+
+interface EngineRTMaps {
+    rtTextureMap: Map<string, RenderTexture>;
+    rtViewQuad: Map<string, ViewQuad>;
+}
+
 /**
+ * Per-engine render-target resource cache. Each Engine3D instance gets its
+ * own isolated map so textures from different engines never collide.
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    private static _engineMaps: Map<string, EngineRTMaps> = new Map();
+    private static _activeEngineId: string | null = null;
 
-    public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+    /**
+     * Switch the active engine. Called by Engine3D.activate() before every
+     * render frame and before init(). Creates a fresh map set for new engines.
+     */
+    public static setActiveEngine(id: string): void {
+        if (!this._engineMaps.has(id)) {
+            this._engineMaps.set(id, {
+                rtTextureMap: new Map<string, RenderTexture>(),
+                rtViewQuad: new Map<string, ViewQuad>(),
+            });
+        }
+        this._activeEngineId = id;
     }
 
+    private static getActiveMaps(): EngineRTMaps {
+        if (this._activeEngineId === null) {
+            throw new Error('RTResourceMap: no active engine — call Engine3D.init() first.');
+        }
+        return this._engineMaps.get(this._activeEngineId)!;
+    }
+
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return this.getActiveMaps().rtTextureMap;
+    }
+
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return this.getActiveMaps().rtViewQuad;
+    }
+
+    /** No-op kept for backward compatibility. Maps are created in setActiveEngine(). */
+    public static init(): void {}
+
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        let maps = this.getActiveMaps();
+        let rt: RenderTexture = maps.rtTextureMap.get(name);
         if (!rt) {
             if (name == RTResourceConfig.colorBufferTex_NAME) {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, false);
@@ -27,17 +63,18 @@ export class RTResourceMap {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, true);
             }
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            maps.rtTextureMap.set(name, rt);
         }
         return rt;
     }
 
     public static createRTTextureArray(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, length: number = 1, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        let maps = this.getActiveMaps();
+        let rt: RenderTexture = maps.rtTextureMap.get(name);
         if (!rt) {
             rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, length, sampleCount);
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            maps.rtTextureMap.set(name, rt);
         }
         return rt;
     }
@@ -50,12 +87,12 @@ export class RTResourceMap {
                 new RTDescriptor()
             ]);
         let viewQuad = new ViewQuad(shaderVS, shaderFS, rtFrame, multisample);
-        RTResourceMap.rtViewQuad.set(name, viewQuad);
+        this.getActiveMaps().rtViewQuad.set(name, viewQuad);
         return viewQuad;
     }
 
     public static getTexture(name: string) {
-        return this.rtTextureMap.get(name);
+        return this.getActiveMaps().rtTextureMap.get(name);
     }
 
     public static CreateSplitTexture(id: string) {
