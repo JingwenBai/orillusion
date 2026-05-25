@@ -11,7 +11,30 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /** Per-engine GBuffer maps, keyed by the engine instance id set via setCurrentEngineId() */
+    private static _gBufferMaps: Map<number, Map<string, GBufferFrame>> = new Map();
+    private static _currentEngineId: number = -1;
+
+    /** Switch the active engine whose GBuffer map is used for all subsequent calls */
+    public static setCurrentEngineId(id: number): void {
+        GBufferFrame._currentEngineId = id;
+    }
+
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        let map = GBufferFrame._gBufferMaps.get(GBufferFrame._currentEngineId);
+        if (!map) {
+            map = new Map<string, GBufferFrame>();
+            GBufferFrame._gBufferMaps.set(GBufferFrame._currentEngineId, map);
+        }
+        return map;
+    }
+
+    /** Remove the GBuffer map for the given engine id (call on engine destroy) */
+    public static releaseEngine(id: number): void {
+        GBufferFrame._gBufferMaps.delete(id);
+    }
+
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
