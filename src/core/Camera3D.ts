@@ -48,6 +48,13 @@ export class Camera3D extends ComponentBase {
     public far: number = 5000;
 
     /**
+     * The EngineInstance that owns this camera.
+     * Set by EngineInstance.startRenderView() or when shadow cameras are created.
+     * @internal
+     */
+    public engine: import('../Engine3D').EngineInstance = null;
+
+    /**
      * orth camera right plane
      */
     public left: number = -100;

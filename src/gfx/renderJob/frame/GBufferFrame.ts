@@ -11,6 +11,7 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
+    /** @internal @deprecated Use setActiveGBufferMap per engine */
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
     // public static bufferTexture: boolean = false;
 
@@ -68,11 +69,11 @@ export class GBufferFrame extends RTFrame {
      * @internal
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        let activeMap = _activeGBufferMap ?? GBufferFrame.gBufferMap;
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!activeMap.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -81,9 +82,9 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            activeMap.set(key, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = activeMap.get(key);
         }
         return gBuffer;
     }
@@ -100,4 +101,17 @@ export class GBufferFrame extends RTFrame {
         this.clone2Frame(gBufferFrame);
         return gBufferFrame;
     }
+}
+
+/**
+ * @internal
+ * Currently active GBuffer map. Set per-engine by EngineInstance.
+ */
+export let _activeGBufferMap: Map<string, GBufferFrame> = null;
+
+/**
+ * @internal
+ */
+export function setActiveGBufferMap(map: Map<string, GBufferFrame>): void {
+    _activeGBufferMap = map;
 }

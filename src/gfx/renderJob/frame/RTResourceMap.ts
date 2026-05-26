@@ -4,21 +4,27 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+
 /**
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    public rtTextureMap: Map<string, RenderTexture>;
+    public rtViewQuad: Map<string, ViewQuad>;
 
-    public static init() {
+    constructor() {
         this.rtTextureMap = new Map<string, RenderTexture>();
         this.rtViewQuad = new Map<string, ViewQuad>();
     }
 
-    public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
+    /** @internal @deprecated use instance directly */
+    public static init() {
+        _activeRTResourceMap = new RTResourceMap();
+    }
+
+    public createRTTextureInternal(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0): RenderTexture {
         let rt: RenderTexture = this.rtTextureMap.get(name);
         if (!rt) {
             if (name == RTResourceConfig.colorBufferTex_NAME) {
@@ -27,67 +33,89 @@ export class RTResourceMap {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, true);
             }
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            this.rtTextureMap.set(name, rt);
         }
         return rt;
     }
 
-    public static createRTTextureArray(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, length: number = 1, useMipmap: boolean = false, sampleCount: number = 0) {
+    public createRTTextureArrayInternal(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, length: number = 1, useMipmap: boolean = false, sampleCount: number = 0): RenderTexture {
         let rt: RenderTexture = this.rtTextureMap.get(name);
         if (!rt) {
             rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, length, sampleCount);
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            this.rtTextureMap.set(name, rt);
         }
         return rt;
     }
 
-    public static createViewQuad(name: string, shaderVS: string, shaderFS: string, outRtTexture: RenderTexture, multisample: number = 0) {
-        let rtFrame = new RTFrame([
-            outRtTexture
-        ],
-            [
-                new RTDescriptor()
-            ]);
+    public createViewQuadInternal(name: string, shaderVS: string, shaderFS: string, outRtTexture: RenderTexture, multisample: number = 0): ViewQuad {
+        let rtFrame = new RTFrame([outRtTexture], [new RTDescriptor()]);
         let viewQuad = new ViewQuad(shaderVS, shaderFS, rtFrame, multisample);
-        RTResourceMap.rtViewQuad.set(name, viewQuad);
+        this.rtViewQuad.set(name, viewQuad);
         return viewQuad;
     }
 
-    public static getTexture(name: string) {
+    public getTextureInternal(name: string): RenderTexture {
         return this.rtTextureMap.get(name);
     }
 
-    public static CreateSplitTexture(id: string) {
-        let colorTex = this.getTexture(RTResourceConfig.colorBufferTex_NAME);
-        let tex = this.getTexture(id + "_split");
+    public CreateSplitTextureInternal(id: string): RenderTexture {
+        let colorTex = this.getTextureInternal(RTResourceConfig.colorBufferTex_NAME);
+        let tex = this.getTextureInternal(id + "_split");
         if (!tex) {
-            tex = this.createRTTexture(id + "_split", colorTex.width, colorTex.height, colorTex.format, false);
+            tex = this.createRTTextureInternal(id + "_split", colorTex.width, colorTex.height, colorTex.format, false);
         }
         return tex;
     }
 
-    public static WriteSplitColorTexture(id: string) {
-        let colorTex = this.getTexture(RTResourceConfig.colorBufferTex_NAME);
-        let tex = this.getTexture(id + "_split");
+    public WriteSplitColorTextureInternal(id: string): void {
+        let colorTex = this.getTextureInternal(RTResourceConfig.colorBufferTex_NAME);
+        let tex = this.getTextureInternal(id + "_split");
         const commandEncoder = GPUContext.beginCommandEncoder();
         commandEncoder.copyTextureToTexture(
-            {
-                texture: colorTex.getGPUTexture(),
-                mipLevel: 0,
-                origin: { x: 0, y: 0, z: 0 },
-            },
-            {
-                texture: tex.getGPUTexture(),
-                mipLevel: 0,
-                origin: { x: 0, y: 0, z: 0 },
-            },
-            {
-                width: tex.width,
-                height: tex.height,
-                depthOrArrayLayers: 1,
-            },
+            { texture: colorTex.getGPUTexture(), mipLevel: 0, origin: { x: 0, y: 0, z: 0 } },
+            { texture: tex.getGPUTexture(), mipLevel: 0, origin: { x: 0, y: 0, z: 0 } },
+            { width: tex.width, height: tex.height, depthOrArrayLayers: 1 },
         );
         GPUContext.endCommandEncoder(commandEncoder);
     }
+
+    // ===== STATIC SHIMS (backward compat via active map) =====
+
+    public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0): RenderTexture {
+        return _activeRTResourceMap?.createRTTextureInternal(name, rtWidth, rtHeight, format, useMipmap, sampleCount);
+    }
+
+    public static createRTTextureArray(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, length: number = 1, useMipmap: boolean = false, sampleCount: number = 0): RenderTexture {
+        return _activeRTResourceMap?.createRTTextureArrayInternal(name, rtWidth, rtHeight, format, length, useMipmap, sampleCount);
+    }
+
+    public static createViewQuad(name: string, shaderVS: string, shaderFS: string, outRtTexture: RenderTexture, multisample: number = 0): ViewQuad {
+        return _activeRTResourceMap?.createViewQuadInternal(name, shaderVS, shaderFS, outRtTexture, multisample);
+    }
+
+    public static getTexture(name: string): RenderTexture {
+        return _activeRTResourceMap?.getTextureInternal(name);
+    }
+
+    public static CreateSplitTexture(id: string): RenderTexture {
+        return _activeRTResourceMap?.CreateSplitTextureInternal(id);
+    }
+
+    public static WriteSplitColorTexture(id: string): void {
+        _activeRTResourceMap?.WriteSplitColorTextureInternal(id);
+    }
+}
+
+/**
+ * @internal
+ * Currently active RTResourceMap. Set by EngineInstance before init and render.
+ */
+export let _activeRTResourceMap: RTResourceMap = null;
+
+/**
+ * @internal
+ */
+export function setActiveRTResourceMap(map: RTResourceMap): void {
+    _activeRTResourceMap = map;
 }
