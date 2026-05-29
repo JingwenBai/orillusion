@@ -8,6 +8,10 @@ import { CanvasConfig } from './CanvasConfig';
  */
 export class Context3D extends CEventDispatcher {
 
+    // Shared GPU adapter and device across all engine instances
+    private static _sharedAdapter: GPUAdapter | null = null;
+    private static _sharedDevice: GPUDevice | null = null;
+
     public adapter: GPUAdapter;
     public device: GPUDevice;
     public context: GPUCanvasContext;
@@ -26,7 +30,7 @@ export class Context3D extends CEventDispatcher {
     }
 
     /**
-     * Configure canvas by CanvasConfig
+     * Configure canvas by CanvasConfig. GPU adapter and device are shared across instances.
      * @param canvasConfig
      * @returns
      */
@@ -39,15 +43,12 @@ export class Context3D extends CEventDispatcher {
                 throw new Error('no Canvas')
             }
 
-            // check if external canvas has initial with and height style
-            // TODO: any way to check external css style?
-            if(!this.canvas.style.width)
+            if (!this.canvas.style.width)
                 this.canvas.style.width = this.canvas.width + 'px';
-            if(!this.canvas.style.height)
+            if (!this.canvas.style.height)
                 this.canvas.style.height = this.canvas.height + 'px';
         } else {
             this.canvas = document.createElement('canvas');
-            // this.canvas.style.position = 'fixed';
             this.canvas.style.position = `absolute`;
             this.canvas.style.top = '0px';
             this.canvas.style.left = '0px';
@@ -57,7 +58,6 @@ export class Context3D extends CEventDispatcher {
             document.body.appendChild(this.canvas);
         }
 
-        // set canvas bg
         if (canvasConfig && canvasConfig.backgroundImage) {
             this.canvas.style.background = `url(${canvasConfig.backgroundImage})`;
             this.canvas.style['background-size'] = 'cover';
@@ -66,49 +66,52 @@ export class Context3D extends CEventDispatcher {
             this.canvas.style.background = 'transparent';
         }
 
-        // prevent touch scroll
         this.canvas.style['touch-action'] = 'none';
         this.canvas.style['object-fit'] = 'cover';
 
-        // check webgpu support
         if (navigator.gpu === undefined) {
             throw new Error('Your browser does not support WebGPU!');
         }
 
-        // request adapter
-        this.adapter = await navigator.gpu.requestAdapter({
-            powerPreference: 'high-performance',
-            // powerPreference: 'low-power',
-        });
+        // Request adapter once and share across all engine instances
+        if (!Context3D._sharedAdapter) {
+            Context3D._sharedAdapter = await navigator.gpu.requestAdapter({
+                powerPreference: 'high-performance',
+            });
 
-        if (this.adapter == null) {
-            throw new Error('Your browser does not support WebGPU!');
-        }
-
-        // request device
-        this.device = await this.adapter.requestDevice({
-            requiredFeatures: [
-                "bgra8unorm-storage",
-                "depth-clip-control",
-                "depth32float-stencil8",
-                "indirect-first-instance",
-                "rg11b10ufloat-renderable",
-            ],
-            requiredLimits: {
-                minUniformBufferOffsetAlignment: 256,
-                maxStorageBufferBindingSize: this.adapter.limits.maxStorageBufferBindingSize
+            if (!Context3D._sharedAdapter) {
+                throw new Error('Your browser does not support WebGPU!');
             }
-        });
-
-        if (this.device == null) {
-            throw new Error('Your browser does not support WebGPU!');
         }
+        this.adapter = Context3D._sharedAdapter;
+
+        // Request device once and share across all engine instances
+        if (!Context3D._sharedDevice) {
+            Context3D._sharedDevice = await this.adapter.requestDevice({
+                requiredFeatures: [
+                    "bgra8unorm-storage",
+                    "depth-clip-control",
+                    "depth32float-stencil8",
+                    "indirect-first-instance",
+                    "rg11b10ufloat-renderable",
+                ],
+                requiredLimits: {
+                    minUniformBufferOffsetAlignment: 256,
+                    maxStorageBufferBindingSize: this.adapter.limits.maxStorageBufferBindingSize
+                }
+            });
+
+            if (!Context3D._sharedDevice) {
+                throw new Error('Your browser does not support WebGPU!');
+            }
+
+            Context3D._sharedDevice.label = 'device';
+        }
+        this.device = Context3D._sharedDevice;
 
         this._pixelRatio = this.canvasConfig?.devicePixelRatio || window.devicePixelRatio || 1;
         this._pixelRatio = Math.min(this._pixelRatio, 2.0);
 
-        // configure webgpu context
-        this.device.label = 'device';
         this.presentationFormat = navigator.gpu.getPreferredCanvasFormat();
         this.context = this.canvas.getContext('webgpu');
         this.context.configure({
@@ -147,7 +150,32 @@ export class Context3D extends CEventDispatcher {
     }
 }
 
+// The currently active Context3D instance — set by Engine3D before each render frame
+let _activeContext: Context3D | null = null;
+
 /**
+ * Set the active GPU context. Called by Engine3D before rendering each frame.
  * @internal
  */
-export let webGPUContext = new Context3D();
+export function setActiveGPUContext(ctx: Context3D): void {
+    _activeContext = ctx;
+}
+
+/**
+ * @internal
+ * webGPUContext is a Proxy that transparently delegates to the currently active
+ * Context3D instance. This allows multiple Engine3D instances (each with its own
+ * canvas and Context3D) to coexist, while all subsystems continue to use the
+ * same `webGPUContext` import without modification.
+ */
+export const webGPUContext: Context3D = new Proxy({} as Context3D, {
+    get(_: Context3D, key: string | symbol): unknown {
+        const ctx = _activeContext!;
+        const val = (ctx as any)[key];
+        return typeof val === 'function' ? val.bind(ctx) : val;
+    },
+    set(_: Context3D, key: string | symbol, value: unknown): boolean {
+        (_activeContext as any)[key] = value;
+        return true;
+    }
+});
