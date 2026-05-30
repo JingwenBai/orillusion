@@ -1,4 +1,5 @@
 import { ComponentCollect } from '../..';
+import { Engine3D_ref } from '../../gfx/renderJob/collect/ComponentCollect';
 import { IComponent } from '../../components/IComponent';
 import { RenderNode } from '../../components/renderer/RenderNode';
 import { Transform } from '../../components/Transform';
@@ -313,12 +314,20 @@ export class Entity extends CEventDispatcher {
             });
             this.components.clear();
         } else {
+            const currentEngine = Engine3D_ref._current;
             ComponentCollect.waitStartComponent.forEach((v, k) => {
+                // Only start components whose scene belongs to the active engine.
+                // Components in scenes not yet assigned to any engine are deferred
+                // until startRenderView() associates them with an engine.
+                const objScene = (k as Object3D).transform?.scene3D;
+                if (objScene && objScene.engine !== currentEngine) {
+                    return;
+                }
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();
-                    ComponentCollect.waitStartComponent.delete(element.object3D);
                 }
+                ComponentCollect.waitStartComponent.delete(k);
             });
         }
     }

@@ -14,13 +14,23 @@ export class GlobalBindGroup {
     private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
     private static _lightEntriesMap: Map<Scene3D, LightEntries>;
     private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
+    /**
+     * Shared matrix bind group - holds the global transform matrix buffer.
+     * All engine instances write/read from the same buffer since matrices are
+     * allocated from a single global pool and frames execute sequentially.
+     */
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
-        this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        // modelMatrixBindGroup is shared; only create it once
+        if (!this.modelMatrixBindGroup) {
+            this.modelMatrixBindGroup = new MatrixBindGroup();
+        }
+        if (!this._cameraBindGroups) {
+            this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
+            this._lightEntriesMap = new Map<Scene3D, LightEntries>();
+            this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        }
     }
 
     public static getAllCameraGroup() {
