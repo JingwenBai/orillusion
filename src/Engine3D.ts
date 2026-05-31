@@ -40,6 +40,74 @@ let _globalInitialized: boolean = false;
 
 export class Engine3D {
 
+    // ─── Static backward-compat API (delegates to last initialised engine) ───
+
+    /**
+     * @internal tracks the most recently initialised Engine3D instance for
+     * legacy static-access patterns (`Engine3D.setting`, `Engine3D.res`, …).
+     */
+    private static _currentEngine: Engine3D | null = null;
+
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static get res(): Res { return Engine3D._currentEngine?.res; }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static get inputSystem(): InputSystem { return Engine3D._currentEngine?.inputSystem; }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static get views(): View3D[] { return Engine3D._currentEngine?.views; }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static get setting(): EngineSetting { return Engine3D._currentEngine?.setting; }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static get renderJobs(): Map<View3D, RendererJob> { return Engine3D._currentEngine?.renderJobs; }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static get size(): number[] { return Engine3D._currentEngine?.size; }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static get aspect(): number { return Engine3D._currentEngine?.aspect; }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static get width(): number { return Engine3D._currentEngine?.width; }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static get height(): number { return Engine3D._currentEngine?.height; }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static get frameRate(): number { return Engine3D._currentEngine?._frameRate ?? 360; }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static set frameRate(value: number) { if (Engine3D._currentEngine) Engine3D._currentEngine.frameRate = value; }
+
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static getRenderJob(view: View3D): RendererJob { return Engine3D._currentEngine?.getRenderJob(view); }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static pause(): void { Engine3D._currentEngine?.pause(); }
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static resume(): void { Engine3D._currentEngine?.resume(); }
+
+    /**
+     * Legacy static init — creates and initialises a single Engine3D instance.
+     * For multi-instance support use `new Engine3D()` directly.
+     * @deprecated Use `new Engine3D()` for multi-instance support
+     */
+    public static async init(
+        descriptor: {
+            canvasConfig?: CanvasConfig;
+            beforeRender?: Function;
+            renderLoop?: Function;
+            lateRender?: Function;
+            engineSetting?: EngineSetting;
+        } = {}
+    ): Promise<void> {
+        const engine = new Engine3D();
+        await engine.init(descriptor);
+    }
+
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static startRenderView(view: View3D): RendererJob {
+        return Engine3D._currentEngine?.startRenderView(view);
+    }
+
+    /** @deprecated Use an engine instance directly for multi-instance support */
+    public static startRenderViews(views: View3D[]): void {
+        Engine3D._currentEngine?.startRenderViews(views);
+    }
+
+    // ─── Instance API ──────────────────────────────────────────────────────────
+
     /**
      * resource manager in engine3d
      */
@@ -395,6 +463,9 @@ export class Engine3D {
         this._lateRender = descriptor.lateRender;
         this.inputSystem = new InputSystem();
         this.inputSystem.initCanvas(this.context3D.canvas);
+
+        // Register as the current engine for legacy static-access patterns
+        Engine3D._currentEngine = this;
         return;
     }
 
