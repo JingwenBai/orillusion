@@ -6,23 +6,23 @@ export class Time {
     /**
      * The time the engine has been running
      */
-    public static time: number = 0;
+    public time: number = 0;
     /**
      * the frame count engine is running
      */
-    public static frame: number = 0;
+    public frame: number = 0;
     /**
      * Time from previous frame to present
      */
-    public static delta: number = 0;
+    public delta: number = 0;
 
-    private static _startTime: number = 0;
-    private static _timeLabel: string = ``;
+    private _startTime: number = 0;
+    private _timeLabel: string = ``;
     /**
      * @internal
      * @param label
      */
-    public static start(label: string) {
+    public start(label: string) {
         this._startTime = performance.now();
         this._timeLabel = label;
     }
@@ -30,7 +30,7 @@ export class Time {
     /**
      * @internal
      */
-    public static end() {
+    public end() {
         console.log(this._timeLabel, performance.now() - this._startTime);
     }
 }
