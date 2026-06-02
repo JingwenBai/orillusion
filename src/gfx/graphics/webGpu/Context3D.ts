@@ -21,6 +21,14 @@ export class Context3D extends CEventDispatcher {
     private _pixelRatio: number = 1.0;
     private _resizeEvent: CEvent;
 
+    /** @internal - the currently active Context3D instance, set by Engine3D before each render */
+    public static _active: Context3D | null = null;
+
+    /** Set the currently active context (called by Engine3D before rendering) */
+    public static setActive(ctx: Context3D): void {
+        Context3D._active = ctx;
+    }
+
     public get pixelRatio() {
         return this._pixelRatio;
     }
@@ -149,5 +157,21 @@ export class Context3D extends CEventDispatcher {
 
 /**
  * @internal
+ * Dynamic proxy that always forwards to the currently active Context3D instance.
+ * Each Engine3D instance sets Context3D._active before its render frame, so all
+ * subsystems that import this symbol automatically use the correct per-engine context.
  */
-export let webGPUContext = new Context3D();
+export const webGPUContext: Context3D = new Proxy({} as Context3D, {
+    get(_: any, prop: string | symbol) {
+        const ctx = Context3D._active;
+        if (!ctx) throw new Error(`webGPUContext: no active Context3D — call Engine3D.init() first`);
+        const value = (ctx as any)[prop];
+        return typeof value === 'function' ? value.bind(ctx) : value;
+    },
+    set(_: any, prop: string | symbol, value: any) {
+        const ctx = Context3D._active;
+        if (!ctx) throw new Error(`webGPUContext: no active Context3D — call Engine3D.init() first`);
+        (ctx as any)[prop] = value;
+        return true;
+    }
+});

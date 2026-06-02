@@ -11,8 +11,21 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    /**
+     * @internal
+     * The active per-engine GBuffer map, set by Engine3D before each render frame.
+     * Replaces the former single static gBufferMap to allow multiple engine instances.
+     */
+    public static _activeMap: Map<string, GBufferFrame> | null = null;
+
+    /**
+     * @deprecated Use Engine3D.active.gBufferFrames instead.
+     * Kept for backward compatibility; points to the currently active engine's map.
+     */
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        return GBufferFrame._activeMap!;
+    }
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -66,13 +79,14 @@ export class GBufferFrame extends RTFrame {
 
     /**
      * @internal
+     * Returns (or lazily creates) a GBufferFrame for the active engine instance.
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        const map = GBufferFrame._activeMap!;
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!map.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -81,9 +95,9 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            map.set(key, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = map.get(key);
         }
         return gBuffer;
     }

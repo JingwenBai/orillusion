@@ -1,5 +1,4 @@
 
-import { Engine3D } from '../../../Engine3D';
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
 import { RenderNode } from '../../../components/renderer/RenderNode';
@@ -15,6 +14,7 @@ import { RenderLayerUtil, RenderLayer } from '../config/RenderLayer';
 import { Probe } from '../passRenderer/ddgi/Probe';
 // import { Graphic3DBatchRenderer } from '../passRenderer/graphic/Graphic3DBatchRenderer';
 import { RendererMask } from '../passRenderer/state/RendererMask';
+import { EngineSetting } from '../../../setting/EngineSetting';
 import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
 import { RenderShaderCollect } from './RenderShaderCollect';
@@ -24,7 +24,26 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+
+    /** @internal - set by Engine3D before each render frame */
+    public static _active: EntityCollect | null = null;
+
+    /** @internal - fallback instance used before any engine is initialized */
+    private static _fallback: EntityCollect | null = null;
+
+    /** @internal - engine setting reference, set by Engine3D during activation */
+    public engineSetting: EngineSetting | null = null;
+
+    /**
+     * Returns the EntityCollect for the currently active Engine3D instance.
+     * Falls back to a no-op instance for pre-init scene property access.
+     * @deprecated Prefer accessing via Engine3D.active.entityCollect for clarity.
+     */
+    public static get instance(): EntityCollect {
+        if (EntityCollect._active) return EntityCollect._active;
+        if (!EntityCollect._fallback) EntityCollect._fallback = new EntityCollect();
+        return EntityCollect._fallback;
+    }
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,12 +75,6 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
-    }
 
     constructor() {
         // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
@@ -103,6 +116,7 @@ export class EntityCollect {
 
     public addRenderNode(root: Scene3D, renderNode: RenderNode) {
         if (!root) return;
+        const engineSetting = this.engineSetting;
         let isTransparent: boolean = renderNode.renderOrder >= 3000;
         if (renderNode.hasMask(RendererMask.Sky)) {
             this.sky = renderNode;
@@ -136,8 +150,8 @@ export class EntityCollect {
             }
             map.get(root).push(renderNode);
 
-            if (Engine3D.setting.occlusionQuery.octree) {
-                renderNode.attachSceneOctree(this.getOctree(root));
+            if (engineSetting?.occlusionQuery?.octree) {
+                renderNode.attachSceneOctree(this.getOctree(root, engineSetting));
             }
 
             let list = this.getPashList(root, renderNode);
@@ -151,9 +165,9 @@ export class EntityCollect {
         this._renderShaderCollect.collect_add(renderNode);
     }
 
-    private getOctree(root: Scene3D) {
+    private getOctree(root: Scene3D, engineSetting?: EngineSetting) {
         let octree: Octree;
-        let setting = Engine3D.setting.occlusionQuery.octree;
+        let setting = engineSetting?.occlusionQuery?.octree;
         if (setting) {
             octree = this._octreeRenderNodes.get(root);
             if (!octree) {
@@ -195,12 +209,13 @@ export class EntityCollect {
     }
 
     public addLight(root: Scene3D, light: ILight) {
+        const maxLight = this.engineSetting?.light?.maxLight ?? 4096;
         if (!this._sceneLights.has(root)) {
             this._sceneLights.set(root, [light]);
         } else {
             let lights = this._sceneLights.get(root)
-            if (lights.length >= Engine3D.setting.light.maxLight) {
-                console.warn('Alreay meet maxmium light number:', Engine3D.setting.light.maxLight)
+            if (lights.length >= maxLight) {
+                console.warn('Alreay meet maxmium light number:', maxLight)
                 return
             }
             let hasLight = lights.indexOf(light) != -1;
@@ -287,12 +302,13 @@ export class EntityCollect {
 
 
     public getRenderNodes(scene: Scene3D, camera: Camera3D): CollectInfo {
+        const engineSetting = this.engineSetting;
         this.autoSortRenderNodes(scene);
         this._collectInfo.clean();
         this._collectInfo.sky = this.sky;
 
-        if (Engine3D.setting.occlusionQuery.octree) {
-            this.rendererOctree = this.getOctree(scene);
+        if (engineSetting?.occlusionQuery?.octree) {
+            this.rendererOctree = this.getOctree(scene, engineSetting);
             this.rendererOctree.getRenderNode(camera.frustum, this._collectInfo);
         } else {
             let list2 = this._op_RenderNodes.get(scene);

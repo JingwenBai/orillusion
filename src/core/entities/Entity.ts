@@ -313,13 +313,16 @@ export class Entity extends CEventDispatcher {
             });
             this.components.clear();
         } else {
-            ComponentCollect.waitStartComponent.forEach((v, k) => {
-                while (v.length > 0) {
-                    const element = v.shift();
-                    element[`__start`]();
-                    ComponentCollect.waitStartComponent.delete(element.object3D);
-                }
-            });
+            const waitMap = ComponentCollect._active?.waitStartComponent;
+            if (waitMap) {
+                waitMap.forEach((v, k) => {
+                    while (v.length > 0) {
+                        const element = v.shift();
+                        element[`__start`]();
+                        waitMap.delete(element.object3D);
+                    }
+                });
+            }
         }
     }
 
