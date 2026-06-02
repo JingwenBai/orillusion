@@ -384,7 +384,10 @@ export class Engine3D {
             this.setting = { ...this.setting, ...descriptor.engineSetting };
         }
 
-        await WasmMatrix.init(Matrix4.allocCount, this.setting.doublePrecision);
+        // WasmMatrix is a shared WASM module — only initialize it once across all engine instances
+        if (!WasmMatrix.wasm) {
+            await WasmMatrix.init(Matrix4.allocCount, this.setting.doublePrecision);
+        }
 
         await this.context3D.init(descriptor.canvasConfig);
 
