@@ -56,7 +56,11 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
+    public static get instance(): EntityCollect {
+        // During a render frame Engine3D._active is always set; fall back to
+        // the legacy static singleton for code that runs outside the render loop.
+        const active = Engine3D._active?.entityCollect;
+        if (active) return active;
         if (!this._instance) {
             this._instance = new EntityCollect();
         }
