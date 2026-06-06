@@ -313,7 +313,15 @@ export class Entity extends CEventDispatcher {
             });
             this.components.clear();
         } else {
+            // Determine which Scene3D this entity belongs to so that we only
+            // start components from the same scene.  This ensures that when
+            // multiple Engine3D instances are running concurrently, each
+            // engine's scene update only triggers __start() on components that
+            // belong to *its* scene – not to another engine's scene.
+            const myScene = this.transform?.scene3D;
             ComponentCollect.waitStartComponent.forEach((v, k) => {
+                // Skip components whose Object3D belongs to a different scene.
+                if (myScene && k.transform?.scene3D !== myScene) return;
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();

@@ -4,22 +4,65 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+import { getCurrentEngineId } from '../../../core/EngineContext';
+
 /**
  * @internal
  * @group Post
+ *
+ * Multi-engine isolation
+ * ----------------------
+ * Render-target textures are per-engine resources (different canvases may have
+ * different sizes and content).  RTResourceMap maintains a separate texture
+ * map and ViewQuad map for each Engine3D instance, identified by engine ID.
+ *
+ * Engine3D sets the active engine ID (via EngineContext) before each render
+ * so that all texture look-ups transparently operate on the correct store.
+ * The public static API is unchanged, preserving backward compatibility.
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    private static _engineMaps = new Map<number, {
+        rtTextureMap: Map<string, RenderTexture>;
+        rtViewQuad: Map<string, ViewQuad>;
+    }>();
 
+    private static _ensureEngine(id: number) {
+        if (!this._engineMaps.has(id)) {
+            this._engineMaps.set(id, {
+                rtTextureMap: new Map<string, RenderTexture>(),
+                rtViewQuad: new Map<string, ViewQuad>(),
+            });
+        }
+        return this._engineMaps.get(id);
+    }
+
+    private static get _current() {
+        return this._ensureEngine(getCurrentEngineId());
+    }
+
+    /** @internal Exposed for read-only inspection; prefer the helper methods. */
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return this._current.rtTextureMap;
+    }
+
+    /** @internal */
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return this._current.rtViewQuad;
+    }
+
+    /**
+     * Initialize the resource store for the current engine.
+     * Safe to call multiple times – subsequent calls are no-ops for the same
+     * engine (the per-engine maps are created lazily by _ensureEngine).
+     */
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        this._ensureEngine(getCurrentEngineId());
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        const store = this._current;
+        let rt: RenderTexture = store.rtTextureMap.get(name);
         if (!rt) {
             if (name == RTResourceConfig.colorBufferTex_NAME) {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, false);
@@ -27,35 +70,32 @@ export class RTResourceMap {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, true);
             }
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            store.rtTextureMap.set(name, rt);
         }
         return rt;
     }
 
     public static createRTTextureArray(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, length: number = 1, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        const store = this._current;
+        let rt: RenderTexture = store.rtTextureMap.get(name);
         if (!rt) {
             rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, length, sampleCount);
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            store.rtTextureMap.set(name, rt);
         }
         return rt;
     }
 
     public static createViewQuad(name: string, shaderVS: string, shaderFS: string, outRtTexture: RenderTexture, multisample: number = 0) {
-        let rtFrame = new RTFrame([
-            outRtTexture
-        ],
-            [
-                new RTDescriptor()
-            ]);
+        const store = this._current;
+        let rtFrame = new RTFrame([outRtTexture], [new RTDescriptor()]);
         let viewQuad = new ViewQuad(shaderVS, shaderFS, rtFrame, multisample);
-        RTResourceMap.rtViewQuad.set(name, viewQuad);
+        store.rtViewQuad.set(name, viewQuad);
         return viewQuad;
     }
 
     public static getTexture(name: string) {
-        return this.rtTextureMap.get(name);
+        return this._current.rtTextureMap.get(name);
     }
 
     public static CreateSplitTexture(id: string) {

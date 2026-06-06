@@ -16,11 +16,20 @@ export class GlobalBindGroup {
     private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
     public static modelMatrixBindGroup: MatrixBindGroup;
 
+    /**
+     * Initialize shared GPU bind-group resources.
+     * The model-matrix buffer and the camera/light/reflection maps are shared
+     * across all Engine3D instances (they are naturally keyed by Camera3D or
+     * Scene3D, which are per-scene and therefore per-engine).
+     * Calling init() more than once is safe – it is a no-op after the first call.
+     */
     public static init() {
-        this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        if (!this.modelMatrixBindGroup) {
+            this.modelMatrixBindGroup = new MatrixBindGroup();
+            this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
+            this._lightEntriesMap = new Map<Scene3D, LightEntries>();
+            this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        }
     }
 
     public static getAllCameraGroup() {
