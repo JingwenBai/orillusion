@@ -19,6 +19,7 @@ export class ShadowLightsCollect {
     public static shadowLights: Map<Scene3D, Float32Array>;
 
     public static init() {
+        if (this.shadowLights) return; // idempotent — safe to call from multiple Engine3D instances
         this.directionLightList = new Map<Scene3D, ILight[]>();
         this.pointLightList = new Map<Scene3D, ILight[]>();
         this.shadowLights = new Map<Scene3D, Float32Array>();

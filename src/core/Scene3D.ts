@@ -1,5 +1,4 @@
 import { Engine3D } from '../Engine3D';
-import { SphereReflection } from '../components/renderer/SphereReflection';
 import { Texture } from '../gfx/graphics/webGpu/core/texture/Texture';
 import { EntityCollect } from '../gfx/renderJob/collect/EntityCollect';
 import { View3D } from './View3D';
@@ -15,21 +14,34 @@ export class Scene3D extends Object3D {
     private skyObject: Object3D;
     public envMapChange: boolean = true;
     public view: View3D;
-    /**
-     *
-     * @constructor
-     */
+
     constructor() {
         super();
         this.transform.scene3D = this;
         this.skyObject = new Object3D();
         this.addChild(this.skyObject);
         this._isScene3D = true;
-        this.envMap ||= Engine3D.res.defaultSky;
+        this.envMap ||= Engine3D.res?.defaultSky;
     }
 
     /**
-     *
+     * Returns the Engine3D instance that owns the view this scene is assigned to.
+     * May be null before Engine3D.startRenderView() is called.
+     */
+    public get engine(): Engine3D | null {
+        return this.view?.engine ?? null;
+    }
+
+    /**
+     * Convenience accessor for the EntityCollect of the owning engine.
+     * Falls back to the primary engine's EntityCollect when no engine is assigned yet.
+     * @internal
+     */
+    public get entityCollect(): EntityCollect {
+        return this.engine?.entityCollect ?? EntityCollect.instance;
+    }
+
+    /**
      * get environment texture
      */
     public get envMap(): Texture {
@@ -44,35 +56,23 @@ export class Scene3D extends Object3D {
             this.envMapChange = true;
         }
         this._envMap = value;
-        if (EntityCollect.instance.sky && `map` in EntityCollect.instance.sky)
-            EntityCollect.instance.sky.map = value;
-
-        // let reflection = new Object3D();
-        // let ref = reflection.addComponent(SphereReflection);
-        // ref.autoUpdate = true;
-        // ref.debug(0, 5);
-        // reflection.x = 0;
-        // reflection.y = 300;
-        // reflection.z = 0;
-        // this.addChild(reflection);
+        const sky = this.entityCollect?.sky;
+        if (sky && `map` in sky) sky.map = value;
     }
 
     /**
-     * Exposure of Sky Box. A larger value produces a sky box with stronger exposure and a brighter appearance.
-     *  A smaller value produces a sky box with weaker exposure and a darker appearance.
+     * Exposure of Sky Box.
      */
     public get exposure(): number {
-        if (EntityCollect.instance.sky && `exposure` in EntityCollect.instance.sky)
-            return EntityCollect.instance.sky.exposure as number;
+        const sky = this.entityCollect?.sky;
+        if (sky && `exposure` in sky) return sky.exposure as number;
         return 0;
     }
 
-    /**
-     * Set the exposure of the Sky Box.
-     */
     public set exposure(value: number) {
-        if (EntityCollect.instance.sky && `exposure` in EntityCollect.instance.sky) {
-            EntityCollect.instance.sky.exposure = value;
+        const sky = this.entityCollect?.sky;
+        if (sky && `exposure` in sky) {
+            sky.exposure = value;
             Engine3D.setting.sky.skyExposure = value;
         }
     }
@@ -81,17 +81,13 @@ export class Scene3D extends Object3D {
      * Get the roughness of the Sky Box.
      */
     public get roughness(): number {
-        if (EntityCollect.instance.sky && `roughness` in EntityCollect.instance.sky) {
-            return EntityCollect.instance.sky.roughness as number;
-        }
+        const sky = this.entityCollect?.sky;
+        if (sky && `roughness` in sky) return sky.roughness as number;
+        return 0;
     }
 
-    /**
-     * Set the roughness of the Sky Box.
-     */
     public set roughness(value: number) {
-        if (EntityCollect.instance.sky && `roughness` in EntityCollect.instance.sky) {
-            EntityCollect.instance.sky.roughness = value;
-        }
+        const sky = this.entityCollect?.sky;
+        if (sky && `roughness` in sky) sky.roughness = value;
     }
 }

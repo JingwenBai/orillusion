@@ -148,6 +148,19 @@ export class Context3D extends CEventDispatcher {
 }
 
 /**
+ * Module-level reference to the *primary* engine's WebGPU context.
+ * Legacy GPU-utility files import this directly; it is updated automatically
+ * when the first (primary) Engine3D instance is initialised.
+ * For multi-instance scenarios access the context via `engine.webGPUContext`.
  * @internal
  */
-export let webGPUContext = new Context3D();
+export let webGPUContext: Context3D = new Context3D();
+
+/**
+ * Update the module-level `webGPUContext` reference.
+ * Called internally by Engine3D when the primary instance finishes init.
+ * @internal
+ */
+export function setGlobalWebGPUContext(ctx: Context3D): void {
+    webGPUContext = ctx;
+}
