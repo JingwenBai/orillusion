@@ -1,5 +1,6 @@
 
 import { Engine3D } from '../../../Engine3D';
+import { ActiveEngineContext } from '../../../EngineContext';
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
 import { RenderNode } from '../../../components/renderer/RenderNode';
@@ -56,7 +57,16 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
+
+    /**
+     * @internal
+     * Returns the active engine's EntityCollect when inside a render frame,
+     * otherwise falls back to the legacy global singleton.
+     */
+    public static get instance(): EntityCollect {
+        if (ActiveEngineContext.entityCollect instanceof EntityCollect) {
+            return ActiveEngineContext.entityCollect;
+        }
         if (!this._instance) {
             this._instance = new EntityCollect();
         }
