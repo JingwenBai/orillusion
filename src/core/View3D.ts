@@ -7,8 +7,14 @@ import { PickFire } from "../io/PickFire";
 import { Vector4 } from "../math/Vector4";
 import { Camera3D } from "./Camera3D";
 import { Scene3D } from "./Scene3D";
+// Engine3D type imported lazily to avoid circular-dependency issues at module
+// load time; the actual value is set by Engine3D.startRenderView().
+import type { Engine3D } from "../Engine3D";
 
 export class View3D extends CEventListener {
+    /** The Engine3D instance that owns this view. Set by Engine3D.startRenderView(). */
+    public engine: Engine3D | null = null;
+
     private _camera: Camera3D;
     private _scene: Scene3D;
     private _viewPort: Vector4;

@@ -11,8 +11,33 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    // ---------------------------------------------------------------
+    // Static callback provider (registered by Engine3D, no import)
+    // ---------------------------------------------------------------
+    private static _mapProvider: (() => Map<string, GBufferFrame>) | null = null;
+
+    /** Called once by Engine3D to wire up the per-instance GBuffer map. */
+    public static setGBufferMapProvider(fn: () => Map<string, GBufferFrame>): void {
+        GBufferFrame._mapProvider = fn;
+    }
+
+    /**
+     * Returns the GBuffer map for the currently-active engine instance.
+     * Falls back to a module-level map for single-engine (legacy) usage.
+     */
+    private static get gBufferMap(): Map<string, GBufferFrame> {
+        if (GBufferFrame._mapProvider) {
+            const map = GBufferFrame._mapProvider();
+            if (map != null) return map;
+        }
+        return GBufferFrame._legacyMap;
+    }
+
+    /** Legacy fallback map – used only when no Engine3D instance is active. */
+    private static _legacyMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    // ---------------------------------------------------------------
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -68,11 +93,11 @@ export class GBufferFrame extends RTFrame {
      * @internal
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        let map = GBufferFrame.gBufferMap;
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!map.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -81,9 +106,9 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            map.set(key, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = map.get(key);
         }
         return gBuffer;
     }
