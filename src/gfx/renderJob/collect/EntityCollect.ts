@@ -24,7 +24,15 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    private static _active: EntityCollect;
+
+    /**
+     * Register an EntityCollect instance as the active one for the current engine.
+     * Called by Engine3D before each render frame.
+     */
+    public static register(instance: EntityCollect) {
+        EntityCollect._active = instance;
+    }
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,11 +64,8 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
+    public static get instance(): EntityCollect {
+        return EntityCollect._active;
     }
 
     constructor() {
