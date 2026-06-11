@@ -6,12 +6,30 @@ import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
+import { currentEngineId } from "../../../core/EngineRegistry";
 
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /** Prefix a GBuffer key with the active engine ID for per-instance isolation. */
+    private static _key(key: string): string {
+        return currentEngineId ? `${currentEngineId}_${key}` : key;
+    }
+
+    /**
+     * Remove all GBuffer frames belonging to the given engine instance.
+     * @internal
+     */
+    public static destroyForEngine(engineId: string): void {
+        for (const key of [...GBufferFrame.gBufferMap.keys()]) {
+            if (key.startsWith(engineId + '_')) {
+                GBufferFrame.gBufferMap.delete(key);
+            }
+        }
+    }
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
@@ -68,11 +86,13 @@ export class GBufferFrame extends RTFrame {
      * @internal
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        // fullKey is used as the gBufferMap entry; raw key is passed to createGBuffer
+        // so that RTResourceMap (which adds its own prefix) doesn't double-prefix.
+        const fullKey = GBufferFrame._key(key);
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!GBufferFrame.gBufferMap.has(fullKey)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -81,9 +101,9 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            GBufferFrame.gBufferMap.set(fullKey, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = GBufferFrame.gBufferMap.get(fullKey);
         }
         return gBuffer;
     }

@@ -26,11 +26,13 @@ export class Context3D extends CEventDispatcher {
     }
 
     /**
-     * Configure canvas by CanvasConfig
+     * Configure canvas by CanvasConfig.
      * @param canvasConfig
+     * @param sharedDevice  Reuse an existing GPUDevice (for multi-instance support).
+     * @param sharedAdapter Reuse an existing GPUAdapter (for multi-instance support).
      * @returns
      */
-    async init(canvasConfig?: CanvasConfig): Promise<boolean> {
+    async init(canvasConfig?: CanvasConfig, sharedDevice?: GPUDevice, sharedAdapter?: GPUAdapter): Promise<boolean> {
         this.canvasConfig = canvasConfig;
 
         if (canvasConfig && canvasConfig.canvas) {
@@ -75,33 +77,40 @@ export class Context3D extends CEventDispatcher {
             throw new Error('Your browser does not support WebGPU!');
         }
 
-        // request adapter
-        this.adapter = await navigator.gpu.requestAdapter({
-            powerPreference: 'high-performance',
-            // powerPreference: 'low-power',
-        });
+        if (sharedDevice && sharedAdapter) {
+            // Multi-instance: reuse the shared GPUDevice and GPUAdapter
+            this.adapter = sharedAdapter;
+            this.device = sharedDevice;
+        } else {
+            // First instance: create a new GPUDevice
+            // request adapter
+            this.adapter = await navigator.gpu.requestAdapter({
+                powerPreference: 'high-performance',
+                // powerPreference: 'low-power',
+            });
 
-        if (this.adapter == null) {
-            throw new Error('Your browser does not support WebGPU!');
-        }
-
-        // request device
-        this.device = await this.adapter.requestDevice({
-            requiredFeatures: [
-                "bgra8unorm-storage",
-                "depth-clip-control",
-                "depth32float-stencil8",
-                "indirect-first-instance",
-                "rg11b10ufloat-renderable",
-            ],
-            requiredLimits: {
-                minUniformBufferOffsetAlignment: 256,
-                maxStorageBufferBindingSize: this.adapter.limits.maxStorageBufferBindingSize
+            if (this.adapter == null) {
+                throw new Error('Your browser does not support WebGPU!');
             }
-        });
 
-        if (this.device == null) {
-            throw new Error('Your browser does not support WebGPU!');
+            // request device
+            this.device = await this.adapter.requestDevice({
+                requiredFeatures: [
+                    "bgra8unorm-storage",
+                    "depth-clip-control",
+                    "depth32float-stencil8",
+                    "indirect-first-instance",
+                    "rg11b10ufloat-renderable",
+                ],
+                requiredLimits: {
+                    minUniformBufferOffsetAlignment: 256,
+                    maxStorageBufferBindingSize: this.adapter.limits.maxStorageBufferBindingSize
+                }
+            });
+
+            if (this.device == null) {
+                throw new Error('Your browser does not support WebGPU!');
+            }
         }
 
         this._pixelRatio = this.canvasConfig?.devicePixelRatio || window.devicePixelRatio || 1;
@@ -148,6 +157,41 @@ export class Context3D extends CEventDispatcher {
 }
 
 /**
+ * The currently active Context3D instance. Set by Engine3D before each render frame.
  * @internal
  */
-export let webGPUContext = new Context3D();
+let _activeContext: Context3D | null = null;
+
+/**
+ * Set the active WebGPU context. Called by Engine3D on init and before each frame.
+ * @internal
+ */
+export function setActiveContext(ctx: Context3D): void {
+    _activeContext = ctx;
+}
+
+/**
+ * Get the active WebGPU context.
+ * @internal
+ */
+export function getActiveContext(): Context3D {
+    return _activeContext!;
+}
+
+/**
+ * Backward-compatible proxy that transparently routes to the currently active
+ * Engine3D instance's Context3D. Existing code that imports `webGPUContext`
+ * continues to work without modification.
+ * @internal
+ */
+export const webGPUContext: Context3D = new Proxy({} as Context3D, {
+    get(_: Context3D, prop: string | symbol) {
+        if (!_activeContext) return undefined;
+        const val = (_activeContext as any)[prop];
+        return typeof val === 'function' ? val.bind(_activeContext) : val;
+    },
+    set(_: Context3D, prop: string | symbol, value: any) {
+        if (_activeContext) (_activeContext as any)[prop] = value;
+        return true;
+    },
+});
