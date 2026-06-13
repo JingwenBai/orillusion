@@ -9,6 +9,9 @@ import { Camera3D } from "./Camera3D";
 import { Scene3D } from "./Scene3D";
 
 export class View3D extends CEventListener {
+    /** The Engine3D instance that owns this view. Set by Engine3D.startRenderView(). */
+    public engine: any; // typed as any to avoid circular import with Engine3D
+
     private _camera: Camera3D;
     private _scene: Scene3D;
     private _viewPort: Vector4;
@@ -51,6 +54,10 @@ export class View3D extends CEventListener {
     public set scene(value: Scene3D) {
         this._scene = value;
         value.view = this;
+        // Propagate engine reference if this view already belongs to an engine
+        if (this.engine) {
+            value.engine = this.engine;
+        }
 
         ShadowLightsCollect.createBuffer(this);
 

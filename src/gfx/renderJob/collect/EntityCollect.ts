@@ -1,5 +1,6 @@
 
 import { Engine3D } from '../../../Engine3D';
+import { EngineContext } from '../../../core/EngineContext';
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
 import { RenderNode } from '../../../components/renderer/RenderNode';
@@ -24,7 +25,13 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    /**
+     * Returns the EntityCollect belonging to the currently active Engine3D instance.
+     * In single-engine setups this behaves identically to the former global singleton.
+     */
+    public static get instance(): EntityCollect {
+        return (EngineContext.current as Engine3D)?.entityCollect ?? null;
+    }
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,13 +63,6 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
-    }
-
     constructor() {
         // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
         this._sceneLights = new Map<Scene3D, ILight[]>();
