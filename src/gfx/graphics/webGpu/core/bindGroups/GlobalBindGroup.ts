@@ -17,6 +17,10 @@ export class GlobalBindGroup {
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
+        // Guard: only create shared GPU resources once. The matrix bind group and
+        // per-scene/camera maps are shared across all Engine3D instances because
+        // they all use the same GPU device and the same global matrix buffer.
+        if (this.modelMatrixBindGroup) return;
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();
