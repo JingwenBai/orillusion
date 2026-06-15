@@ -2,6 +2,7 @@ import { CEvent, Texture } from '../../..';
 import { CEventDispatcher } from '../../../event/CEventDispatcher';
 import { CResizeEvent } from '../../../event/CResizeEvent';
 import { CanvasConfig } from './CanvasConfig';
+import { getCurrentEngine } from '../../../util/EngineContext';
 
 /**
  * @internal
@@ -130,6 +131,82 @@ export class Context3D extends CEventDispatcher {
         return true;
     }
 
+    /**
+     * Initialize this context by reusing an existing GPUAdapter and GPUDevice.
+     * Used by subsequent Engine3D instances to share the GPU device.
+     * @param sharedAdapter - The existing GPUAdapter to reuse
+     * @param sharedDevice - The existing GPUDevice to reuse
+     * @param canvasConfig - Canvas configuration
+     * @returns
+     */
+    async initSharedDevice(sharedAdapter: GPUAdapter, sharedDevice: GPUDevice, canvasConfig?: CanvasConfig): Promise<boolean> {
+        this.canvasConfig = canvasConfig;
+
+        if (canvasConfig && canvasConfig.canvas) {
+            this.canvas = canvasConfig.canvas;
+            if (this.canvas === null) {
+                throw new Error('no Canvas')
+            }
+
+            // check if external canvas has initial with and height style
+            if(!this.canvas.style.width)
+                this.canvas.style.width = this.canvas.width + 'px';
+            if(!this.canvas.style.height)
+                this.canvas.style.height = this.canvas.height + 'px';
+        } else {
+            this.canvas = document.createElement('canvas');
+            this.canvas.style.position = `absolute`;
+            this.canvas.style.top = '0px';
+            this.canvas.style.left = '0px';
+            this.canvas.style.width = '100%';
+            this.canvas.style.height = '100%';
+            this.canvas.style.zIndex = canvasConfig?.zIndex ? canvasConfig.zIndex.toString() : '0';
+            document.body.appendChild(this.canvas);
+        }
+
+        // set canvas bg
+        if (canvasConfig && canvasConfig.backgroundImage) {
+            this.canvas.style.background = `url(${canvasConfig.backgroundImage})`;
+            this.canvas.style['background-size'] = 'cover';
+            this.canvas.style['background-position'] = 'center';
+        } else {
+            this.canvas.style.background = 'transparent';
+        }
+
+        // prevent touch scroll
+        this.canvas.style['touch-action'] = 'none';
+        this.canvas.style['object-fit'] = 'cover';
+
+        // Reuse the shared adapter and device — skip navigator.gpu.requestAdapter/requestDevice
+        this.adapter = sharedAdapter;
+        this.device = sharedDevice;
+
+        this._pixelRatio = canvasConfig?.devicePixelRatio || window.devicePixelRatio || 1;
+        this._pixelRatio = Math.min(this._pixelRatio, 2.0);
+
+        // configure webgpu context
+        this.device.label = 'device';
+        this.presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+        this.context = this.canvas.getContext('webgpu');
+        this.context.configure({
+            device: this.device,
+            format: this.presentationFormat,
+            usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+            alphaMode: 'premultiplied',
+            colorSpace: `srgb`
+        });
+
+        this._resizeEvent = new CResizeEvent(CResizeEvent.RESIZE, { width: this.windowWidth, height: this.windowHeight });
+        const resizeObserver = new ResizeObserver(() => {
+            this.updateSize();
+            Texture.destroyTexture();
+        });
+
+        resizeObserver.observe(this.canvas);
+        this.updateSize();
+        return true;
+    }
+
     public updateSize() {
         let w = Math.floor(this.canvas.clientWidth * this.pixelRatio);
         let h = Math.floor(this.canvas.clientHeight * this.pixelRatio);
@@ -149,5 +226,20 @@ export class Context3D extends CEventDispatcher {
 
 /**
  * @internal
+ * Proxy that always delegates to the current active engine's gpuContext.
+ * This allows webGPUContext to be used as a singleton reference across the codebase
+ * while actually dispatching to whichever Engine3D instance is currently rendering.
  */
-export let webGPUContext = new Context3D();
+export const webGPUContext: Context3D = new Proxy({} as Context3D, {
+    get(_: any, prop: string | symbol): any {
+        const ctx: any = getCurrentEngine()?.gpuContext;
+        if (!ctx) return undefined;
+        const val = ctx[prop as string];
+        return typeof val === 'function' ? val.bind(ctx) : val;
+    },
+    set(_: any, prop: string | symbol, value: any): boolean {
+        const ctx: any = getCurrentEngine()?.gpuContext;
+        if (ctx) ctx[prop as string] = value;
+        return true;
+    }
+});
