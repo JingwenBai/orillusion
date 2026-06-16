@@ -10,12 +10,42 @@ import { RenderTexture } from '../../../textures/RenderTexture';
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    private static _activeEngineId: number = 0;
+    private static _textureMaps: Map<number, Map<string, RenderTexture>> = new Map();
+    private static _viewQuadMaps: Map<number, Map<string, ViewQuad>> = new Map();
 
-    public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+    public static setActiveEngine(id: number): void {
+        RTResourceMap._activeEngineId = id;
+        if (!RTResourceMap._textureMaps.has(id)) {
+            RTResourceMap._textureMaps.set(id, new Map<string, RenderTexture>());
+        }
+        if (!RTResourceMap._viewQuadMaps.has(id)) {
+            RTResourceMap._viewQuadMaps.set(id, new Map<string, ViewQuad>());
+        }
+    }
+
+    private static get rtTextureMap(): Map<string, RenderTexture> {
+        const map = RTResourceMap._textureMaps.get(RTResourceMap._activeEngineId);
+        if (!map) {
+            const m = new Map<string, RenderTexture>();
+            RTResourceMap._textureMaps.set(RTResourceMap._activeEngineId, m);
+            return m;
+        }
+        return map;
+    }
+
+    private static get rtViewQuad(): Map<string, ViewQuad> {
+        const map = RTResourceMap._viewQuadMaps.get(RTResourceMap._activeEngineId);
+        if (!map) {
+            const m = new Map<string, ViewQuad>();
+            RTResourceMap._viewQuadMaps.set(RTResourceMap._activeEngineId, m);
+            return m;
+        }
+        return map;
+    }
+
+    public static init(): void {
+        // Maps are now managed per-engine via setActiveEngine()
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {

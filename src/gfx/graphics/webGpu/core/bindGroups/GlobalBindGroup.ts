@@ -17,10 +17,10 @@ export class GlobalBindGroup {
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
-        this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        this.modelMatrixBindGroup ||= new MatrixBindGroup();
+        this._cameraBindGroups ||= new Map<Camera3D, GlobalUniformGroup>();
+        this._lightEntriesMap ||= new Map<Scene3D, LightEntries>();
+        this._reflectionEntriesMap ||= new Map<Scene3D, ReflectionEntries>();
     }
 
     public static getAllCameraGroup() {
