@@ -17,10 +17,23 @@ export class GlobalBindGroup {
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
-        this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        // modelMatrixBindGroup is tied to the shared WASM matrix buffer —
+        // create it only once across all Engine3D instances.
+        if (!this.modelMatrixBindGroup) {
+            this.modelMatrixBindGroup = new MatrixBindGroup();
+        }
+        // These maps are keyed by Camera3D / Scene3D object identity, so entries
+        // from different engines never collide.  Initialise lazily on first use
+        // rather than wiping existing entries when a second engine inits.
+        if (!this._cameraBindGroups) {
+            this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
+        }
+        if (!this._lightEntriesMap) {
+            this._lightEntriesMap = new Map<Scene3D, LightEntries>();
+        }
+        if (!this._reflectionEntriesMap) {
+            this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        }
     }
 
     public static getAllCameraGroup() {

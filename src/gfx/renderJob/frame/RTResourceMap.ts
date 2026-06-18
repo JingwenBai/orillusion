@@ -4,18 +4,23 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+import { getActiveEngineResources } from '../../../engine/EngineResources';
 /**
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return getActiveEngineResources().rtTextureMap as Map<string, RenderTexture>;
+    }
 
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return getActiveEngineResources().rtViewQuad as Map<string, ViewQuad>;
+    }
+
+    /** @internal kept for API compat; per-engine maps are already created in EngineResources */
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {

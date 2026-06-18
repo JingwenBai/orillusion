@@ -6,12 +6,17 @@ import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
+import { getActiveEngineResources } from "../../../engine/EngineResources";
 
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /** Per-engine GBuffer map, backed by the active engine's EngineResources. */
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        return getActiveEngineResources().gBufferMap as Map<string, GBufferFrame>;
+    }
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
