@@ -4,18 +4,52 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+
+interface RTResourceData {
+    rtTextureMap: Map<string, RenderTexture>;
+    rtViewQuad: Map<string, ViewQuad>;
+}
+
 /**
  * @internal
  * @group Post
  */
 export class RTResourceMap {
+    private static _dataByEngine: Map<string, RTResourceData> = new Map();
+    private static _activeEngineId: string = '';
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return this._getActive().rtTextureMap;
+    }
 
-    public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return this._getActive().rtViewQuad;
+    }
+
+    private static _getActive(): RTResourceData {
+        let data = this._dataByEngine.get(this._activeEngineId);
+        if (!data) {
+            data = { rtTextureMap: new Map(), rtViewQuad: new Map() };
+            this._dataByEngine.set(this._activeEngineId, data);
+        }
+        return data;
+    }
+
+    /**
+     * Initialize resource maps for the given engine instance and make it active.
+     */
+    public static init(engineId: string = 'default') {
+        if (!this._dataByEngine.has(engineId)) {
+            this._dataByEngine.set(engineId, { rtTextureMap: new Map(), rtViewQuad: new Map() });
+        }
+        this._activeEngineId = engineId;
+    }
+
+    /**
+     * Switch the active engine context for resource map lookups.
+     */
+    public static switchTo(engineId: string) {
+        this._activeEngineId = engineId;
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {

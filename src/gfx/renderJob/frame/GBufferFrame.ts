@@ -11,8 +11,35 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    private static _mapsByEngine: Map<string, Map<string, GBufferFrame>> = new Map();
+    private static _activeEngineId: string = '';
+
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        let map = this._mapsByEngine.get(this._activeEngineId);
+        if (!map) {
+            map = new Map<string, GBufferFrame>();
+            this._mapsByEngine.set(this._activeEngineId, map);
+        }
+        return map;
+    }
+
+    /**
+     * Initialize GBuffer maps for the given engine instance and make it active.
+     */
+    public static init(engineId: string = 'default') {
+        if (!this._mapsByEngine.has(engineId)) {
+            this._mapsByEngine.set(engineId, new Map<string, GBufferFrame>());
+        }
+        this._activeEngineId = engineId;
+    }
+
+    /**
+     * Switch the active engine context for GBuffer lookups.
+     */
+    public static switchTo(engineId: string) {
+        this._activeEngineId = engineId;
+    }
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
