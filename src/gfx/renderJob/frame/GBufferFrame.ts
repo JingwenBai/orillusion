@@ -6,12 +6,24 @@ import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
+import { getCurrentEngineId } from '../../../core/EngineContext';
 
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    private static _gBufferMapStore: Map<number, Map<string, GBufferFrame>> = new Map();
+
+    private static get gBufferMap(): Map<string, GBufferFrame> {
+        const id = getCurrentEngineId();
+        let map = GBufferFrame._gBufferMapStore.get(id);
+        if (!map) {
+            map = new Map<string, GBufferFrame>();
+            GBufferFrame._gBufferMapStore.set(id, map);
+        }
+        return map;
+    }
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;

@@ -5,6 +5,14 @@ import { View3D } from '../../../core/View3D';
 import { CameraUtil } from '../../../util/CameraUtil';
 import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { GlobalUniformGroup } from '../../graphics/webGpu/core/bindGroups/GlobalUniformGroup';
+import { getCurrentEngineId } from '../../../core/EngineContext';
+
+interface ShadowLightsData {
+    directionLightList: Map<Scene3D, ILight[]>;
+    pointLightList: Map<Scene3D, ILight[]>;
+    shadowLights: Map<Scene3D, Float32Array>;
+}
+
 /**
  * @internal
  * @group Lights
@@ -14,14 +22,33 @@ export class ShadowLightsCollect {
     public static maxNumDirectionShadow = 8;
     public static maxNumPointShadow = 8;
 
-    public static directionLightList: Map<Scene3D, ILight[]>;
-    public static pointLightList: Map<Scene3D, ILight[]>;
-    public static shadowLights: Map<Scene3D, Float32Array>;
+    private static _store: Map<number, ShadowLightsData> = new Map();
+
+    private static _data(): ShadowLightsData {
+        const id = getCurrentEngineId();
+        let d = ShadowLightsCollect._store.get(id);
+        if (!d) {
+            d = {
+                directionLightList: new Map(),
+                pointLightList: new Map(),
+                shadowLights: new Map(),
+            };
+            ShadowLightsCollect._store.set(id, d);
+        }
+        return d;
+    }
+
+    public static get directionLightList() { return ShadowLightsCollect._data().directionLightList; }
+    public static get pointLightList() { return ShadowLightsCollect._data().pointLightList; }
+    public static get shadowLights() { return ShadowLightsCollect._data().shadowLights; }
 
     public static init() {
-        this.directionLightList = new Map<Scene3D, ILight[]>();
-        this.pointLightList = new Map<Scene3D, ILight[]>();
-        this.shadowLights = new Map<Scene3D, Float32Array>();
+        const id = getCurrentEngineId();
+        ShadowLightsCollect._store.set(id, {
+            directionLightList: new Map(),
+            pointLightList: new Map(),
+            shadowLights: new Map(),
+        });
     }
 
     public static createBuffer(view: View3D) {
