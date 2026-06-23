@@ -1,5 +1,6 @@
 import { Camera3D } from "../../../../../core/Camera3D";
 import { Scene3D } from "../../../../../core/Scene3D";
+import { getCurrentEngine } from "../../../../../EngineContext";
 import { GlobalUniformGroup } from "./GlobalUniformGroup";
 import { LightEntries } from "./groups/LightEntries";
 import { ReflectionEntries } from "./groups/ReflectionEntries";
@@ -11,23 +12,26 @@ import { MatrixBindGroup } from "./MatrixBindGroup";
  * @group GFX
  */
 export class GlobalBindGroup {
-    private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
-    private static _lightEntriesMap: Map<Scene3D, LightEntries>;
-    private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
-    public static modelMatrixBindGroup: MatrixBindGroup;
 
-    public static init() {
+    // ─── Instance state ────────────────────────────────────────────────────────
+
+    private _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
+    private _lightEntriesMap: Map<Scene3D, LightEntries>;
+    private _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
+    public modelMatrixBindGroup: MatrixBindGroup;
+
+    constructor() {
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();
         this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
     }
 
-    public static getAllCameraGroup() {
+    public getAllCameraGroup() {
         return this._cameraBindGroups;
     }
 
-    public static getCameraGroup(camera: Camera3D) {
+    public getCameraGroup(camera: Camera3D): GlobalUniformGroup {
         let cameraBindGroup = this._cameraBindGroups.get(camera);
         if (!cameraBindGroup) {
             cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
@@ -41,7 +45,7 @@ export class GlobalBindGroup {
         return cameraBindGroup;
     }
 
-    public static updateCameraGroup(camera: Camera3D) {
+    public updateCameraGroup(camera: Camera3D) {
         let cameraBindGroup = this._cameraBindGroups.get(camera);
         if (!cameraBindGroup) {
             cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
@@ -54,7 +58,7 @@ export class GlobalBindGroup {
         }
     }
 
-    public static getLightEntries(scene: Scene3D): LightEntries {
+    public getLightEntries(scene: Scene3D): LightEntries {
         if (!scene) {
             console.log(`getLightEntries scene is null`);
         }
@@ -67,9 +71,9 @@ export class GlobalBindGroup {
         return this._lightEntriesMap.get(scene);
     }
 
-    public static getReflectionEntries(scene: Scene3D): ReflectionEntries {
+    public getReflectionEntries(scene: Scene3D): ReflectionEntries {
         if (!scene) {
-            console.log(`getLightEntries scene is null`);
+            console.log(`getReflectionEntries scene is null`);
         }
 
         let reflectionEntries = this._reflectionEntriesMap.get(scene);
@@ -80,6 +84,44 @@ export class GlobalBindGroup {
         return this._reflectionEntriesMap.get(scene);
     }
 
+    // ─── Static backward-compat delegation ─────────────────────────────────────
 
+    private static get _instance(): GlobalBindGroup {
+        return getCurrentEngine()?.globalBindGroup;
+    }
 
+    /** @internal */
+    public static get modelMatrixBindGroup(): MatrixBindGroup {
+        return this._instance?.modelMatrixBindGroup;
+    }
+
+    /** @internal */
+    public static init() {
+        // No-op: instance is created by Engine3D constructor
+    }
+
+    /** @internal */
+    public static getAllCameraGroup() {
+        return this._instance?.getAllCameraGroup() ?? new Map<Camera3D, GlobalUniformGroup>();
+    }
+
+    /** @internal */
+    public static getCameraGroup(camera: Camera3D): GlobalUniformGroup {
+        return this._instance?.getCameraGroup(camera);
+    }
+
+    /** @internal */
+    public static updateCameraGroup(camera: Camera3D) {
+        return this._instance?.updateCameraGroup(camera);
+    }
+
+    /** @internal */
+    public static getLightEntries(scene: Scene3D): LightEntries {
+        return this._instance?.getLightEntries(scene);
+    }
+
+    /** @internal */
+    public static getReflectionEntries(scene: Scene3D): ReflectionEntries {
+        return this._instance?.getReflectionEntries(scene);
+    }
 }
