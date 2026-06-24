@@ -147,7 +147,35 @@ export class Context3D extends CEventDispatcher {
     }
 }
 
+let _activeContext: Context3D | null = null;
+
 /**
+ * Proxy that always delegates to the currently active engine's Context3D.
+ * Call setActiveContext() when switching between engine instances.
  * @internal
  */
-export let webGPUContext = new Context3D();
+export const webGPUContext: Context3D = new Proxy({} as Context3D, {
+    get(_: Context3D, prop: string | symbol): any {
+        if (!_activeContext) {
+            console.warn('[webGPUContext] No active engine context. Call engine.init() first.');
+            return undefined;
+        }
+        const val = (_activeContext as any)[prop as string];
+        return typeof val === 'function' ? val.bind(_activeContext) : val;
+    },
+    set(_: Context3D, prop: string | symbol, value: any): boolean {
+        if (_activeContext) {
+            (_activeContext as any)[prop as string] = value;
+        }
+        return true;
+    }
+});
+
+/**
+ * Switch the active WebGPU context to the given engine's Context3D.
+ * Called automatically by Engine3D before each render frame.
+ * @internal
+ */
+export function setActiveContext(ctx: Context3D | null): void {
+    _activeContext = ctx;
+}
