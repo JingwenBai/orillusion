@@ -1,5 +1,6 @@
 import { Camera3D } from "../../../../../core/Camera3D";
 import { Scene3D } from "../../../../../core/Scene3D";
+import { getActiveEngineId } from "../../../../../core/EngineID";
 import { GlobalUniformGroup } from "./GlobalUniformGroup";
 import { LightEntries } from "./groups/LightEntries";
 import { ReflectionEntries } from "./groups/ReflectionEntries";
@@ -11,16 +12,21 @@ import { MatrixBindGroup } from "./MatrixBindGroup";
  * @group GFX
  */
 export class GlobalBindGroup {
+    private static _modelMatrixBindGroups: Map<string, MatrixBindGroup> = new Map();
     private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
     private static _lightEntriesMap: Map<Scene3D, LightEntries>;
     private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
-    public static modelMatrixBindGroup: MatrixBindGroup;
+
+    public static get modelMatrixBindGroup(): MatrixBindGroup {
+        return this._modelMatrixBindGroups.get(getActiveEngineId());
+    }
 
     public static init() {
-        this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        const id = getActiveEngineId();
+        this._modelMatrixBindGroups.set(id, new MatrixBindGroup());
+        this._cameraBindGroups ||= new Map<Camera3D, GlobalUniformGroup>();
+        this._lightEntriesMap ||= new Map<Scene3D, LightEntries>();
+        this._reflectionEntriesMap ||= new Map<Scene3D, ReflectionEntries>();
     }
 
     public static getAllCameraGroup() {
@@ -79,7 +85,4 @@ export class GlobalBindGroup {
         }
         return this._reflectionEntriesMap.get(scene);
     }
-
-
-
 }
