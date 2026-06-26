@@ -34,3 +34,13 @@ export class Time {
         console.log(this._timeLabel, performance.now() - this._startTime);
     }
 }
+
+/**
+ * Per-engine time state (non-static version for multi-engine support)
+ * @group Util
+ */
+export class EngineTime {
+    public time: number = 0;
+    public frame: number = 0;
+    public delta: number = 0;
+}

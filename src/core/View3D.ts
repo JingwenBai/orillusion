@@ -7,10 +7,12 @@ import { PickFire } from "../io/PickFire";
 import { Vector4 } from "../math/Vector4";
 import { Camera3D } from "./Camera3D";
 import { Scene3D } from "./Scene3D";
+import type { Engine3D } from '../Engine3D';
 
 export class View3D extends CEventListener {
     private _camera: Camera3D;
     private _scene: Scene3D;
+    public engine: Engine3D;
     private _viewPort: Vector4;
     private _enablePick: boolean = false;
     private _enable: boolean = true;
@@ -51,6 +53,7 @@ export class View3D extends CEventListener {
     public set scene(value: Scene3D) {
         this._scene = value;
         value.view = this;
+        if (this.engine) value.engine = this.engine;
 
         ShadowLightsCollect.createBuffer(this);
 

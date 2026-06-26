@@ -15,6 +15,7 @@ export class Scene3D extends Object3D {
     private skyObject: Object3D;
     public envMapChange: boolean = true;
     public view: View3D;
+    public engine: Engine3D;
     /**
      *
      * @constructor
