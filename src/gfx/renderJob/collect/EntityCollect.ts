@@ -24,8 +24,6 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
-
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
     private _sceneGIProbes: Map<Scene3D, Probe[]>;
@@ -56,11 +54,20 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
+
+    /**
+     * @deprecated Access via scene.view.engine.entityCollect or Engine3D instance.
+     * Kept for backward compatibility with single-engine usage.
+     */
+    private static _instance: EntityCollect;
     public static get instance() {
         if (!this._instance) {
             this._instance = new EntityCollect();
         }
         return this._instance;
+    }
+    public static set instance(value: EntityCollect) {
+        this._instance = value;
     }
 
     constructor() {

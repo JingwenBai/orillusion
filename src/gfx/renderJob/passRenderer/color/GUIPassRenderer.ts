@@ -28,7 +28,7 @@ export class GUIPassRenderer extends RendererBase {
     public compute(view: View3D, occlusionSystem: OcclusionSystem): void {
         let command = GPUContext.beginCommandEncoder();
         let src = GPUContext.lastRenderPassState.getLastRenderTexture();
-        let dest = GBufferFrame.getGUIBufferFrame().getColorTexture();
+        let dest = (view.engine ? view.engine.getGUIBufferFrame() : GBufferFrame.getGUIBufferFrame()).getColorTexture();
         GPUContext.copyTexture(command, src, dest);
         GPUContext.endCommandEncoder(command);
     }
@@ -44,7 +44,8 @@ export class GUIPassRenderer extends RendererBase {
 
         this.rendererPassState.camera3D = camera;
 
-        let collectInfo = EntityCollect.instance.getRenderNodes(scene, camera);
+        const ec = view.engine ? view.engine.entityCollect : EntityCollect.instance;
+        let collectInfo = ec.getRenderNodes(scene, camera);
 
         {
             this.renderContext.specialtRenderPass();
@@ -73,7 +74,8 @@ export class GUIPassRenderer extends RendererBase {
     }
 
     public drawNodes(view: View3D, renderContext: RenderContext, nodes: RenderNode[], occlusionSystem: OcclusionSystem, clusterLightingBuffer: ClusterLightingBuffer) {
-        let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+        const ec = view.engine ? view.engine.entityCollect : EntityCollect.instance;
+        let viewRenderList = ec.getRenderShaderCollect(view);
         if (viewRenderList) {
             for (const renderList of viewRenderList) {
                 let nodeMap = renderList[1];
