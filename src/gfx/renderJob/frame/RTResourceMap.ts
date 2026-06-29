@@ -10,16 +10,41 @@ import { RenderTexture } from '../../../textures/RenderTexture';
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    // Per-engine render texture maps — keyed by engine instance to avoid name conflicts
+    // across multiple engine instances with different canvas sizes.
+    private static _engineMaps: Map<object, { rtTextureMap: Map<string, RenderTexture>; rtViewQuad: Map<string, ViewQuad> }> = new Map();
 
+    /** @internal — resolved at runtime via Engine3D.current */
+    private static _getEngineData() {
+        // Resolve the current engine via globalThis to avoid a circular import
+        // (Engine3D → RTResourceMap → Engine3D).  Falls back to RTResourceMap
+        // itself as the map key when no engine is active (e.g. during tests).
+        const Engine3D = (globalThis as any).__Engine3D__;
+        const engine = Engine3D?.current ?? RTResourceMap;
+        let data = this._engineMaps.get(engine);
+        if (!data) {
+            data = { rtTextureMap: new Map<string, RenderTexture>(), rtViewQuad: new Map<string, ViewQuad>() };
+            this._engineMaps.set(engine, data);
+        }
+        return data;
+    }
+
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return this._getEngineData().rtTextureMap;
+    }
+
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return this._getEngineData().rtViewQuad;
+    }
+
+    /** @deprecated Use per-engine data — init is now a no-op */
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        // Data is lazily initialized per engine instance; no global init needed.
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        const map = this._getEngineData().rtTextureMap;
+        let rt: RenderTexture = map.get(name);
         if (!rt) {
             if (name == RTResourceConfig.colorBufferTex_NAME) {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, false);
@@ -27,35 +52,31 @@ export class RTResourceMap {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, true);
             }
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            map.set(name, rt);
         }
         return rt;
     }
 
     public static createRTTextureArray(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, length: number = 1, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        const map = this._getEngineData().rtTextureMap;
+        let rt: RenderTexture = map.get(name);
         if (!rt) {
             rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, length, sampleCount);
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            map.set(name, rt);
         }
         return rt;
     }
 
     public static createViewQuad(name: string, shaderVS: string, shaderFS: string, outRtTexture: RenderTexture, multisample: number = 0) {
-        let rtFrame = new RTFrame([
-            outRtTexture
-        ],
-            [
-                new RTDescriptor()
-            ]);
+        let rtFrame = new RTFrame([outRtTexture], [new RTDescriptor()]);
         let viewQuad = new ViewQuad(shaderVS, shaderFS, rtFrame, multisample);
-        RTResourceMap.rtViewQuad.set(name, viewQuad);
+        this._getEngineData().rtViewQuad.set(name, viewQuad);
         return viewQuad;
     }
 
     public static getTexture(name: string) {
-        return this.rtTextureMap.get(name);
+        return this._getEngineData().rtTextureMap.get(name);
     }
 
     public static CreateSplitTexture(id: string) {

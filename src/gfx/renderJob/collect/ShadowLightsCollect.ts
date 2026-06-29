@@ -17,8 +17,11 @@ export class ShadowLightsCollect {
     public static directionLightList: Map<Scene3D, ILight[]>;
     public static pointLightList: Map<Scene3D, ILight[]>;
     public static shadowLights: Map<Scene3D, Float32Array>;
+    private static _initialized: boolean = false;
 
     public static init() {
+        if (this._initialized) return;
+        this._initialized = true;
         this.directionLightList = new Map<Scene3D, ILight[]>();
         this.pointLightList = new Map<Scene3D, ILight[]>();
         this.shadowLights = new Map<Scene3D, Float32Array>();
