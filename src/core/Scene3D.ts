@@ -15,6 +15,14 @@ export class Scene3D extends Object3D {
     private skyObject: Object3D;
     public envMapChange: boolean = true;
     public view: View3D;
+
+    /**
+     * The Engine3D instance that owns this scene (via its View3D).
+     * Resolves through view.engine; null if not yet attached to a view.
+     */
+    public get engine(): import('../Engine3D').Engine3D | null {
+        return this.view?.engine ?? null;
+    }
     /**
      *
      * @constructor

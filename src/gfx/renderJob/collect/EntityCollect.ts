@@ -24,6 +24,10 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
+    /**
+     * @deprecated Use view.engine.entityCollect instead. Kept for backward compatibility.
+     * @internal
+     */
     private static _instance: EntityCollect;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
@@ -56,11 +60,31 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
+    /**
+     * @deprecated Use view.engine.entityCollect instead.
+     * Returns the shared fallback instance (single-engine backward compatibility).
+     */
     public static get instance() {
         if (!this._instance) {
             this._instance = new EntityCollect();
         }
         return this._instance;
+    }
+
+    /**
+     * Get the EntityCollect for the engine that owns the given scene.
+     * Preferred API for multi-engine setups.
+     */
+    public static getForScene(scene: Scene3D): EntityCollect {
+        return scene?.engine?.entityCollect ?? EntityCollect.instance;
+    }
+
+    /**
+     * Get the EntityCollect for the engine that owns the given view.
+     * Preferred API for multi-engine setups.
+     */
+    public static getForView(view: View3D): EntityCollect {
+        return view?.engine?.entityCollect ?? EntityCollect.instance;
     }
 
     constructor() {
