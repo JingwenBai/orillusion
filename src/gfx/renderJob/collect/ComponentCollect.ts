@@ -3,6 +3,20 @@ import { IComponent } from "../../../components/IComponent";
 import { View3D } from "../../../core/View3D";
 import { Object3D } from "../../../core/entities/Object3D";
 
+/**
+ * Per-engine snapshot of ComponentCollect state.
+ * @internal
+ */
+export type ComponentCollectState = {
+    componentsUpdateList: Map<View3D, Map<IComponent, Function>>;
+    componentsLateUpdateList: Map<View3D, Map<IComponent, Function>>;
+    componentsBeforeUpdateList: Map<View3D, Map<IComponent, Function>>;
+    componentsComputeList: Map<View3D, Map<IComponent, Function>>;
+    componentsEnablePickerList: Map<View3D, Map<ColliderComponent, Function>>;
+    graphicComponent: Map<View3D, Map<IComponent, Function>>;
+    waitStartComponent: Map<Object3D, IComponent[]>;
+};
+
 export class ComponentCollect {
 
     /**
@@ -38,8 +52,6 @@ export class ComponentCollect {
     /**
      * @internal
      */
-    // private static waitStartComponentBak: Map<Object3D, IComponent[]>;
-    // private static waitStartComponentBody: Map<Object3D, IComponent[]>;
     public static waitStartComponent: Map<Object3D, IComponent[]>;
 
     private static _init: boolean = false;
@@ -53,10 +65,39 @@ export class ComponentCollect {
             this.componentsComputeList = new Map<View3D, Map<IComponent, Function>>();
             this.componentsEnablePickerList = new Map<View3D, Map<ColliderComponent, Function>>();
             this.graphicComponent = new Map<View3D, Map<IComponent, Function>>();
-            // this.waitStartComponentBak = new Map<Object3D, IComponent[]>();
-            // this.waitStartComponentBody = new Map<Object3D, IComponent[]>();
             this.waitStartComponent = new Map<Object3D, IComponent[]>();
         }
+    }
+
+    /**
+     * Create a fresh state object for a new engine instance.
+     * @internal
+     */
+    public static createEngineState(): ComponentCollectState {
+        return {
+            componentsUpdateList: new Map(),
+            componentsLateUpdateList: new Map(),
+            componentsBeforeUpdateList: new Map(),
+            componentsComputeList: new Map(),
+            componentsEnablePickerList: new Map(),
+            graphicComponent: new Map(),
+            waitStartComponent: new Map(),
+        };
+    }
+
+    /**
+     * Activate a per-engine state, replacing current global state.
+     * @internal
+     */
+    public static activateEngineState(state: ComponentCollectState): void {
+        this._init = true;
+        this.componentsUpdateList = state.componentsUpdateList;
+        this.componentsLateUpdateList = state.componentsLateUpdateList;
+        this.componentsBeforeUpdateList = state.componentsBeforeUpdateList;
+        this.componentsComputeList = state.componentsComputeList;
+        this.componentsEnablePickerList = state.componentsEnablePickerList;
+        this.graphicComponent = state.graphicComponent;
+        this.waitStartComponent = state.waitStartComponent;
     }
 
     public static bindUpdate(view: View3D, component: IComponent, call: Function) {

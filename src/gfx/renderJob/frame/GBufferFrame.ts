@@ -12,6 +12,22 @@ export class GBufferFrame extends RTFrame {
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /**
+     * Activate a per-engine GBuffer map as the active global map.
+     * @internal
+     */
+    public static activateEngineState(gBufferMap: Map<string, GBufferFrame>): void {
+        this.gBufferMap = gBufferMap;
+    }
+
+    /**
+     * Capture the current gBufferMap for a per-engine state snapshot.
+     * @internal
+     */
+    public static captureEngineState(): Map<string, GBufferFrame> {
+        return this.gBufferMap;
+    }
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;

@@ -4,6 +4,16 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+
+/**
+ * Per-engine snapshot of RTResourceMap state.
+ * @internal
+ */
+export type RTResourceMapState = {
+    rtTextureMap: Map<string, RenderTexture>;
+    rtViewQuad: Map<string, ViewQuad>;
+};
+
 /**
  * @internal
  * @group Post
@@ -16,6 +26,26 @@ export class RTResourceMap {
     public static init() {
         this.rtTextureMap = new Map<string, RenderTexture>();
         this.rtViewQuad = new Map<string, ViewQuad>();
+    }
+
+    /**
+     * Capture current state into a snapshot object.
+     * @internal
+     */
+    public static captureEngineState(): RTResourceMapState {
+        return {
+            rtTextureMap: this.rtTextureMap,
+            rtViewQuad: this.rtViewQuad,
+        };
+    }
+
+    /**
+     * Restore a per-engine state snapshot as the active global state.
+     * @internal
+     */
+    public static activateEngineState(state: RTResourceMapState): void {
+        this.rtTextureMap = state.rtTextureMap;
+        this.rtViewQuad = state.rtViewQuad;
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {

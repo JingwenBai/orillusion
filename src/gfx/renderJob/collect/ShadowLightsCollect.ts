@@ -6,6 +6,16 @@ import { CameraUtil } from '../../../util/CameraUtil';
 import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { GlobalUniformGroup } from '../../graphics/webGpu/core/bindGroups/GlobalUniformGroup';
 /**
+ * Per-engine snapshot of ShadowLightsCollect state.
+ * @internal
+ */
+export type ShadowLightsCollectState = {
+    directionLightList: Map<Scene3D, ILight[]>;
+    pointLightList: Map<Scene3D, ILight[]>;
+    shadowLights: Map<Scene3D, Float32Array>;
+};
+
+/**
  * @internal
  * @group Lights
  */
@@ -22,6 +32,28 @@ export class ShadowLightsCollect {
         this.directionLightList = new Map<Scene3D, ILight[]>();
         this.pointLightList = new Map<Scene3D, ILight[]>();
         this.shadowLights = new Map<Scene3D, Float32Array>();
+    }
+
+    /**
+     * Capture current state into a snapshot object.
+     * @internal
+     */
+    public static captureEngineState(): ShadowLightsCollectState {
+        return {
+            directionLightList: this.directionLightList,
+            pointLightList: this.pointLightList,
+            shadowLights: this.shadowLights,
+        };
+    }
+
+    /**
+     * Restore a per-engine state snapshot as the active global state.
+     * @internal
+     */
+    public static activateEngineState(state: ShadowLightsCollectState): void {
+        this.directionLightList = state.directionLightList;
+        this.pointLightList = state.pointLightList;
+        this.shadowLights = state.shadowLights;
     }
 
     public static createBuffer(view: View3D) {

@@ -9,6 +9,23 @@ import { RenderShaderPass } from "../graphics/webGpu/shader/RenderShaderPass";
 import { RendererPassState } from "./passRenderer/state/RendererPassState";
 
 /**
+ * Per-engine snapshot of GPUContext state.
+ * @internal
+ */
+export type GPUContextState = {
+    lastGeometry: GeometryBase;
+    lastPipeline: GPURenderPipeline;
+    lastShader: RenderShaderPass;
+    drawCount: number;
+    renderPassCount: number;
+    geometryCount: number;
+    pipelineCount: number;
+    matrixCount: number;
+    lastRenderPassState: RendererPassState;
+    LastCommand: GPUCommandEncoder;
+};
+
+/**
  * WebGPU api use context
  */
 export class GPUContext {
@@ -22,6 +39,61 @@ export class GPUContext {
     public static matrixCount: number = 0;
     public static lastRenderPassState: RendererPassState;
     public static LastCommand: GPUCommandEncoder;
+
+    /**
+     * Create a fresh GPUContext state for a new engine instance.
+     * @internal
+     */
+    public static createEngineState(): GPUContextState {
+        return {
+            lastGeometry: null,
+            lastPipeline: null,
+            lastShader: null,
+            drawCount: 0,
+            renderPassCount: 0,
+            geometryCount: 0,
+            pipelineCount: 0,
+            matrixCount: 0,
+            lastRenderPassState: null,
+            LastCommand: null,
+        };
+    }
+
+    /**
+     * Capture current state into a snapshot object.
+     * @internal
+     */
+    public static captureEngineState(): GPUContextState {
+        return {
+            lastGeometry: this.lastGeometry,
+            lastPipeline: this.lastPipeline,
+            lastShader: this.lastShader,
+            drawCount: this.drawCount,
+            renderPassCount: this.renderPassCount,
+            geometryCount: this.geometryCount,
+            pipelineCount: this.pipelineCount,
+            matrixCount: this.matrixCount,
+            lastRenderPassState: this.lastRenderPassState,
+            LastCommand: this.LastCommand,
+        };
+    }
+
+    /**
+     * Restore a per-engine state snapshot as the active global state.
+     * @internal
+     */
+    public static activateEngineState(state: GPUContextState): void {
+        this.lastGeometry = state.lastGeometry;
+        this.lastPipeline = state.lastPipeline;
+        this.lastShader = state.lastShader;
+        this.drawCount = state.drawCount;
+        this.renderPassCount = state.renderPassCount;
+        this.geometryCount = state.geometryCount;
+        this.pipelineCount = state.pipelineCount;
+        this.matrixCount = state.matrixCount;
+        this.lastRenderPassState = state.lastRenderPassState;
+        this.LastCommand = state.LastCommand;
+    }
 
     /**
      * renderPipeline before render need bind pipeline

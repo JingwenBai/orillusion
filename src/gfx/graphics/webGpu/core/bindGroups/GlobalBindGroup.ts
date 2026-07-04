@@ -6,6 +6,17 @@ import { ReflectionEntries } from "./groups/ReflectionEntries";
 import { MatrixBindGroup } from "./MatrixBindGroup";
 
 /**
+ * Per-engine snapshot of GlobalBindGroup state.
+ * @internal
+ */
+export type GlobalBindGroupState = {
+    modelMatrixBindGroup: MatrixBindGroup;
+    cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
+    lightEntriesMap: Map<Scene3D, LightEntries>;
+    reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
+};
+
+/**
  * @internal
  * Use Global DO Matrix ArrayBuffer Descriptor
  * @group GFX
@@ -21,6 +32,30 @@ export class GlobalBindGroup {
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();
         this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+    }
+
+    /**
+     * Capture current state into a snapshot object.
+     * @internal
+     */
+    public static captureEngineState(): GlobalBindGroupState {
+        return {
+            modelMatrixBindGroup: this.modelMatrixBindGroup,
+            cameraBindGroups: this._cameraBindGroups,
+            lightEntriesMap: this._lightEntriesMap,
+            reflectionEntriesMap: this._reflectionEntriesMap,
+        };
+    }
+
+    /**
+     * Restore a per-engine state snapshot as the active global state.
+     * @internal
+     */
+    public static activateEngineState(state: GlobalBindGroupState): void {
+        this.modelMatrixBindGroup = state.modelMatrixBindGroup;
+        this._cameraBindGroups = state.cameraBindGroups;
+        this._lightEntriesMap = state.lightEntriesMap;
+        this._reflectionEntriesMap = state.reflectionEntriesMap;
     }
 
     public static getAllCameraGroup() {
