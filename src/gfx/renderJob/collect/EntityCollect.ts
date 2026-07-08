@@ -51,7 +51,11 @@ export class EntityCollect {
             giLightingChange: true
         }
 
-    public sky: RenderNode;
+    /** @deprecated Use getSky(scene) / setSky(scene, node) for multi-instance support. */
+    public get sky(): RenderNode { return this._skyMap.values().next().value ?? null; }
+    public set sky(v: RenderNode) { /* legacy no-op — setting is now per-scene via addRenderNode */ }
+
+    private _skyMap: Map<Scene3D, RenderNode>;
 
     private _collectInfo: CollectInfo;
 
@@ -71,6 +75,7 @@ export class EntityCollect {
         this._op_RenderNodes = new Map<Scene3D, RenderNode[]>();
         this._tr_RenderNodes = new Map<Scene3D, RenderNode[]>();
         this._reflections = new Map<Scene3D, Reflection[]>();
+        this._skyMap = new Map<Scene3D, RenderNode>();
 
         this._graphics = [];
 
@@ -80,6 +85,18 @@ export class EntityCollect {
         this._collectInfo = new CollectInfo();
         this._renderShaderCollect = new RenderShaderCollect();
         this._octreeRenderNodes = new Map<Scene3D, Octree>();
+    }
+
+    public getSky(scene: Scene3D): RenderNode {
+        return this._skyMap.get(scene) ?? null;
+    }
+
+    public setSky(scene: Scene3D, sky: RenderNode): void {
+        if (sky) {
+            this._skyMap.set(scene, sky);
+        } else {
+            this._skyMap.delete(scene);
+        }
     }
 
     private getPashList(root: Scene3D, renderNode: RenderNode) {
@@ -105,7 +122,7 @@ export class EntityCollect {
         if (!root) return;
         let isTransparent: boolean = renderNode.renderOrder >= 3000;
         if (renderNode.hasMask(RendererMask.Sky)) {
-            this.sky = renderNode;
+            this._skyMap.set(root, renderNode);
         } else if (renderNode.hasMask(RendererMask.Reflection)) {
             this.removeRenderNode(root, renderNode);
             let maps = this._reflections.get(root);
@@ -170,7 +187,7 @@ export class EntityCollect {
     public removeRenderNode(root: Scene3D, renderNode: RenderNode) {
         renderNode.detachSceneOctree();
         if (renderNode.hasMask(RendererMask.Sky)) {
-            this.sky = null;
+            if (this._skyMap.get(root) === renderNode) this._skyMap.delete(root);
         } else if (renderNode.hasMask(RendererMask.Reflection)) {
             let maps = this._reflections.get(root);
             if (maps) {
@@ -289,7 +306,7 @@ export class EntityCollect {
     public getRenderNodes(scene: Scene3D, camera: Camera3D): CollectInfo {
         this.autoSortRenderNodes(scene);
         this._collectInfo.clean();
-        this._collectInfo.sky = this.sky;
+        this._collectInfo.sky = this._skyMap.get(scene) ?? null;
 
         if (Engine3D.setting.occlusionQuery.octree) {
             this.rendererOctree = this.getOctree(scene);

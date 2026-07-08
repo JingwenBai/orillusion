@@ -549,9 +549,11 @@ export class Engine3D {
         Time.frame += 1;
         Interpolator.tick(Time.delta);
 
-        let views = this.views;
-        let i = 0;
-        for (i = 0; i < views.length; i++) {
+        const views = this.views;
+        // Build a fast lookup set so ComponentCollect iterations skip other engines' views.
+        const ownViews = new Set(views);
+
+        for (let i = 0; i < views.length; i++) {
             const view = views[i];
             view.scene.waitUpdate();
             let [w, h] = this._context.presentationSize;
@@ -561,54 +563,33 @@ export class Engine3D {
         if (this._beforeRender)
             await this._beforeRender();
 
-        for (const iterator of ComponentCollect.componentsBeforeUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
-                }
+        for (const [view, components] of ComponentCollect.componentsBeforeUpdateList) {
+            if (!ownViews.has(view)) continue;
+            for (const [component, callback] of components) {
+                if (component.enable) callback(view);
             }
         }
 
         let command = webGPUContext.device.createCommandEncoder();
-        for (const iterator of ComponentCollect.componentsComputeList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k, command);
-                }
+        for (const [view, components] of ComponentCollect.componentsComputeList) {
+            if (!ownViews.has(view)) continue;
+            for (const [component, callback] of components) {
+                if (component.enable) callback(view, command);
             }
         }
-
         webGPUContext.device.queue.submit([command.finish()]);
 
-        for (const iterator of ComponentCollect.componentsUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
-                }
+        for (const [view, components] of ComponentCollect.componentsUpdateList) {
+            if (!ownViews.has(view)) continue;
+            for (const [component, callback] of components) {
+                if (component.enable) callback(view);
             }
         }
 
-        for (const iterator of ComponentCollect.graphicComponent) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (k && f.enable) {
-                    c(k);
-                }
+        for (const [view, components] of ComponentCollect.graphicComponent) {
+            if (!ownViews.has(view)) continue;
+            for (const [component, callback] of components) {
+                if (view && component.enable) callback(view);
             }
         }
 
@@ -627,15 +608,10 @@ export class Engine3D {
             v.renderFrame();
         });
 
-        for (const iterator of ComponentCollect.componentsLateUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
-                }
+        for (const [view, components] of ComponentCollect.componentsLateUpdateList) {
+            if (!ownViews.has(view)) continue;
+            for (const [component, callback] of components) {
+                if (component.enable) callback(view);
             }
         }
 
