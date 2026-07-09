@@ -15,6 +15,12 @@ export class Scene3D extends Object3D {
     private skyObject: Object3D;
     public envMapChange: boolean = true;
     public view: View3D;
+
+    /**
+     * The Engine3D instance that owns this scene.
+     * Automatically set when this scene is assigned to a View3D that belongs to an engine.
+     */
+    public engine: Engine3D | null = null;
     /**
      *
      * @constructor
@@ -25,7 +31,7 @@ export class Scene3D extends Object3D {
         this.skyObject = new Object3D();
         this.addChild(this.skyObject);
         this._isScene3D = true;
-        this.envMap ||= Engine3D.res.defaultSky;
+        this.envMap ||= Engine3D.res?.defaultSky;
     }
 
     /**
