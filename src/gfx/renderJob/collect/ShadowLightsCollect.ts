@@ -5,23 +5,76 @@ import { View3D } from '../../../core/View3D';
 import { CameraUtil } from '../../../util/CameraUtil';
 import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { GlobalUniformGroup } from '../../graphics/webGpu/core/bindGroups/GlobalUniformGroup';
+
 /**
+ * Per-engine shadow light tracking. Each Engine3D instance owns one of these;
+ * static accessors always delegate to the currently active instance.
+ *
  * @internal
  * @group Lights
  */
 export class ShadowLightsCollect {
 
-    public static maxNumDirectionShadow = 8;
-    public static maxNumPointShadow = 8;
+    // --- INSTANCE DATA ---
 
-    public static directionLightList: Map<Scene3D, ILight[]>;
-    public static pointLightList: Map<Scene3D, ILight[]>;
-    public static shadowLights: Map<Scene3D, Float32Array>;
+    public maxNumDirectionShadow: number = 8;
+    public maxNumPointShadow: number = 8;
 
-    public static init() {
-        this.directionLightList = new Map<Scene3D, ILight[]>();
-        this.pointLightList = new Map<Scene3D, ILight[]>();
-        this.shadowLights = new Map<Scene3D, Float32Array>();
+    public directionLightList: Map<Scene3D, ILight[]> = new Map();
+    public pointLightList: Map<Scene3D, ILight[]> = new Map();
+    public shadowLights: Map<Scene3D, Float32Array> = new Map();
+
+    // --- ACTIVE INSTANCE TRACKING ---
+
+    private static _active: ShadowLightsCollect = new ShadowLightsCollect();
+
+    /** Switch the active per-engine instance. Called by Engine3D._activate(). */
+    public static setActive(slc: ShadowLightsCollect): void {
+        ShadowLightsCollect._active = slc;
+    }
+
+    // --- STATIC ACCESSORS (delegate to active instance) ---
+
+    public static get maxNumDirectionShadow(): number {
+        return ShadowLightsCollect._active.maxNumDirectionShadow;
+    }
+    public static set maxNumDirectionShadow(v: number) {
+        ShadowLightsCollect._active.maxNumDirectionShadow = v;
+    }
+
+    public static get maxNumPointShadow(): number {
+        return ShadowLightsCollect._active.maxNumPointShadow;
+    }
+    public static set maxNumPointShadow(v: number) {
+        ShadowLightsCollect._active.maxNumPointShadow = v;
+    }
+
+    public static get directionLightList(): Map<Scene3D, ILight[]> {
+        return ShadowLightsCollect._active.directionLightList;
+    }
+    public static set directionLightList(v: Map<Scene3D, ILight[]>) {
+        ShadowLightsCollect._active.directionLightList = v;
+    }
+
+    public static get pointLightList(): Map<Scene3D, ILight[]> {
+        return ShadowLightsCollect._active.pointLightList;
+    }
+    public static set pointLightList(v: Map<Scene3D, ILight[]>) {
+        ShadowLightsCollect._active.pointLightList = v;
+    }
+
+    public static get shadowLights(): Map<Scene3D, Float32Array> {
+        return ShadowLightsCollect._active.shadowLights;
+    }
+    public static set shadowLights(v: Map<Scene3D, Float32Array>) {
+        ShadowLightsCollect._active.shadowLights = v;
+    }
+
+    // --- STATIC METHODS (unchanged — use `this.xxx` which calls static getters) ---
+
+    /** @deprecated Kept for compatibility; instance is now initialised in the constructor. */
+    public static init(): void {
+        // No-op: the active instance is already initialised.
     }
 
     public static createBuffer(view: View3D) {
@@ -125,8 +178,6 @@ export class ShadowLightsCollect {
             if (list.indexOf(light) == -1) {
                 list.push(light);
             }
-
-
             return list;
         }
     }
@@ -156,7 +207,6 @@ export class ShadowLightsCollect {
             return list;
         }
     }
-
 
     public static update(view: View3D) {
 

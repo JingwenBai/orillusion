@@ -11,8 +11,20 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    // Per-engine G-buffer map — Engine3D creates one Map per instance and
+    // calls GBufferFrame.setActiveMap() before each render frame.
+    private static _activeMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /** Switch the active per-engine G-buffer map. Called by Engine3D._activate(). */
+    public static setActiveMap(map: Map<string, GBufferFrame>): void {
+        GBufferFrame._activeMap = map;
+    }
+
+    /** The active engine's G-buffer map (replaces the old static gBufferMap). */
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        return GBufferFrame._activeMap;
+    }
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -72,7 +84,6 @@ export class GBufferFrame extends RTFrame {
         if (!GBufferFrame.gBufferMap.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,

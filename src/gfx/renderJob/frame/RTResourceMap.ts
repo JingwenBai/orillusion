@@ -4,18 +4,52 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+
 /**
+ * Per-engine render-texture and view-quad cache. Each Engine3D instance owns
+ * one of these; static accessors always delegate to the currently active
+ * instance so existing call-sites continue to work unchanged.
+ *
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    // --- INSTANCE DATA ---
 
-    public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+    public rtTextureMap: Map<string, RenderTexture> = new Map();
+    public rtViewQuad: Map<string, ViewQuad> = new Map();
+
+    // --- ACTIVE INSTANCE TRACKING ---
+
+    private static _active: RTResourceMap = new RTResourceMap();
+
+    /** Switch the active per-engine instance. Called by Engine3D._activate(). */
+    public static setActive(map: RTResourceMap): void {
+        RTResourceMap._active = map;
+    }
+
+    // --- STATIC ACCESSORS (delegate to active instance) ---
+
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return RTResourceMap._active.rtTextureMap;
+    }
+    public static set rtTextureMap(v: Map<string, RenderTexture>) {
+        RTResourceMap._active.rtTextureMap = v;
+    }
+
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return RTResourceMap._active.rtViewQuad;
+    }
+    public static set rtViewQuad(v: Map<string, ViewQuad>) {
+        RTResourceMap._active.rtViewQuad = v;
+    }
+
+    // --- STATIC METHODS (unchanged) ---
+
+    /** @deprecated Kept for compatibility; instance is initialised in the constructor. */
+    public static init(): void {
+        // No-op: the active instance is already initialised.
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {

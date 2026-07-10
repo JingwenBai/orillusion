@@ -56,7 +56,11 @@ import { SHCommon_frag } from './core/common/SHCommon_frag';
  */
 export class ShaderLib {
 
+    public static isInitialized: boolean = false;
+
     public static init() {
+        if (ShaderLib.isInitialized) return;
+        ShaderLib.isInitialized = true;
         ShaderLib.register('MathShader', MathShader);
         ShaderLib.register('FastMathShader', FastMathShader);
         ShaderLib.register("BitUtil", BitUtil);
