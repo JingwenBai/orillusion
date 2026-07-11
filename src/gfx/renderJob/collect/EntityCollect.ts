@@ -24,7 +24,51 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    /**
+     * Registry that maps each Scene3D to the EntityCollect that owns it.
+     * Used by components to look up the correct collector without depending
+     * on the global Engine3D.current pointer.
+     */
+    private static _sceneRegistry: Map<Scene3D, EntityCollect> = new Map();
+
+    /**
+     * Register `scene` as belonging to `collect`.
+     * Called by Engine3D.startRenderView / startRenderViews.
+     */
+    public static register(scene: Scene3D, collect: EntityCollect): void {
+        if (scene && collect) this._sceneRegistry.set(scene, collect);
+    }
+
+    /** Unregister a scene (e.g. when an engine is destroyed). */
+    public static unregister(scene: Scene3D): void {
+        this._sceneRegistry.delete(scene);
+    }
+
+    /**
+     * Return the EntityCollect that owns `scene`, or undefined if not yet
+     * registered (e.g. scene was created before the engine started).
+     */
+    public static getByScene(scene: Scene3D): EntityCollect | undefined {
+        return this._sceneRegistry.get(scene);
+    }
+
+    /**
+     * Backward-compatible singleton accessor.
+     * Returns the currently-rendering engine's EntityCollect so that existing
+     * code calling `EntityCollect.instance.xxx()` continues to work correctly
+     * in both single- and multi-instance scenarios.
+     * @deprecated Prefer EntityCollect.getByScene(scene) for explicit lookup.
+     */
+    public static get instance(): EntityCollect {
+        const engineEntityCollect = (Engine3D.current as any)?.entityCollect;
+        if (engineEntityCollect) return engineEntityCollect;
+        // Fallback: lazily create a shared instance for code that runs outside a render frame
+        if (!EntityCollect._fallback) EntityCollect._fallback = new EntityCollect();
+        return EntityCollect._fallback;
+    }
+
+    /** Fallback collector used when accessed outside an active render frame. */
+    private static _fallback: EntityCollect = null;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,13 +100,6 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
-    }
-
     constructor() {
         // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
         this._sceneLights = new Map<Scene3D, ILight[]>();
