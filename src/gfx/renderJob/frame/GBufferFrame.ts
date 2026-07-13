@@ -7,12 +7,26 @@ import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
 
+/** @internal Per-engine GBuffer map state */
+export class GBufferFrameState {
+    gBufferMap: Map<string, GBufferFrame> = new Map();
+}
+
+let _state: GBufferFrameState = new GBufferFrameState();
+
+/** @internal */
+export function _createGBufferFrameState(): GBufferFrameState { return new GBufferFrameState(); }
+/** @internal */
+export function _setActiveGBufferFrame(s: GBufferFrameState): void { _state = s; }
+
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    /** @internal @deprecated Use Engine3D.instance.gBufferFrameState.gBufferMap for per-instance access */
+    public static get gBufferMap(): Map<string, GBufferFrame> { return _state.gBufferMap; }
+    public static set gBufferMap(v: Map<string, GBufferFrame>) { _state.gBufferMap = v; }
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -69,10 +83,9 @@ export class GBufferFrame extends RTFrame {
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!_state.gBufferMap.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -81,9 +94,9 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            _state.gBufferMap.set(key, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = _state.gBufferMap.get(key);
         }
         return gBuffer;
     }

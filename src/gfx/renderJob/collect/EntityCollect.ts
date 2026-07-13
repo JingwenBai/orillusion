@@ -19,10 +19,6 @@ import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
 import { RenderShaderCollect } from './RenderShaderCollect';
 
-/**
- * @internal
- * @group Post
- */
 export class EntityCollect {
     private static _instance: EntityCollect;
 
@@ -57,9 +53,12 @@ export class EntityCollect {
 
     private rendererOctree: Octree;
     public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
+        const ctx = Engine3D.current?.context;
+        if (ctx) {
+            if (!ctx._entityCollect) ctx._entityCollect = new EntityCollect();
+            return ctx._entityCollect as EntityCollect;
         }
+        if (!this._instance) this._instance = new EntityCollect();
         return this._instance;
     }
 

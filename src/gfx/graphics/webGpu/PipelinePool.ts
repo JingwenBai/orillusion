@@ -1,18 +1,23 @@
 import { PoolNode, RenderShaderPass } from "../../..";
 
-export class PipelinePool {
-    private static pipelineMap: Map<string, GPURenderPipeline> = new Map<string, GPURenderPipeline>();
+/** @internal Per-engine pipeline cache state */
+export class PipelinePoolState {
+    pipelineMap: Map<string, GPURenderPipeline> = new Map();
+}
 
-    public static getSharePipeline(shaderVariant: string) {
-        let pipeline = this.pipelineMap.get(shaderVariant);
-        if (pipeline) {
-            return pipeline;
-        } else {
-            return null;
-        }
+let _state: PipelinePoolState = new PipelinePoolState();
+
+/** @internal */
+export function _createPipelinePoolState(): PipelinePoolState { return new PipelinePoolState(); }
+/** @internal */
+export function _setActivePipelinePool(s: PipelinePoolState): void { _state = s; }
+
+export class PipelinePool {
+    public static getSharePipeline(shaderVariant: string): GPURenderPipeline | null {
+        return _state.pipelineMap.get(shaderVariant) ?? null;
     }
 
-    public static setSharePipeline(shaderVariant: string, pipeline: GPURenderPipeline) {
-        this.pipelineMap.set(shaderVariant, pipeline);
+    public static setSharePipeline(shaderVariant: string, pipeline: GPURenderPipeline): void {
+        _state.pipelineMap.set(shaderVariant, pipeline);
     }
 }
