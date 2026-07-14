@@ -1,7 +1,6 @@
 import { Engine3D } from "../../Engine3D";
 import { Scene3D } from "../../core/Scene3D";
 import { GlobalBindGroup } from "../../gfx/graphics/webGpu/core/bindGroups/GlobalBindGroup";
-import { EntityCollect } from "../../gfx/renderJob/collect/EntityCollect";
 import { DDGIIrradianceVolume } from "../../gfx/renderJob/passRenderer/ddgi/DDGIIrradianceVolume";
 import { Probe } from "../../gfx/renderJob/passRenderer/ddgi/Probe";
 import { GIProbeMaterial, GIProbeMaterialType } from "../../materials/GIProbeMaterial";
@@ -77,7 +76,7 @@ export class GlobalIlluminationComponent extends ComponentBase {
         }
 
         for (let i = 0; i < this._probes.length; i++) {
-            EntityCollect.instance.addGIProbe(scene, this._probes[i]);
+            scene?.entityCollect?.addGIProbe(scene, this._probes[i]);
         }
 
         this.object3D.transform.enable = false;

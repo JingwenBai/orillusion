@@ -40,10 +40,10 @@ export class SphereReflection extends Reflection {
         // mr.material = new LitMaterial();
 
         let reflectionSetting = Engine3D.setting.reflectionSetting;
-        let reflectionsGBufferFrame = GBufferFrame.getGBufferFrame(GBufferFrame.reflections_GBuffer, reflectionSetting.width, reflectionSetting.height);
+        let reflectionsGBufferFrame = this.transform.view3D?.engine?.getGBufferFrame(GBufferFrame.reflections_GBuffer, reflectionSetting.width, reflectionSetting.height);
         let mat = new ReflectionMaterial();
         mat.reflectionIndex = index;
-        mat.baseMap = reflectionsGBufferFrame.getCompressGBufferTexture();
+        mat.baseMap = reflectionsGBufferFrame?.getCompressGBufferTexture();
         mr.material = mat;
         this.object3D.addChild(obj);
 

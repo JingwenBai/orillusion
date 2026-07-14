@@ -4,7 +4,6 @@ import { View3D } from '../../core/View3D';
 import { MeshRenderer } from './MeshRenderer';
 import { BoundingBox } from '../../core/bound/BoundingBox';
 import { Texture } from '../../gfx/graphics/webGpu/core/texture/Texture';
-import { EntityCollect } from '../../gfx/renderJob/collect/EntityCollect';
 import { ClusterLightingBuffer } from '../../gfx/renderJob/passRenderer/cluster/ClusterLightingBuffer';
 import { RendererMask } from '../../gfx/renderJob/passRenderer/state/RendererMask';
 import { RendererPassState } from '../../gfx/renderJob/passRenderer/state/RendererPassState';
@@ -45,7 +44,8 @@ export class SkyRenderer extends MeshRenderer {
             this.castNeedPass();
 
             if (!this._inRenderer && this.transform.scene3D) {
-                EntityCollect.instance.sky = this;
+                const scene = this.transform.scene3D;
+                if (scene.entityCollect) scene.entityCollect.sky = this;
                 this._inRenderer = true;
             }
         }
@@ -54,7 +54,8 @@ export class SkyRenderer extends MeshRenderer {
     public onDisable(): void {
         if (this._inRenderer && this.transform.scene3D) {
             this._inRenderer = false;
-            EntityCollect.instance.sky = null;
+            const scene = this.transform.scene3D;
+            if (scene.entityCollect) scene.entityCollect.sky = null;
         }
         super.onDisable();
     }

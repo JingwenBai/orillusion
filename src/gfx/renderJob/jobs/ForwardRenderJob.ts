@@ -7,7 +7,6 @@ import { RendererJob } from './RendererJob';
 import { DDGIProbeRenderer } from '../passRenderer/ddgi/DDGIProbeRenderer';
 import { webGPUContext } from '../../graphics/webGpu/Context3D';
 import { RTResourceConfig } from '../config/RTResourceConfig';
-import { RTResourceMap } from '../frame/RTResourceMap';
 import { GPUTextureFormat } from '../../graphics/webGpu/WebGPUConst';
 import { GUIPassRenderer } from '../passRenderer/color/GUIPassRenderer';
 /**
@@ -28,7 +27,7 @@ export class ForwardRenderJob extends RendererJob {
         super.start();
         {
             let colorPassRenderer = new ColorPassRenderer();
-            let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+            let rtFrame = this.view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
 
             if (Engine3D.setting.render.zPrePass) {
                 rtFrame.zPreTexture = this.depthPassRenderer.rendererPassState.depthTexture;
@@ -51,7 +50,7 @@ export class ForwardRenderJob extends RendererJob {
         }
 
         {
-            let guiFrame = GBufferFrame.getGUIBufferFrame();
+            let guiFrame = this.view.engine.getGUIBufferFrame();
             let guiPassRenderer = new GUIPassRenderer();
             guiPassRenderer.setRenderStates(guiFrame);
             this.rendererMap.addRenderer(guiPassRenderer);

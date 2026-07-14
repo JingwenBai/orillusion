@@ -6,8 +6,6 @@ import { PassGenerate } from "../../gfx/generate/PassGenerate";
 import { GlobalBindGroup } from "../../gfx/graphics/webGpu/core/bindGroups/GlobalBindGroup";
 import { ShaderReflection } from "../../gfx/graphics/webGpu/shader/value/ShaderReflectionInfo";
 import { GPUContext } from "../../gfx/renderJob/GPUContext";
-import { EntityCollect } from "../../gfx/renderJob/collect/EntityCollect";
-import { RTResourceMap } from "../../gfx/renderJob/frame/RTResourceMap";
 import { RenderContext } from "../../gfx/renderJob/passRenderer/RenderContext";
 import { ClusterLightingBuffer } from "../../gfx/renderJob/passRenderer/cluster/ClusterLightingBuffer";
 import { RendererMask, RendererMaskUtil } from "../../gfx/renderJob/passRenderer/state/RendererMask";
@@ -238,14 +236,14 @@ export class RenderNode extends ComponentBase {
             this.initPipeline();
         }
 
-        EntityCollect.instance.addRenderNode(this.transform.scene3D, this);
+        this.transform.scene3D?.entityCollect?.addRenderNode(this.transform.scene3D, this);
 
         this.updateOctreeEntity();
     }
 
     public onDisable(): void {
         this._enable = false;
-        EntityCollect.instance.removeRenderNode(this.transform.scene3D, this);
+        this.transform.scene3D?.entityCollect?.removeRenderNode(this.transform.scene3D, this);
         super.onDisable?.();
     }
 
@@ -294,7 +292,7 @@ export class RenderNode extends ComponentBase {
             this.renderOrder = sort;
 
             if (this.enable && this.transform && this.transform.scene3D) {
-                EntityCollect.instance.addRenderNode(this.transform.scene3D, this);
+                this.transform.scene3D?.entityCollect?.addRenderNode(this.transform.scene3D, this);
             }
 
         }
@@ -401,7 +399,7 @@ export class RenderNode extends ComponentBase {
                 if (renderShader.pipeline) {
                     if (renderShader.shaderState.splitTexture) {
                         renderContext.endRenderPass();
-                        RTResourceMap.WriteSplitColorTexture(renderNode.instanceID);
+                        view.engine.rtResourceMap.WriteSplitColorTexture(renderNode.instanceID);
                         renderContext.beginOpaqueRenderPass();
 
                         GPUContext.bindCamera(renderContext.encoder, view.camera);
@@ -536,7 +534,7 @@ export class RenderNode extends ComponentBase {
                     const renderShader = pass;
 
                     if (renderShader.shaderState.splitTexture) {
-                        let splitTexture = RTResourceMap.CreateSplitTexture(node.instanceID);
+                        let splitTexture = view.engine.rtResourceMap.CreateSplitTexture(node.instanceID);
                         renderShader.setTexture("splitTexture_Map", splitTexture);
                     }
 

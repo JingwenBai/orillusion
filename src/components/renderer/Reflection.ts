@@ -1,7 +1,6 @@
 
 import { View3D } from '../../core/View3D';
 import { BoundingBox } from '../../core/bound/BoundingBox';
-import { EntityCollect } from '../../gfx/renderJob/collect/EntityCollect';
 import { ClusterLightingBuffer } from '../../gfx/renderJob/passRenderer/cluster/ClusterLightingBuffer';
 import { RendererMask } from '../../gfx/renderJob/passRenderer/state/RendererMask';
 import { RendererPassState } from '../../gfx/renderJob/passRenderer/state/RendererPassState';
@@ -32,11 +31,11 @@ export class Reflection extends RenderNode {
     }
 
     public onEnable(): void {
-        EntityCollect.instance.addRenderNode(this.transform.scene3D, this);
+        this.transform.scene3D?.entityCollect?.addRenderNode(this.transform.scene3D, this);
     }
 
     public onDisable(): void {
-        EntityCollect.instance.removeRenderNode(this.transform.scene3D, this);
+        this.transform.scene3D?.entityCollect?.removeRenderNode(this.transform.scene3D, this);
     }
 
     public renderPass2(view: View3D, passType: PassType, rendererPassState: RendererPassState, clusterLightingBuffer: ClusterLightingBuffer, encoder: GPURenderPassEncoder, useBundle: boolean = false) {

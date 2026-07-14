@@ -7,7 +7,6 @@ import { webGPUContext } from "../../../graphics/webGpu/Context3D";
 import { GPUTextureFormat } from "../../../graphics/webGpu/WebGPUConst";
 import { RTDescriptor } from "../../../graphics/webGpu/descriptor/RTDescriptor";
 import { GPUContext } from "../../GPUContext";
-import { EntityCollect } from "../../collect/EntityCollect";
 import { RTResourceConfig } from "../../config/RTResourceConfig";
 import { RTFrame } from "../../frame/RTFrame";
 import { RTResourceMap } from "../../frame/RTResourceMap";
@@ -57,7 +56,7 @@ export class PreDepthPassRenderer extends RendererBase {
         let scene3D = scene;
 
         this.rendererPassState.camera3D = camera;
-        let collectInfo = EntityCollect.instance.getRenderNodes(scene3D, camera);
+        let collectInfo = view.scene.entityCollect.getRenderNodes(scene3D, camera);
         this.compute(view, occlusionSystem);
 
         let op_bundleList = this.renderBundleOp(view, collectInfo, occlusionSystem);
@@ -74,7 +73,7 @@ export class PreDepthPassRenderer extends RendererBase {
         //     GPUContext.bindCamera(encoder, camera);
         //     EntityCollect.instance.sky.renderPass2(this._rendererType, this.rendererPassState, scene, this.clusterLightingRender, encoder);
         // }
-        let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+        let viewRenderList = view.scene.entityCollect.getRenderShaderCollect(view);
         for (const renderList of viewRenderList) {
             let nodeMap = renderList[1];
             for (const iterator of nodeMap) {
