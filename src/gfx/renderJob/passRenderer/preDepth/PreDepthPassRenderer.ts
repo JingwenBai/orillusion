@@ -9,7 +9,6 @@ import { RTDescriptor } from "../../../graphics/webGpu/descriptor/RTDescriptor";
 import { GPUContext } from "../../GPUContext";
 import { RTResourceConfig } from "../../config/RTResourceConfig";
 import { RTFrame } from "../../frame/RTFrame";
-import { RTResourceMap } from "../../frame/RTResourceMap";
 import { OcclusionSystem } from "../../occlusion/OcclusionSystem";
 import { RendererBase } from "../RendererBase";
 import { ClusterLightingBuffer } from "../cluster/ClusterLightingBuffer";
@@ -25,13 +24,14 @@ export class PreDepthPassRenderer extends RendererBase {
     public useRenderBundle: boolean = false;
     shadowPassCount: number;
     zCullingCompute: ZCullingCompute;
-    constructor() {
+    constructor(view?: View3D) {
         super();
         this.passType = PassType.DEPTH;
 
+        const rtMap = view?.engine?.rtResourceMap ?? Engine3D.rtResourceMap;
         let size = webGPUContext.presentationSize;
         let scale = 1;
-        this.zBufferTexture = RTResourceMap.createRTTexture(RTResourceConfig.zBufferTexture_NAME, Math.floor(size[0] * scale), Math.floor(size[1] * scale), GPUTextureFormat.rgba16float, false);
+        this.zBufferTexture = rtMap.createRTTexture(RTResourceConfig.zBufferTexture_NAME, Math.floor(size[0] * scale), Math.floor(size[1] * scale), GPUTextureFormat.rgba16float, false);
         let rtDec = new RTDescriptor()
         rtDec.clearValue = [0, 0, 0, 0];
         rtDec.loadOp = `clear`;
@@ -39,7 +39,7 @@ export class PreDepthPassRenderer extends RendererBase {
         ], [
             // new RTDescriptor()
         ],
-            RTResourceMap.createRTTexture(RTResourceConfig.zPreDepthTexture_NAME, Math.floor(size[0]), Math.floor(size[1]), GPUTextureFormat.depth32float, false),
+            rtMap.createRTTexture(RTResourceConfig.zPreDepthTexture_NAME, Math.floor(size[0]), Math.floor(size[1]), GPUTextureFormat.depth32float, false),
             null,
             false
         );

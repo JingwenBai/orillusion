@@ -650,4 +650,8 @@ export class Engine3D {
     public static getGUIBufferFrame(): GBufferFrame {
         return Engine3D._default.getGUIBufferFrame();
     }
+
+    public static get rtResourceMap(): RTResourceMap {
+        return Engine3D._default.rtResourceMap;
+    }
 }

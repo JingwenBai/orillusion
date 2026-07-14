@@ -104,7 +104,7 @@ export class RendererJob {
         this.reflectionRenderer = this.addRenderer(ReflectionRenderer, view);
 
         if (Engine3D.setting.render.zPrePass) {
-            this.depthPassRenderer = this.addRenderer(PreDepthPassRenderer);
+            this.depthPassRenderer = this.addRenderer(PreDepthPassRenderer, view);
         }
 
         this.shadowMapPassRenderer = new ShadowMapPassRenderer();
