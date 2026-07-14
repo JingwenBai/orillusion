@@ -642,4 +642,12 @@ export class Engine3D {
     public static resume(): void {
         Engine3D._default.resume();
     }
+
+    public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        return Engine3D._default.getGBufferFrame(key, fixedWidth, fixedHeight, outColor, depthTexture);
+    }
+
+    public static getGUIBufferFrame(): GBufferFrame {
+        return Engine3D._default.getGUIBufferFrame();
+    }
 }
