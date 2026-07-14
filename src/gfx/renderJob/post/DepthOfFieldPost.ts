@@ -7,7 +7,6 @@ import { ComputeShader } from '../../graphics/webGpu/shader/ComputeShader';
 import { GPUTextureFormat } from '../../graphics/webGpu/WebGPUConst';
 import { webGPUContext } from '../../graphics/webGpu/Context3D';
 import { GPUContext } from '../GPUContext';
-import { RTResourceMap } from '../frame/RTResourceMap';
 import { RendererPassState } from '../passRenderer/state/RendererPassState';
 import { PostBase } from './PostBase';
 import { Engine3D } from '../../../Engine3D';
@@ -111,7 +110,7 @@ export class DepthOfFieldPost extends PostBase {
         setting.far = value;
     }
 
-    private createBlurCompute() {
+    private createBlurCompute(view: View3D) {
         this.blurSettings = [];
         this.blurComputes = [];
         let cfg = Engine3D.setting.render.postProcessing.depthOfView;
@@ -123,7 +122,7 @@ export class DepthOfFieldPost extends PostBase {
             this.blurSettings.push(blurSetting);
 
             blurCompute.setUniformBuffer('blurSetting', blurSetting);
-            let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+            let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
             blurCompute.setSamplerTexture(`gBufferTexture`, rtFrame.getCompressGBufferTexture());
 
             let input = i % 2 == 0 ? this.blurTexture1 : this.blurTexture2;
@@ -171,7 +170,7 @@ export class DepthOfFieldPost extends PostBase {
     render(view: View3D, command: GPUCommandEncoder) {
         if (!this.blurComputes) {
             this.createResource();
-            this.createBlurCompute();
+            this.createBlurCompute(view);
             let standUniform = GlobalBindGroup.getCameraGroup(view.camera);
             for (let i = 0; i < this.blurComputes.length; i++) {
                 const blurCompute = this.blurComputes[i];
@@ -179,7 +178,7 @@ export class DepthOfFieldPost extends PostBase {
             }
             this.rendererPassState = WebGPUDescriptorCreator.createRendererPassState(this.rtFrame, null);
         }
-        this.autoSetColorTexture('inTex', this.blurComputes[0]);
+        this.autoSetColorTexture('inTex', this.blurComputes[0], view);
 
         let cfg = Engine3D.setting.render.postProcessing.depthOfView;
         cfg.far = Math.max(cfg.near, cfg.far) + 0.0001;

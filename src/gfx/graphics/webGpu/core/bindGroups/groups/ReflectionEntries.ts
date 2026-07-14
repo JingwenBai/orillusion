@@ -6,7 +6,6 @@ import { GPUContext } from "../../../../../..";
 import { Engine3D } from "../../../../../../Engine3D";
 import { View3D } from "../../../../../../core/View3D";
 import { RenderTexture } from "../../../../../../textures/RenderTexture";
-import { EntityCollect } from "../../../../../renderJob/collect/EntityCollect";
 import { GBufferFrame } from "../../../../../renderJob/frame/GBufferFrame";
 import { GPUTextureFormat } from "../../../WebGPUConst";
 import { StorageGPUBuffer } from "../../buffer/StorageGPUBuffer";
@@ -37,7 +36,7 @@ export class ReflectionEntries {
         // GPUContext.endCommandEncoder(command);
 
         this.storageGPUBuffer.clean();
-        let reflections = EntityCollect.instance.getReflections(view.scene);
+        let reflections = view.scene.entityCollect.getReflections(view.scene);
         for (let i = 0; i < reflections.length; i++) {
             const reflection = reflections[i];
             reflection.gid = i;

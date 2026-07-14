@@ -3,7 +3,6 @@ import { VirtualTexture } from '../../../textures/VirtualTexture';
 import { Texture } from '../../graphics/webGpu/core/texture/Texture';
 import { UniformNode } from '../../graphics/webGpu/core/uniforms/UniformNode';
 import { GPUContext } from '../GPUContext';
-import { RTResourceMap } from '../frame/RTResourceMap';
 import { ComputeShader } from '../../../gfx/graphics/webGpu/shader/ComputeShader';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { PostRenderer } from '../passRenderer/post/PostRenderer';
@@ -21,6 +20,7 @@ export class PostBase {
     public postRenderer: PostRenderer;
     protected rtViewQuad: Map<string, ViewQuad>;
     protected virtualTexture: Map<string, VirtualTexture>;
+    protected _view: View3D;
 
     constructor() {
         this.rtViewQuad = new Map<string, ViewQuad>();
@@ -29,33 +29,34 @@ export class PostBase {
         webGPUContext.addEventListener(CResizeEvent.RESIZE, this.onResize, this);
     }
 
-    protected createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt = RTResourceMap.createRTTexture(name, rtWidth, rtHeight, format, useMipmap, sampleCount);
+    protected createRTTexture(view: View3D, name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
+        let rt = view.engine.rtResourceMap.createRTTexture(name, rtWidth, rtHeight, format, useMipmap, sampleCount);
         rt.name = name;
         this.virtualTexture.set(name, rt);
         Reference.getInstance().attached(rt, this);
         return rt;
     }
 
-    protected createViewQuad(name: string, shaderName: string, outRtTexture: VirtualTexture, msaa: number = 0) {
-        let viewQuad = RTResourceMap.createViewQuad(name, 'Quad_vert_wgsl', shaderName, outRtTexture, msaa);
+    protected createViewQuad(view: View3D, name: string, shaderName: string, outRtTexture: VirtualTexture, msaa: number = 0) {
+        let viewQuad = view.engine.rtResourceMap.createViewQuad(name, 'Quad_vert_wgsl', shaderName, outRtTexture, msaa);
         this.rtViewQuad.set(name, viewQuad);
         return viewQuad;
     }
 
-    protected getOutTexture(): Texture {
+    protected getOutTexture(view?: View3D): Texture {
         let colorTexture: Texture;
         let renderTargets = GPUContext.lastRenderPassState.renderTargets;
         if (renderTargets.length > 0) {
             colorTexture = renderTargets[0];
         } else {
-            colorTexture = RTResourceMap.getTexture(RTResourceConfig.colorBufferTex_NAME);
+            let v = view || this._view;
+            colorTexture = v?.engine.rtResourceMap.getTexture(RTResourceConfig.colorBufferTex_NAME);
         }
         return colorTexture;
     }
 
-    protected autoSetColorTexture(name: string, compute: ComputeShader): void {
-        let input = this.getOutTexture() as VirtualTexture;
+    protected autoSetColorTexture(name: string, compute: ComputeShader, view?: View3D): void {
+        let input = this.getOutTexture(view) as VirtualTexture;
         compute.setSamplerTexture(name, input);
     }
     /**
@@ -77,6 +78,7 @@ export class PostBase {
      * @internal
      */
     public render(view: View3D, command: GPUCommandEncoder) {
+        this._view = view;
         this.compute(view);
         this.rtViewQuad.forEach((viewQuad, k) => {
             let lastTexture = GPUContext.lastRenderPassState.getLastRenderTexture();

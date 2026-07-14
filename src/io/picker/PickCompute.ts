@@ -16,8 +16,8 @@ export class PickCompute {
     private _outBuffer: ComputeGPUBuffer;
     constructor() { }
 
-    public init() {
-        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+    public init(view: View3D) {
+        let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
         this._computeShader = new ComputeShader(Picker_cs);
 
         this._outBuffer = new ComputeGPUBuffer(32);

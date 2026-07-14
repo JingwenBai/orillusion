@@ -151,7 +151,7 @@ export class GTAOPost extends PostBase {
         setting.usePosFloat32 = value;
     }
 
-    private createCompute() {
+    private createCompute(view: View3D) {
         this.gtaoCompute = new ComputeShader(GTAO_cs);
 
         let gtaoSetting: UniformGPUBuffer = new UniformGPUBuffer(4 * 2); //vector4 * 2
@@ -166,9 +166,9 @@ export class GTAOPost extends PostBase {
 
         this.aoBuffer = new StorageGPUBuffer(this.gtaoTexture.width * this.gtaoTexture.height);
         this.gtaoCompute.setStorageBuffer('aoBuffer', this.aoBuffer);
-        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+        let rtFrame = view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
         this.gtaoCompute.setSamplerTexture(`gBufferTexture`, rtFrame.getCompressGBufferTexture());
-        this.autoSetColorTexture('inTex', this.gtaoCompute);
+        this.autoSetColorTexture('inTex', this.gtaoCompute, view);
         this.gtaoCompute.setStorageTexture(`outTex`, this.gtaoTexture);
 
         this.gtaoSetting = gtaoSetting;
@@ -203,7 +203,7 @@ export class GTAOPost extends PostBase {
     render(view: View3D, command: GPUCommandEncoder) {
         if (!this.gtaoCompute) {
             this.createResource();
-            this.createCompute();
+            this.createCompute(view);
             this.onResize();
 
             this.rendererPassState = WebGPUDescriptorCreator.createRendererPassState(this.rtFrame, null);

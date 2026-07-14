@@ -14,7 +14,6 @@ import { Time } from '../../../util/Time';
 import { clamp } from '../../../math/MathUtil';
 import { View3D } from '../../../core/View3D';
 import { RTDescriptor } from '../../graphics/webGpu/descriptor/RTDescriptor';
-import { GBufferFrame } from '../frame/GBufferFrame';
 import { RTFrame } from '../frame/RTFrame';
 import { GTAO_cs } from '../../../assets/shader/compute/GTAO_cs';
 import { CResizeEvent } from '../../../event/CResizeEvent';
@@ -152,7 +151,7 @@ export class SSGIPost extends PostBase {
 
 
     private createResource() {
-        let rtFrame = GBufferFrame.getGBufferFrame("ColorPassGBuffer");
+        let rtFrame = this.view.engine.getGBufferFrame("ColorPassGBuffer");
         this.gBufferTexture = rtFrame.getCompressGBufferTexture();
 
         let presentationSize = webGPUContext.presentationSize;
@@ -201,7 +200,7 @@ export class SSGIPost extends PostBase {
             this.ssgiCompute.setStorageTexture(`newTexture`, this.newTexture);
             this.ssgiCompute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);
             this.ssgiCompute.setStorageBuffer('updateBuffer', this.updateBuffer);
-            this.autoSetColorTexture('inTex', this.ssgiCompute);
+            this.autoSetColorTexture('inTex', this.ssgiCompute, this.view);
         }
 
         {

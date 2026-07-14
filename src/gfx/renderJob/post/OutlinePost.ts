@@ -165,7 +165,7 @@ export class OutlinePost extends PostBase {
     }
 
     private createCompute() {
-        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+        let rtFrame = this.view.engine.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
 
         this.calcWeightCompute = new ComputeShader(OutlineCalcOutline_cs);
 
@@ -197,7 +197,7 @@ export class OutlinePost extends PostBase {
         //blend
         this.blendCompute = new ComputeShader(OutLineBlendColor_cs);
         this.blendCompute.setStorageBuffer('outlineSetting', this.outlineSetting);
-        this.autoSetColorTexture('inTex', this.blendCompute);
+        this.autoSetColorTexture('inTex', this.blendCompute, this.view);
         this.blendCompute.setSamplerTexture(`lowTex`, this.lowTex);
         this.blendCompute.setStorageTexture(`outlineTex`, this.outlineTex);
 
