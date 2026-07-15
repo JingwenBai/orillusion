@@ -149,5 +149,27 @@ export class Context3D extends CEventDispatcher {
 
 /**
  * @internal
+ * Set the active WebGPU context that the webGPUContext proxy will delegate to.
+ * Called by Engine3D before each render frame.
  */
-export let webGPUContext = new Context3D();
+let _activeContext: Context3D | null = null;
+
+export function setActiveWebGPUContext(ctx: Context3D): void {
+    _activeContext = ctx;
+}
+
+/**
+ * @internal
+ * A dynamic proxy that always delegates to the currently active Context3D instance.
+ * This allows multiple Engine3D instances (each with its own Context3D) to coexist
+ * without modifying the hundreds of files that import webGPUContext directly.
+ */
+export const webGPUContext: Context3D = new Proxy<Context3D>({} as Context3D, {
+    get(_: Context3D, prop: string | symbol): unknown {
+        return (_activeContext as unknown as Record<string | symbol, unknown>)[prop];
+    },
+    set(_: Context3D, prop: string | symbol, value: unknown): boolean {
+        (_activeContext as unknown as Record<string | symbol, unknown>)[prop] = value;
+        return true;
+    }
+});
