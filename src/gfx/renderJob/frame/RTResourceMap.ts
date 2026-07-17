@@ -14,6 +14,7 @@ export class RTResourceMap {
     public static rtViewQuad: Map<string, ViewQuad>;
 
     public static init() {
+        if (this.rtTextureMap) return;
         this.rtTextureMap = new Map<string, RenderTexture>();
         this.rtViewQuad = new Map<string, ViewQuad>();
     }
