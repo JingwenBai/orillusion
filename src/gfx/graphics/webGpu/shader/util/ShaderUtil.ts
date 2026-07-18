@@ -1,3 +1,4 @@
+import { EngineRegistry } from '../../../../../core/EngineRegistry';
 import { RenderShaderPass } from "../RenderShaderPass";
 
 export type VertexPart = {
@@ -20,11 +21,30 @@ export type FragmentPart = {
 }
 
 export class ShaderUtil {
-    public static renderShaderModulePool: Map<string, GPUShaderModule>;
-    public static renderShader: Map<string, RenderShaderPass>;
+    // ---- instance state (per Engine3D) ----
+    public renderShaderModulePool: Map<string, GPUShaderModule>;
+    public renderShader: Map<string, RenderShaderPass>;
 
-    public static init() {
+    public init() {
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
         this.renderShader = new Map<string, RenderShaderPass>();
+    }
+
+    // ---- static delegates → forward to current engine's instance ----
+
+    private static get _inst(): ShaderUtil {
+        return EngineRegistry.current?.shaderUtil as ShaderUtil;
+    }
+
+    public static get renderShaderModulePool(): Map<string, GPUShaderModule> {
+        return ShaderUtil._inst?.renderShaderModulePool;
+    }
+
+    public static get renderShader(): Map<string, RenderShaderPass> {
+        return ShaderUtil._inst?.renderShader;
+    }
+
+    public static init(): void {
+        ShaderUtil._inst?.init();
     }
 }

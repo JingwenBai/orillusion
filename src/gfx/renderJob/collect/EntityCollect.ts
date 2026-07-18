@@ -1,4 +1,5 @@
 
+import { EngineRegistry } from '../../../core/EngineRegistry';
 import { Engine3D } from '../../../Engine3D';
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
@@ -24,7 +25,7 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    private static _fallbackInstance: EntityCollect;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,11 +57,13 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
+    public static get instance(): EntityCollect {
+        const engineEntityCollect = EngineRegistry.current?.entityCollect as EntityCollect;
+        if (engineEntityCollect) return engineEntityCollect;
+        if (!EntityCollect._fallbackInstance) {
+            EntityCollect._fallbackInstance = new EntityCollect();
         }
-        return this._instance;
+        return EntityCollect._fallbackInstance;
     }
 
     constructor() {

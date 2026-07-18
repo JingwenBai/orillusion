@@ -1,28 +1,27 @@
+import { EngineRegistry } from '../../../../../core/EngineRegistry';
 import { webGPUContext } from "../../Context3D";
 
 export class GlobalBindGroupLayout {
 
-    private static _globalDataBindGroupLayout: GPUBindGroupLayout;
     public static getGlobalDataBindGroupLayout(): GPUBindGroupLayout {
-        if (this._globalDataBindGroupLayout) return this._globalDataBindGroupLayout;
+        const engine = EngineRegistry.current;
+        const cacheKey = '_globalDataBindGroupLayout';
+        if (engine && engine[cacheKey]) return engine[cacheKey];
+
         let entries: GPUBindGroupLayoutEntry[] = [];
         entries.push({
             binding: 0,
             visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
-            buffer: {
-                type: 'uniform',
-            },
+            buffer: { type: 'uniform' },
         });
-
         entries.push({
             binding: 1,
             visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
-            buffer: {
-                type: 'read-only-storage',
-            },
+            buffer: { type: 'read-only-storage' },
         });
 
-        this._globalDataBindGroupLayout = webGPUContext.device.createBindGroupLayout({ entries });
-        return this._globalDataBindGroupLayout;
+        const layout = webGPUContext.device.createBindGroupLayout({ entries });
+        if (engine) engine[cacheKey] = layout;
+        return layout;
     }
 }

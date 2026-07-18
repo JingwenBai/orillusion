@@ -149,5 +149,23 @@ export class Context3D extends CEventDispatcher {
 
 /**
  * @internal
+ * Proxy that forwards all property accesses to the currently active Engine3D instance's context.
+ * Use Engine3D.init() to set up the active context.
  */
-export let webGPUContext = new Context3D();
+import { EngineRegistry } from '../../../core/EngineRegistry';
+
+export const webGPUContext: Context3D = new Proxy({} as Context3D, {
+    get(_target, prop: string | symbol) {
+        const ctx: Context3D | undefined = EngineRegistry.current?.context;
+        if (ctx) {
+            const val = (ctx as any)[prop];
+            return typeof val === 'function' ? val.bind(ctx) : val;
+        }
+        return undefined;
+    },
+    set(_target, prop: string | symbol, value: any) {
+        const ctx: Context3D | undefined = EngineRegistry.current?.context;
+        if (ctx) (ctx as any)[prop] = value;
+        return true;
+    }
+}) as Context3D;
