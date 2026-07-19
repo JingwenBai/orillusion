@@ -1,5 +1,6 @@
 
 import { RenderTexture } from "../../../textures/RenderTexture";
+import { Context3D } from "../../graphics/webGpu/Context3D";
 import { webGPUContext } from "../../graphics/webGpu/Context3D";
 import { GPUTextureFormat } from "../../graphics/webGpu/WebGPUConst";
 import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
@@ -11,8 +12,17 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    /**
+     * Per-Engine3D GBuffer frame registry.
+     * Returns the map owned by the currently-active (or default) Engine3D instance
+     * so that multiple engine instances each maintain their own GBuffer resources.
+     */
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        const E = _getEngine();
+        const inst = E?._current ?? E?._defaultInstance;
+        return inst?.gBufferFrameMap;
+    }
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -69,10 +79,16 @@ export class GBufferFrame extends RTFrame {
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        const map = GBufferFrame.gBufferMap;
+        if (!map) {
+            console.warn('GBufferFrame.getGBufferFrame called before Engine3D instance is available');
+            return null;
+        }
+        if (!map.has(key)) {
             gBuffer = new GBufferFrame();
-            let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
+            // Use the active canvas size when auto-sizing.
+            let ctx = Context3D.activeContext ?? webGPUContext;
+            let size = ctx.presentationSize;
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -81,9 +97,9 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            map.set(key, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = map.get(key);
         }
         return gBuffer;
     }
@@ -100,4 +116,13 @@ export class GBufferFrame extends RTFrame {
         this.clone2Frame(gBufferFrame);
         return gBufferFrame;
     }
+}
+
+/**
+ * Late-bound accessor — set by Engine3D at module initialization to avoid circular imports.
+ */
+let _engineRef: { _current: any; _defaultInstance: any } | null = null;
+function _getEngine() { return _engineRef; }
+export function _setEngineRef(ref: { _current: any; _defaultInstance: any }) {
+    _engineRef = ref;
 }

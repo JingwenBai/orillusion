@@ -1,7 +1,7 @@
 import { Camera3D } from "../../core/Camera3D";
 import { GeometryBase } from "../../core/geometry/GeometryBase";
 import { ProfilerUtil } from "../../util/ProfilerUtil";
-import { webGPUContext } from "../graphics/webGpu/Context3D";
+import { Context3D, webGPUContext } from "../graphics/webGpu/Context3D";
 import { GlobalBindGroup } from "../graphics/webGpu/core/bindGroups/GlobalBindGroup";
 import { Texture } from "../graphics/webGpu/core/texture/Texture";
 import { ComputeShader } from "../graphics/webGpu/shader/ComputeShader";
@@ -165,13 +165,16 @@ export class GPUContext {
             }
             return command.beginRenderPass(renderPassState.renderPassDescriptor);
         } else {
+            // Use the context of the currently-rendering Engine3D instance so that
+            // each instance writes to its own canvas instead of the default one.
+            let ctx = Context3D.activeContext ?? webGPUContext;
             let att0 = renderPassState.renderPassDescriptor.colorAttachments[0];
             if (att0) {
                 if (renderPassState.multisample > 0) {
                     att0.view = renderPassState.multiTexture.createView();
-                    att0.resolveTarget = webGPUContext.context.getCurrentTexture().createView();
+                    att0.resolveTarget = ctx.context.getCurrentTexture().createView();
                 } else {
-                    att0.view = webGPUContext.context.getCurrentTexture().createView();
+                    att0.view = ctx.context.getCurrentTexture().createView();
                 }
             }
             return command.beginRenderPass(renderPassState.renderPassDescriptor);
