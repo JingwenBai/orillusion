@@ -131,16 +131,26 @@ export class ComponentBase implements IComponent {
 
     public copyComponent(from: this): this { return this; }
 
+    /** Returns the per-engine ComponentCollect for this component, falling back to the static proxy. */
+    private get _collect(): ComponentCollect {
+        const engine = this.transform?.view3D?.engine;
+        return engine ? engine.componentCollect : null;
+    }
+
     /**
      * internal
      * Add update function. Will be executed at every frame update.
      * @param call callback
      */
     private _onUpdate(call: Function) {
-        if (call != null) {
-            ComponentCollect.bindUpdate(this.transform.view3D, this, call);
+        const collect = this._collect;
+        const view = this.transform.view3D;
+        if (collect) {
+            if (call != null) collect.bindUpdate(view, this, call);
+            else collect.unBindUpdate(view, this);
         } else {
-            ComponentCollect.unBindUpdate(this.transform.view3D, this);
+            if (call != null) ComponentCollect.bindUpdate(view, this, call);
+            else ComponentCollect.unBindUpdate(view, this);
         }
     }
 
@@ -149,10 +159,14 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onLateUpdate(call: Function) {
-        if (call != null) {
-            ComponentCollect.bindLateUpdate(this.transform.view3D, this, call);
+        const collect = this._collect;
+        const view = this.transform.view3D;
+        if (collect) {
+            if (call != null) collect.bindLateUpdate(view, this, call);
+            else collect.unBindLateUpdate(view, this);
         } else {
-            ComponentCollect.unBindLateUpdate(this.transform.view3D, this);
+            if (call != null) ComponentCollect.bindLateUpdate(view, this, call);
+            else ComponentCollect.unBindLateUpdate(view, this);
         }
     }
 
@@ -161,10 +175,14 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onBeforeUpdate(call: Function) {
-        if (call != null) {
-            ComponentCollect.bindBeforeUpdate(this.transform.view3D, this, call);
+        const collect = this._collect;
+        const view = this.transform.view3D;
+        if (collect) {
+            if (call != null) collect.bindBeforeUpdate(view, this, call);
+            else collect.unBindBeforeUpdate(view, this);
         } else {
-            ComponentCollect.unBindBeforeUpdate(this.transform.view3D, this);
+            if (call != null) ComponentCollect.bindBeforeUpdate(view, this, call);
+            else ComponentCollect.unBindBeforeUpdate(view, this);
         }
     }
 
@@ -174,10 +192,14 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onCompute(call: Function) {
-        if (call != null) {
-            ComponentCollect.bindCompute(this.transform.view3D, this, call);
+        const collect = this._collect;
+        const view = this.transform.view3D;
+        if (collect) {
+            if (call != null) collect.bindCompute(view, this, call);
+            else collect.unBindCompute(view, this);
         } else {
-            ComponentCollect.unBindCompute(this.transform.view3D, this);
+            if (call != null) ComponentCollect.bindCompute(view, this, call);
+            else ComponentCollect.unBindCompute(view, this);
         }
     }
 
@@ -186,10 +208,14 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onGraphic(call: Function) {
-        if (call != null) {
-            ComponentCollect.bindGraphic(this.transform.view3D, this, call);
+        const collect = this._collect;
+        const view = this.transform.view3D;
+        if (collect) {
+            if (call != null) collect.bindGraphic(view, this, call);
+            else collect.unBindGraphic(view, this);
         } else {
-            ComponentCollect.unBindGraphic(this.transform.view3D, this);
+            if (call != null) ComponentCollect.bindGraphic(view, this, call);
+            else ComponentCollect.unBindGraphic(view, this);
         }
     }
 

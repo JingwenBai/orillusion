@@ -1,5 +1,6 @@
 
 import { Engine3D } from '../../../Engine3D';
+import { getCurrentEngine } from '../../EngineContext';
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
 import { RenderNode } from '../../../components/renderer/RenderNode';
@@ -56,10 +57,15 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
+
+    /**
+     * Returns the EntityCollect for the current active engine.
+     * Falls back to a module-level singleton for backward compatibility.
+     */
+    public static get instance(): EntityCollect {
+        const engine = getCurrentEngine();
+        if (engine?.entityCollect) return engine.entityCollect;
+        if (!this._instance) this._instance = new EntityCollect();
         return this._instance;
     }
 

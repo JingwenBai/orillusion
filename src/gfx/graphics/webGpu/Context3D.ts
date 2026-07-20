@@ -130,6 +130,65 @@ export class Context3D extends CEventDispatcher {
         return true;
     }
 
+    /**
+     * Initialize this context reusing an already-created adapter/device.
+     * Used by additional Engine3D instances so they share the same GPU device
+     * while each having their own canvas surface.
+     */
+    async initWithSharedDevice(adapter: GPUAdapter, device: GPUDevice, canvasConfig?: CanvasConfig): Promise<boolean> {
+        this.adapter = adapter;
+        this.device = device;
+        this.canvasConfig = canvasConfig;
+
+        if (canvasConfig && canvasConfig.canvas) {
+            this.canvas = canvasConfig.canvas;
+            if (!this.canvas.style.width) this.canvas.style.width = this.canvas.width + 'px';
+            if (!this.canvas.style.height) this.canvas.style.height = this.canvas.height + 'px';
+        } else {
+            this.canvas = document.createElement('canvas');
+            this.canvas.style.position = 'absolute';
+            this.canvas.style.top = '0px';
+            this.canvas.style.left = '0px';
+            this.canvas.style.width = '100%';
+            this.canvas.style.height = '100%';
+            this.canvas.style.zIndex = canvasConfig?.zIndex ? canvasConfig.zIndex.toString() : '0';
+            document.body.appendChild(this.canvas);
+        }
+
+        if (canvasConfig && canvasConfig.backgroundImage) {
+            this.canvas.style.background = `url(${canvasConfig.backgroundImage})`;
+            this.canvas.style['background-size'] = 'cover';
+            this.canvas.style['background-position'] = 'center';
+        } else {
+            this.canvas.style.background = 'transparent';
+        }
+
+        this.canvas.style['touch-action'] = 'none';
+        this.canvas.style['object-fit'] = 'cover';
+
+        this._pixelRatio = canvasConfig?.devicePixelRatio || window.devicePixelRatio || 1;
+        this._pixelRatio = Math.min(this._pixelRatio, 2.0);
+
+        this.presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+        this.context = this.canvas.getContext('webgpu');
+        this.context.configure({
+            device: this.device,
+            format: this.presentationFormat,
+            usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+            alphaMode: 'premultiplied',
+            colorSpace: 'srgb',
+        });
+
+        this._resizeEvent = new CResizeEvent(CResizeEvent.RESIZE, { width: this.windowWidth, height: this.windowHeight });
+        const resizeObserver = new ResizeObserver(() => {
+            this.updateSize();
+            Texture.destroyTexture();
+        });
+        resizeObserver.observe(this.canvas);
+        this.updateSize();
+        return true;
+    }
+
     public updateSize() {
         let w = Math.floor(this.canvas.clientWidth * this.pixelRatio);
         let h = Math.floor(this.canvas.clientHeight * this.pixelRatio);
@@ -149,5 +208,13 @@ export class Context3D extends CEventDispatcher {
 
 /**
  * @internal
+ * Switch the active WebGPU context (called by each Engine3D instance before its render frame).
  */
-export let webGPUContext = new Context3D();
+export function setWebGPUContext(ctx: Context3D): void {
+    webGPUContext = ctx;
+}
+
+/**
+ * @internal
+ */
+export let webGPUContext: Context3D = new Context3D();

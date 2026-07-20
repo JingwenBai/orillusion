@@ -1,36 +1,51 @@
+import { getCurrentEngine } from '../gfx/EngineContext';
+
 /**
- * Tool of time
+ * Per-engine time state.
  * @group Util
  */
-export class Time {
-    /**
-     * The time the engine has been running
-     */
-    public static time: number = 0;
-    /**
-     * the frame count engine is running
-     */
-    public static frame: number = 0;
-    /**
-     * Time from previous frame to present
-     */
-    public static delta: number = 0;
+export class EngineTime {
+    public time: number = 0;
+    public frame: number = 0;
+    public delta: number = 0;
+    private _startTime: number = 0;
+    private _timeLabel: string = '';
 
-    private static _startTime: number = 0;
-    private static _timeLabel: string = ``;
-    /**
-     * @internal
-     * @param label
-     */
-    public static start(label: string) {
+    public start(label: string): void {
         this._startTime = performance.now();
         this._timeLabel = label;
     }
 
-    /**
-     * @internal
-     */
-    public static end() {
+    public end(): void {
+        console.log(this._timeLabel, performance.now() - this._startTime);
+    }
+}
+
+/**
+ * Tool of time — static proxy to the current engine's time instance.
+ * @group Util
+ */
+export class Time {
+    public static get time(): number { return getCurrentEngine()?.time?.time ?? 0; }
+    public static set time(v: number) { if (getCurrentEngine()?.time) getCurrentEngine().time.time = v; }
+
+    public static get frame(): number { return getCurrentEngine()?.time?.frame ?? 0; }
+    public static set frame(v: number) { if (getCurrentEngine()?.time) getCurrentEngine().time.frame = v; }
+
+    public static get delta(): number { return getCurrentEngine()?.time?.delta ?? 0; }
+    public static set delta(v: number) { if (getCurrentEngine()?.time) getCurrentEngine().time.delta = v; }
+
+    private static _startTime: number = 0;
+    private static _timeLabel: string = '';
+
+    /** @internal */
+    public static start(label: string): void {
+        this._startTime = performance.now();
+        this._timeLabel = label;
+    }
+
+    /** @internal */
+    public static end(): void {
         console.log(this._timeLabel, performance.now() - this._startTime);
     }
 }
