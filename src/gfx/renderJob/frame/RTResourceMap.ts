@@ -5,17 +5,26 @@ import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
 /**
+ * Per-engine render texture and view-quad registry.
+ *
+ * The static maps (rtTextureMap, rtViewQuad) are reassigned by Engine3D.activate()
+ * to point to the active instance's own maps before each render frame, enabling
+ * multiple Engine3D instances to maintain isolated sets of render textures.
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    public static rtTextureMap: Map<string, RenderTexture> = new Map();
+    public static rtViewQuad: Map<string, ViewQuad> = new Map();
 
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        // Maps are managed by the active Engine3D instance via Engine3D.activate().
+        // Calling init() simply clears the current active maps so they start fresh
+        // for this engine without reallocating (Engine3D sets the map references
+        // before calling init).
+        this.rtTextureMap.clear();
+        this.rtViewQuad.clear();
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
