@@ -4,22 +4,46 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+
+// Per-engine resource maps, activated by Engine3D._activate() before each render frame
+let _activeRTTextureMap: Map<string, RenderTexture> | null = null;
+let _activeRTViewQuadMap: Map<string, ViewQuad> | null = null;
+
+/**
+ * @internal
+ * Called by Engine3D to activate per-engine RT resource storage.
+ */
+export function setActiveRTMaps(
+    textureMap: Map<string, RenderTexture>,
+    viewQuadMap: Map<string, ViewQuad>
+): void {
+    _activeRTTextureMap = textureMap;
+    _activeRTViewQuadMap = viewQuadMap;
+}
+
 /**
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    private static _defaultRTTextureMap: Map<string, RenderTexture> = new Map();
+    private static _defaultRTViewQuadMap: Map<string, ViewQuad> = new Map();
+
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return _activeRTTextureMap ?? RTResourceMap._defaultRTTextureMap;
+    }
+
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return _activeRTViewQuadMap ?? RTResourceMap._defaultRTViewQuadMap;
+    }
 
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        // No-op: maps are now managed per-engine via setActiveRTMaps()
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        let rt: RenderTexture = RTResourceMap.rtTextureMap.get(name);
         if (!rt) {
             if (name == RTResourceConfig.colorBufferTex_NAME) {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, false);
@@ -33,7 +57,7 @@ export class RTResourceMap {
     }
 
     public static createRTTextureArray(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, length: number = 1, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        let rt: RenderTexture = RTResourceMap.rtTextureMap.get(name);
         if (!rt) {
             rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, length, sampleCount);
             rt.name = name;
@@ -55,7 +79,7 @@ export class RTResourceMap {
     }
 
     public static getTexture(name: string) {
-        return this.rtTextureMap.get(name);
+        return RTResourceMap.rtTextureMap.get(name);
     }
 
     public static CreateSplitTexture(id: string) {
