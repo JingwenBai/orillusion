@@ -25,7 +25,7 @@ export class Scene3D extends Object3D {
         this.skyObject = new Object3D();
         this.addChild(this.skyObject);
         this._isScene3D = true;
-        this.envMap ||= Engine3D.res.defaultSky;
+        this.envMap ||= Engine3D.res?.defaultSky;
     }
 
     /**

@@ -24,6 +24,7 @@ export class ShaderUtil {
     public static renderShader: Map<string, RenderShaderPass>;
 
     public static init() {
+        if (this.renderShaderModulePool) return; // already initialized; GPUShaderModules are tied to the shared GPUDevice
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
         this.renderShader = new Map<string, RenderShaderPass>();
     }

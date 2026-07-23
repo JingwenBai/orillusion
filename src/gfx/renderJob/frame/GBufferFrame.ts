@@ -11,8 +11,18 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
+
+    /**
+     * Active per-engine GBuffer map.
+     * Set by Engine3D before each frame so that static getGBufferFrame() calls
+     * automatically use the correct engine's GBuffers.
+     */
+    public static activeMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /**
+     * Legacy global GBuffer map (used when activeMap is not set or for non-engine contexts).
+     */
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -44,7 +54,6 @@ export class GBufferFrame extends RTFrame {
 
         let compressGBufferRTDes: RTDescriptor;
         compressGBufferRTDes = new RTDescriptor();
-
         reDescriptors.push(compressGBufferRTDes);
     }
 
@@ -66,13 +75,16 @@ export class GBufferFrame extends RTFrame {
 
     /**
      * @internal
+     * Look up or create a GBufferFrame by key.
+     * Uses GBufferFrame.activeMap (the per-engine map set by Engine3D before each frame).
+     * Falls back to the legacy static gBufferMap for contexts without an active engine.
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        const map = GBufferFrame.activeMap;
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!map.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -81,9 +93,9 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            map.set(key, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = map.get(key);
         }
         return gBuffer;
     }

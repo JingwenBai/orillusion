@@ -8,12 +8,16 @@ import { CanvasConfig } from './CanvasConfig';
  */
 export class Context3D extends CEventDispatcher {
 
-    public adapter: GPUAdapter;
-    public device: GPUDevice;
+    // --- Shared device-level state (one GPUDevice per application, shared across all Engine3D instances) ---
+    public static adapter: GPUAdapter;
+    public static device: GPUDevice;
+    public static presentationFormat: GPUTextureFormat;
+    private static _deviceInitialized: boolean = false;
+
+    // --- Per-instance canvas-level state ---
     public context: GPUCanvasContext;
     public aspect: number;
     public presentationSize: number[] = [0, 0];
-    public presentationFormat: GPUTextureFormat;
     public canvas: HTMLCanvasElement;
     public windowWidth: number;
     public windowHeight: number;
@@ -25,68 +29,38 @@ export class Context3D extends CEventDispatcher {
         return this._pixelRatio;
     }
 
+    // Convenience instance getters delegate to shared static state
+    public get device(): GPUDevice { return Context3D.device; }
+    public get adapter(): GPUAdapter { return Context3D.adapter; }
+
     /**
-     * Configure canvas by CanvasConfig
-     * @param canvasConfig
-     * @returns
+     * Configure canvas by CanvasConfig.
+     * The GPUDevice is initialized once (shared across all Engine3D instances);
+     * the canvas and swap-chain are per-instance.
      */
     async init(canvasConfig?: CanvasConfig): Promise<boolean> {
-        this.canvasConfig = canvasConfig;
-
-        if (canvasConfig && canvasConfig.canvas) {
-            this.canvas = canvasConfig.canvas;
-            if (this.canvas === null) {
-                throw new Error('no Canvas')
-            }
-
-            // check if external canvas has initial with and height style
-            // TODO: any way to check external css style?
-            if(!this.canvas.style.width)
-                this.canvas.style.width = this.canvas.width + 'px';
-            if(!this.canvas.style.height)
-                this.canvas.style.height = this.canvas.height + 'px';
-        } else {
-            this.canvas = document.createElement('canvas');
-            // this.canvas.style.position = 'fixed';
-            this.canvas.style.position = `absolute`;
-            this.canvas.style.top = '0px';
-            this.canvas.style.left = '0px';
-            this.canvas.style.width = '100%';
-            this.canvas.style.height = '100%';
-            this.canvas.style.zIndex = canvasConfig?.zIndex ? canvasConfig.zIndex.toString() : '0';
-            document.body.appendChild(this.canvas);
+        if (!Context3D._deviceInitialized) {
+            await Context3D._initDevice();
+            Context3D._deviceInitialized = true;
         }
+        await this._initCanvas(canvasConfig);
+        return true;
+    }
 
-        // set canvas bg
-        if (canvasConfig && canvasConfig.backgroundImage) {
-            this.canvas.style.background = `url(${canvasConfig.backgroundImage})`;
-            this.canvas.style['background-size'] = 'cover';
-            this.canvas.style['background-position'] = 'center';
-        } else {
-            this.canvas.style.background = 'transparent';
-        }
-
-        // prevent touch scroll
-        this.canvas.style['touch-action'] = 'none';
-        this.canvas.style['object-fit'] = 'cover';
-
-        // check webgpu support
+    private static async _initDevice(): Promise<void> {
         if (navigator.gpu === undefined) {
             throw new Error('Your browser does not support WebGPU!');
         }
 
-        // request adapter
-        this.adapter = await navigator.gpu.requestAdapter({
+        Context3D.adapter = await navigator.gpu.requestAdapter({
             powerPreference: 'high-performance',
-            // powerPreference: 'low-power',
         });
 
-        if (this.adapter == null) {
+        if (Context3D.adapter == null) {
             throw new Error('Your browser does not support WebGPU!');
         }
 
-        // request device
-        this.device = await this.adapter.requestDevice({
+        Context3D.device = await Context3D.adapter.requestDevice({
             requiredFeatures: [
                 "bgra8unorm-storage",
                 "depth-clip-control",
@@ -96,38 +70,73 @@ export class Context3D extends CEventDispatcher {
             ],
             requiredLimits: {
                 minUniformBufferOffsetAlignment: 256,
-                maxStorageBufferBindingSize: this.adapter.limits.maxStorageBufferBindingSize
+                maxStorageBufferBindingSize: Context3D.adapter.limits.maxStorageBufferBindingSize
             }
         });
 
-        if (this.device == null) {
+        if (Context3D.device == null) {
             throw new Error('Your browser does not support WebGPU!');
         }
+
+        Context3D.device.label = 'device';
+        Context3D.presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+    }
+
+    private async _initCanvas(canvasConfig?: CanvasConfig): Promise<void> {
+        this.canvasConfig = canvasConfig;
+
+        if (canvasConfig && canvasConfig.canvas) {
+            this.canvas = canvasConfig.canvas;
+            if (this.canvas === null) {
+                throw new Error('no Canvas');
+            }
+
+            if (!this.canvas.style.width)
+                this.canvas.style.width = this.canvas.width + 'px';
+            if (!this.canvas.style.height)
+                this.canvas.style.height = this.canvas.height + 'px';
+        } else {
+            this.canvas = document.createElement('canvas');
+            this.canvas.style.position = `absolute`;
+            this.canvas.style.top = '0px';
+            this.canvas.style.left = '0px';
+            this.canvas.style.width = '100%';
+            this.canvas.style.height = '100%';
+            this.canvas.style.zIndex = canvasConfig?.zIndex ? canvasConfig.zIndex.toString() : '0';
+            document.body.appendChild(this.canvas);
+        }
+
+        if (canvasConfig && canvasConfig.backgroundImage) {
+            this.canvas.style.background = `url(${canvasConfig.backgroundImage})`;
+            this.canvas.style['background-size'] = 'cover';
+            this.canvas.style['background-position'] = 'center';
+        } else {
+            this.canvas.style.background = 'transparent';
+        }
+
+        this.canvas.style['touch-action'] = 'none';
+        this.canvas.style['object-fit'] = 'cover';
 
         this._pixelRatio = this.canvasConfig?.devicePixelRatio || window.devicePixelRatio || 1;
         this._pixelRatio = Math.min(this._pixelRatio, 2.0);
 
-        // configure webgpu context
-        this.device.label = 'device';
-        this.presentationFormat = navigator.gpu.getPreferredCanvasFormat();
         this.context = this.canvas.getContext('webgpu');
         this.context.configure({
-            device: this.device,
-            format: this.presentationFormat,
+            device: Context3D.device,
+            format: Context3D.presentationFormat,
             usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
             alphaMode: 'premultiplied',
             colorSpace: `srgb`
         });
 
-        this._resizeEvent = new CResizeEvent(CResizeEvent.RESIZE, { width: this.windowWidth, height: this.windowHeight })
+        this._resizeEvent = new CResizeEvent(CResizeEvent.RESIZE, { width: this.windowWidth, height: this.windowHeight });
         const resizeObserver = new ResizeObserver(() => {
-            this.updateSize()
-            Texture.destroyTexture()
+            this.updateSize();
+            Texture.destroyTexture();
         });
 
         resizeObserver.observe(this.canvas);
         this.updateSize();
-        return true;
     }
 
     public updateSize() {
@@ -149,5 +158,18 @@ export class Context3D extends CEventDispatcher {
 
 /**
  * @internal
+ * Points to the currently-active engine's Context3D.
+ * Updated by Engine3D before each render frame via setActiveWebGPUContext().
+ * All code that imports webGPUContext sees the live binding (ES module semantics),
+ * so it automatically refers to the correct engine's canvas/swap-chain.
  */
-export let webGPUContext = new Context3D();
+export let webGPUContext: Context3D = new Context3D();
+
+/**
+ * @internal
+ * Switch which engine's canvas is the active render target.
+ * Called by Engine3D at the start of every render frame.
+ */
+export function setActiveWebGPUContext(ctx: Context3D): void {
+    webGPUContext = ctx;
+}
