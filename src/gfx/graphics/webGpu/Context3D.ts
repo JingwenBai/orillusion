@@ -18,6 +18,8 @@ export class Context3D extends CEventDispatcher {
     public windowWidth: number;
     public windowHeight: number;
     public canvasConfig: CanvasConfig;
+    /** @internal Textures queued for deferred destruction on next resize */
+    public pendingDestroyTextures: GPUTexture[] = [];
     private _pixelRatio: number = 1.0;
     private _resizeEvent: CEvent;
 
@@ -121,13 +123,19 @@ export class Context3D extends CEventDispatcher {
 
         this._resizeEvent = new CResizeEvent(CResizeEvent.RESIZE, { width: this.windowWidth, height: this.windowHeight })
         const resizeObserver = new ResizeObserver(() => {
-            this.updateSize()
-            Texture.destroyTexture()
+            this.updateSize();
+            this._destroyPendingTextures();
         });
 
         resizeObserver.observe(this.canvas);
         this.updateSize();
         return true;
+    }
+
+    private _destroyPendingTextures(): void {
+        while (this.pendingDestroyTextures.length > 0) {
+            this.pendingDestroyTextures.shift().destroy();
+        }
     }
 
     public updateSize() {
@@ -150,4 +158,12 @@ export class Context3D extends CEventDispatcher {
 /**
  * @internal
  */
-export let webGPUContext = new Context3D();
+export let webGPUContext: Context3D;
+
+/**
+ * Set the globally active WebGPU context. Called by Engine3D.activate() before each frame.
+ * @internal
+ */
+export function setWebGPUContext(ctx: Context3D): void {
+    webGPUContext = ctx;
+}

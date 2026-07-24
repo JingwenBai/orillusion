@@ -545,17 +545,17 @@ export class Texture implements GPUSamplerDescriptor {
         }
     }
 
-    private static _texs: GPUTexture[] = [];
     public static delayDestroyTexture(tex: GPUTexture) {
-        if (!this._texs.includes(tex)) {
-            this._texs.push(tex);
+        if (webGPUContext && !webGPUContext.pendingDestroyTextures.includes(tex)) {
+            webGPUContext.pendingDestroyTextures.push(tex);
         }
     }
 
+    /** @deprecated Use context.pendingDestroyTextures via resize observer instead */
     public static destroyTexture() {
-        if (this._texs.length > 0) {
-            while (this._texs.length > 0) {
-                this._texs.shift().destroy();
+        if (webGPUContext) {
+            while (webGPUContext.pendingDestroyTextures.length > 0) {
+                webGPUContext.pendingDestroyTextures.shift().destroy();
             }
         }
     }

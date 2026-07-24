@@ -12,32 +12,55 @@ import { RendererPassState } from "./passRenderer/state/RendererPassState";
  * WebGPU api use context
  */
 export class GPUContext {
-    public static lastGeometry: GeometryBase;
-    public static lastPipeline: GPURenderPipeline;
-    public static lastShader: RenderShaderPass;
-    public static drawCount: number = 0;
-    public static renderPassCount: number = 0;
-    public static geometryCount: number = 0;
-    public static pipelineCount: number = 0;
-    public static matrixCount: number = 0;
-    public static lastRenderPassState: RendererPassState;
-    public static LastCommand: GPUCommandEncoder;
+    public lastGeometry: GeometryBase;
+    public lastPipeline: GPURenderPipeline;
+    public lastShader: RenderShaderPass;
+    public drawCount: number = 0;
+    public renderPassCount: number = 0;
+    public geometryCount: number = 0;
+    public pipelineCount: number = 0;
+    public matrixCount: number = 0;
+    public lastRenderPassState: RendererPassState;
+    public LastCommand: GPUCommandEncoder;
+
+    private static _active: GPUContext = new GPUContext();
+
+    public static activate(instance: GPUContext): void {
+        GPUContext._active = instance;
+    }
+
+    /** Static accessor for lastRenderPassState (used by post-processing passes) */
+    public static get lastRenderPassState(): RendererPassState {
+        return GPUContext._active.lastRenderPassState;
+    }
+    public static set lastRenderPassState(v: RendererPassState) {
+        GPUContext._active.lastRenderPassState = v;
+    }
+
+    /** Static accessor for drawCount (used by profiling) */
+    public static get drawCount(): number {
+        return GPUContext._active.drawCount;
+    }
+    public static set drawCount(v: number) {
+        GPUContext._active.drawCount = v;
+    }
 
     /**
      * renderPipeline before render need bind pipeline
      * @param encoder current GPURenderPassEncoder {@link GPURenderPassEncoder } {@link GPURenderBundleEncoder }
      * @param renderShader render pass shader {@link RenderShaderPass }
-     * @returns 
+     * @returns
      */
     public static bindPipeline(encoder: GPURenderPassEncoder | GPURenderBundleEncoder, renderShader: RenderShaderPass) {
-        if (GPUContext.lastShader != renderShader) {
-            GPUContext.lastShader = renderShader;
+        const ctx = GPUContext._active;
+        if (ctx.lastShader != renderShader) {
+            ctx.lastShader = renderShader;
         } else {
             return false;
         }
 
-        if (GPUContext.lastPipeline != renderShader.pipeline) {
-            GPUContext.lastPipeline = renderShader.pipeline;
+        if (ctx.lastPipeline != renderShader.pipeline) {
+            ctx.lastPipeline = renderShader.pipeline;
             encoder.setPipeline(renderShader.pipeline);
         }
 
@@ -51,7 +74,7 @@ export class GPUContext {
     }
 
     /**
-     * render before need make sure use camera 
+     * render before need make sure use camera
      * @param encoder current GPURenderPassEncoder {@link GPURenderPassEncoder } {@link GPURenderBundleEncoder }
      * @param camera use camera {@link Camera3D}
      */
@@ -61,15 +84,16 @@ export class GPUContext {
     }
 
     /**
-     * bind geometry vertex buffer to current render pipeline 
+     * bind geometry vertex buffer to current render pipeline
      * @param encoder current GPURenderPassEncoder {@link GPURenderPassEncoder } {@link GPURenderBundleEncoder }
-     * @param geometry engine geometry 
-     * @param offset geometry buffer bytes offset 
+     * @param geometry engine geometry
+     * @param offset geometry buffer bytes offset
      * @param size geometry buffer bytes length
      */
     public static bindGeometryBuffer(encoder: GPURenderPassEncoder | GPURenderBundleEncoder, geometry: GeometryBase) {
-        if (this.lastGeometry != geometry) {
-            this.lastGeometry = geometry;
+        const ctx = GPUContext._active;
+        if (ctx.lastGeometry != geometry) {
+            ctx.lastGeometry = geometry;
 
             if (geometry.indicesBuffer)
                 encoder.setIndexBuffer(geometry.indicesBuffer.indicesGPUBuffer.buffer, geometry.indicesBuffer.indicesFormat);
@@ -87,15 +111,16 @@ export class GPUContext {
      * begin or end clean all use cache
      */
     public static cleanCache() {
-        this.lastGeometry = null;
-        this.lastPipeline = null;
-        this.lastShader = null;
+        const ctx = GPUContext._active;
+        ctx.lastGeometry = null;
+        ctx.lastPipeline = null;
+        ctx.lastShader = null;
     }
 
     /**
      * create a render pipeline
      * @param gpuRenderPipeline {@link GPURenderPipelineDescriptor}
-     * @returns 
+     * @returns
      */
     public static createPipeline(gpuRenderPipeline: GPURenderPipelineDescriptor) {
         ProfilerUtil.countStart("GPUContext", "pipeline");
@@ -104,16 +129,17 @@ export class GPUContext {
     }
 
     /**
-     * auto get webgpu commandEncoder and start a command encoder 
+     * auto get webgpu commandEncoder and start a command encoder
      * @returns commandEncoder {@link GPUCommandEncoder}
      */
     public static beginCommandEncoder(): GPUCommandEncoder {
         ProfilerUtil.countStart("GPUContext", "beginCommandEncoder");
-        if (this.LastCommand) {
-            webGPUContext.device.queue.submit([this.LastCommand.finish()]);
+        const ctx = GPUContext._active;
+        if (ctx.LastCommand) {
+            webGPUContext.device.queue.submit([ctx.LastCommand.finish()]);
         }
-        this.LastCommand = webGPUContext.device.createCommandEncoder();
-        return this.LastCommand;
+        ctx.LastCommand = webGPUContext.device.createCommandEncoder();
+        return ctx.LastCommand;
     }
 
     /**
@@ -121,15 +147,16 @@ export class GPUContext {
      * @param command {@link GPUCommandEncoder}
      */
     public static endCommandEncoder(command: GPUCommandEncoder) {
-        if (this.LastCommand == command) {
-            webGPUContext.device.queue.submit([this.LastCommand.finish()]);
-            this.LastCommand = null;
+        const ctx = GPUContext._active;
+        if (ctx.LastCommand == command) {
+            webGPUContext.device.queue.submit([ctx.LastCommand.finish()]);
+            ctx.LastCommand = null;
             ProfilerUtil.countStart("GPUContext", "endCommandEncoder");
         }
     }
 
     /**
-     * create a renderBundle gpu object by GPURenderBundleEncoderDescriptor 
+     * create a renderBundle gpu object by GPURenderBundleEncoderDescriptor
      * @param des {@link GPURenderBundleEncoderDescriptor}
      * @returns renderBundleEncoder {@link GPURenderBundleEncoder}
      */
@@ -145,9 +172,10 @@ export class GPUContext {
      * @returns encoder {@link GPURenderPassEncoder}
      */
     public static beginRenderPass(command: GPUCommandEncoder, renderPassState: RendererPassState): GPURenderPassEncoder {
-        this.cleanCache();
-        this.renderPassCount++;
-        this.lastRenderPassState = renderPassState;
+        GPUContext.cleanCache();
+        const ctx = GPUContext._active;
+        ctx.renderPassCount++;
+        ctx.lastRenderPassState = renderPassState;
         if (renderPassState.depthTexture) {
             let depth = renderPassState.renderPassDescriptor.depthStencilAttachment;
             depth.view = renderPassState.depthTexture.getGPUView() as any;
@@ -180,12 +208,6 @@ export class GPUContext {
 
     /**
      * Start the rendering process to draw any pipes
-     * @param encoder 
-     * @param indexCount 
-     * @param instanceCount 
-     * @param firstIndex 
-     * @param baseVertex 
-     * @param firstInstance 
      */
     public static drawIndexed(encoder: GPURenderPassEncoder, indexCount: GPUSize32,
         instanceCount?: GPUSize32,
@@ -193,7 +215,7 @@ export class GPUContext {
         baseVertex?: GPUSignedOffset32,
         firstInstance?: GPUSize32) {
         encoder.drawIndexed(indexCount, instanceCount, firstIndex, baseVertex, firstInstance);
-        this.drawCount++;
+        GPUContext._active.drawCount++;
     }
 
     public static draw(encoder: GPURenderPassEncoder, vertexCount: GPUSize32,
@@ -201,12 +223,12 @@ export class GPUContext {
         firstVertex?: GPUSize32,
         firstInstance?: GPUSize32) {
         encoder.draw(vertexCount, instanceCount, firstVertex, firstInstance);
-        this.drawCount++;
+        GPUContext._active.drawCount++;
     }
 
     /**
      * The GPU must be informed of the end of encoder recording
-     * @param encoder 
+     * @param encoder
      */
     public static endPass(encoder: GPURenderPassEncoder) {
         encoder.insertDebugMarker("end")
@@ -215,8 +237,8 @@ export class GPUContext {
 
     /**
      * Perform the final calculation and submit the Shader to the GPU
-     * @param command 
-     * @param computes 
+     * @param command
+     * @param computes
      */
     public static computeCommand(command: GPUCommandEncoder, computes: ComputeShader[]) {
         let computePass = command.beginComputePass();
