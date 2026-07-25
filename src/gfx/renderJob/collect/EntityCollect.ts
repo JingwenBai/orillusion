@@ -24,6 +24,8 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
+    /** @internal per-engine instance registry; static `instance` getter returns active engine's instance */
+    public static _activeInstance: EntityCollect;
     private static _instance: EntityCollect;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
@@ -57,6 +59,7 @@ export class EntityCollect {
 
     private rendererOctree: Octree;
     public static get instance() {
+        if (this._activeInstance) return this._activeInstance;
         if (!this._instance) {
             this._instance = new EntityCollect();
         }
