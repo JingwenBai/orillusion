@@ -18,6 +18,13 @@ export class View3D extends CEventListener {
     public guiPick: GUIPick;
     public readonly canvasList: GUICanvas[];
 
+    /**
+     * @internal
+     * The Engine3D instance that owns this view. Set by Engine3D.startRenderView().
+     * Typed as `any` to avoid a circular import with Engine3D.
+     */
+    public engine: any = null;
+
     constructor(x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
         super();
         this.canvasList = [];
