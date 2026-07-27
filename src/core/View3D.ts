@@ -9,6 +9,14 @@ import { Camera3D } from "./Camera3D";
 import { Scene3D } from "./Scene3D";
 
 export class View3D extends CEventListener {
+    /**
+     * The Engine3D instance that owns this view.
+     * Set automatically by Engine3D.startRenderView() / startRenderViews().
+     * Used by subsystems (ComponentCollect, ShadowLightsCollect, …) to route
+     * calls to the correct per-engine instance when multiple engines are active.
+     */
+    public engine: any = null;  // typed as `any` to avoid circular import; actual type is Engine3D
+
     private _camera: Camera3D;
     private _scene: Scene3D;
     private _viewPort: Vector4;
@@ -52,6 +60,8 @@ export class View3D extends CEventListener {
         this._scene = value;
         value.view = this;
 
+        // Resolve per-engine ShadowLightsCollect if engine is already attached to this view;
+        // otherwise fall back to the active-engine delegate (backward compat).
         ShadowLightsCollect.createBuffer(this);
 
         if (value) {

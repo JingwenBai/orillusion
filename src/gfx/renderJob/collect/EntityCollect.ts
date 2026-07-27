@@ -1,5 +1,4 @@
 
-import { Engine3D } from '../../../Engine3D';
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
 import { RenderNode } from '../../../components/renderer/RenderNode';
@@ -7,24 +6,25 @@ import { Camera3D } from '../../../core/Camera3D';
 import { Scene3D } from '../../../core/Scene3D';
 import { View3D } from '../../../core/View3D';
 import { BoundingBox } from '../../../core/bound/BoundingBox';
-import { GeometryBase } from '../../../core/geometry/GeometryBase';
 import { Octree } from '../../../core/tree/octree/Octree';
 import { Vector3 } from '../../../math/Vector3';
 import { zSorterUtil } from '../../../util/ZSorterUtil';
 import { RenderLayerUtil, RenderLayer } from '../config/RenderLayer';
 import { Probe } from '../passRenderer/ddgi/Probe';
-// import { Graphic3DBatchRenderer } from '../passRenderer/graphic/Graphic3DBatchRenderer';
 import { RendererMask } from '../passRenderer/state/RendererMask';
 import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
 import { RenderShaderCollect } from './RenderShaderCollect';
+import { engineRef } from '../../../EngineRef';
 
 /**
+ * Per-Engine3D render-node and light registry.
+ * Instantiated once per Engine3D; accessed via the static `instance` accessor
+ * which resolves to the currently active engine's instance.
  * @internal
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,11 +56,12 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
+    /**
+     * Returns the EntityCollect belonging to the currently active Engine3D instance.
+     * For multi-instance scenes use `view.engine.entityCollect` directly.
+     */
+    public static get instance(): EntityCollect {
+        return engineRef.active?.entityCollect;
     }
 
     constructor() {
@@ -136,7 +137,7 @@ export class EntityCollect {
             }
             map.get(root).push(renderNode);
 
-            if (Engine3D.setting.occlusionQuery.octree) {
+            if (engineRef.active?.setting?.occlusionQuery?.octree) {
                 renderNode.attachSceneOctree(this.getOctree(root));
             }
 
@@ -153,7 +154,7 @@ export class EntityCollect {
 
     private getOctree(root: Scene3D) {
         let octree: Octree;
-        let setting = Engine3D.setting.occlusionQuery.octree;
+        let setting = engineRef.active?.setting?.occlusionQuery?.octree;
         if (setting) {
             octree = this._octreeRenderNodes.get(root);
             if (!octree) {
@@ -199,8 +200,9 @@ export class EntityCollect {
             this._sceneLights.set(root, [light]);
         } else {
             let lights = this._sceneLights.get(root)
-            if (lights.length >= Engine3D.setting.light.maxLight) {
-                console.warn('Alreay meet maxmium light number:', Engine3D.setting.light.maxLight)
+            const maxLight = engineRef.active?.setting?.light?.maxLight ?? 4096;
+            if (lights.length >= maxLight) {
+                console.warn('Already met maximum light number:', maxLight)
                 return
             }
             let hasLight = lights.indexOf(light) != -1;
@@ -291,7 +293,7 @@ export class EntityCollect {
         this._collectInfo.clean();
         this._collectInfo.sky = this.sky;
 
-        if (Engine3D.setting.occlusionQuery.octree) {
+        if (engineRef.active?.setting?.occlusionQuery?.octree) {
             this.rendererOctree = this.getOctree(scene);
             this.rendererOctree.getRenderNode(camera.frustum, this._collectInfo);
         } else {

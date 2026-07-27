@@ -6,13 +6,19 @@ import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
+import { engineRef } from "../../../EngineRef";
 
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
+
+    /**
+     * Fallback map used only when no engine is active (should not happen in normal usage).
+     * Per-engine maps are stored on each Engine3D instance as `engine.gBufferMap`.
+     * @internal
+     */
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -42,10 +48,7 @@ export class GBufferFrame extends RTFrame {
             this.depthTexture.name = key + `_depthTexture`;
         }
 
-        let compressGBufferRTDes: RTDescriptor;
-        compressGBufferRTDes = new RTDescriptor();
-
-        reDescriptors.push(compressGBufferRTDes);
+        reDescriptors.push(new RTDescriptor());
     }
 
     public getPositionMap() {
@@ -64,30 +67,63 @@ export class GBufferFrame extends RTFrame {
         return this._compressGBufferTex;
     }
 
+    /** Resolve the per-engine gBufferMap from the active engine or fall back to the legacy static map. */
+    private static _activeMap(): Map<string, GBufferFrame> {
+        return engineRef.active?.gBufferMap ?? GBufferFrame.gBufferMap;
+    }
+
     /**
+     * Get or create a GBufferFrame by key.
+     * Uses the active Engine3D instance's per-engine map so that two engines
+     * can have independent G-buffers with the same logical key.
      * @internal
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        const map = this._activeMap();
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!map.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
-                fixedWidth == 0 ? size[0] : fixedWidth,
-                fixedHeight == 0 ? size[1] : fixedHeight,
-                fixedWidth != 0 && fixedHeight != 0,
+                fixedWidth === 0 ? size[0] : fixedWidth,
+                fixedHeight === 0 ? size[1] : fixedHeight,
+                fixedWidth !== 0 && fixedHeight !== 0,
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            map.set(key, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = map.get(key);
         }
         return gBuffer;
     }
 
+    /**
+     * Internal helper used by Engine3D.init() to pre-create a GBuffer into a
+     * specific engine's map without requiring an active engine to be set yet.
+     * @internal
+     */
+    public static _getGBufferFrame(engine: { gBufferMap: Map<string, GBufferFrame>; rtResourceMap: RTResourceMap }, key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        const map = engine.gBufferMap;
+        let gBuffer: GBufferFrame;
+        if (!map.has(key)) {
+            gBuffer = new GBufferFrame();
+            let size = webGPUContext.presentationSize;
+            gBuffer.createGBuffer(
+                key,
+                fixedWidth === 0 ? size[0] : fixedWidth,
+                fixedHeight === 0 ? size[1] : fixedHeight,
+                fixedWidth !== 0 && fixedHeight !== 0,
+                outColor,
+                depthTexture
+            );
+            map.set(key, gBuffer);
+        } else {
+            gBuffer = map.get(key);
+        }
+        return gBuffer;
+    }
 
     public static getGUIBufferFrame() {
         let colorRTFrame = this.getGBufferFrame(this.colorPass_GBuffer);
