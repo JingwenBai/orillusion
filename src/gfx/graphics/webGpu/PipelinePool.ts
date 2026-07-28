@@ -1,18 +1,21 @@
-import { PoolNode, RenderShaderPass } from "../../..";
+import { webGPUContext } from "./Context3D";
 
 export class PipelinePool {
-    private static pipelineMap: Map<string, GPURenderPipeline> = new Map<string, GPURenderPipeline>();
+    private static _deviceMap: Map<GPUDevice, Map<string, GPURenderPipeline>> = new Map();
 
-    public static getSharePipeline(shaderVariant: string) {
-        let pipeline = this.pipelineMap.get(shaderVariant);
-        if (pipeline) {
-            return pipeline;
-        } else {
-            return null;
+    private static _getPool(): Map<string, GPURenderPipeline> {
+        const device = webGPUContext.device;
+        if (!this._deviceMap.has(device)) {
+            this._deviceMap.set(device, new Map());
         }
+        return this._deviceMap.get(device);
     }
 
-    public static setSharePipeline(shaderVariant: string, pipeline: GPURenderPipeline) {
-        this.pipelineMap.set(shaderVariant, pipeline);
+    public static getSharePipeline(shaderVariant: string): GPURenderPipeline | null {
+        return this._getPool().get(shaderVariant) ?? null;
+    }
+
+    public static setSharePipeline(shaderVariant: string, pipeline: GPURenderPipeline): void {
+        this._getPool().set(shaderVariant, pipeline);
     }
 }

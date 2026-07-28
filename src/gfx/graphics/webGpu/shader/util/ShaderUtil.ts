@@ -1,3 +1,4 @@
+import { webGPUContext } from "../../Context3D";
 import { RenderShaderPass } from "../RenderShaderPass";
 
 export type VertexPart = {
@@ -20,11 +21,34 @@ export type FragmentPart = {
 }
 
 export class ShaderUtil {
-    public static renderShaderModulePool: Map<string, GPUShaderModule>;
-    public static renderShader: Map<string, RenderShaderPass>;
+    private static _modulePool: Map<GPUDevice, Map<string, GPUShaderModule>> = new Map();
+    private static _shaderPool: Map<GPUDevice, Map<string, RenderShaderPass>> = new Map();
+
+    public static get renderShaderModulePool(): Map<string, GPUShaderModule> {
+        const device = webGPUContext.device;
+        if (!this._modulePool.has(device)) {
+            this._modulePool.set(device, new Map());
+        }
+        return this._modulePool.get(device);
+    }
+
+    public static set renderShaderModulePool(map: Map<string, GPUShaderModule>) {
+        this._modulePool.set(webGPUContext.device, map);
+    }
+
+    public static get renderShader(): Map<string, RenderShaderPass> {
+        const device = webGPUContext.device;
+        if (!this._shaderPool.has(device)) {
+            this._shaderPool.set(device, new Map());
+        }
+        return this._shaderPool.get(device);
+    }
+
+    public static set renderShader(map: Map<string, RenderShaderPass>) {
+        this._shaderPool.set(webGPUContext.device, map);
+    }
 
     public static init() {
-        this.renderShaderModulePool = new Map<string, GPUShaderModule>();
-        this.renderShader = new Map<string, RenderShaderPass>();
+        // Pools are now lazily created per-device; this is intentionally a no-op.
     }
 }

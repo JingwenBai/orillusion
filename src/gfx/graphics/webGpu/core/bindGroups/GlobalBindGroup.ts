@@ -11,16 +11,24 @@ import { MatrixBindGroup } from "./MatrixBindGroup";
  * @group GFX
  */
 export class GlobalBindGroup {
-    private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
-    private static _lightEntriesMap: Map<Scene3D, LightEntries>;
-    private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
+    /** @internal */
+    public static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
+    /** @internal */
+    public static _lightEntriesMap: Map<Scene3D, LightEntries>;
+    /** @internal */
+    public static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
+        // modelMatrixBindGroup is per-engine (GPU buffer tied to one device).
+        // The camera/light/reflection maps are keyed by Camera3D/Scene3D and are
+        // shared safely across engines, so they are only created once.
         this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        if (!this._cameraBindGroups) {
+            this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
+            this._lightEntriesMap = new Map<Scene3D, LightEntries>();
+            this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        }
     }
 
     public static getAllCameraGroup() {

@@ -2,9 +2,13 @@ import { webGPUContext } from "../../Context3D";
 
 export class GlobalBindGroupLayout {
 
-    private static _globalDataBindGroupLayout: GPUBindGroupLayout;
+    private static _layoutMap: Map<GPUDevice, GPUBindGroupLayout> = new Map();
+
     public static getGlobalDataBindGroupLayout(): GPUBindGroupLayout {
-        if (this._globalDataBindGroupLayout) return this._globalDataBindGroupLayout;
+        const device = webGPUContext.device;
+        const cached = this._layoutMap.get(device);
+        if (cached) return cached;
+
         let entries: GPUBindGroupLayoutEntry[] = [];
         entries.push({
             binding: 0,
@@ -13,7 +17,6 @@ export class GlobalBindGroupLayout {
                 type: 'uniform',
             },
         });
-
         entries.push({
             binding: 1,
             visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE,
@@ -22,7 +25,8 @@ export class GlobalBindGroupLayout {
             },
         });
 
-        this._globalDataBindGroupLayout = webGPUContext.device.createBindGroupLayout({ entries });
-        return this._globalDataBindGroupLayout;
+        const layout = device.createBindGroupLayout({ entries });
+        this._layoutMap.set(device, layout);
+        return layout;
     }
 }
