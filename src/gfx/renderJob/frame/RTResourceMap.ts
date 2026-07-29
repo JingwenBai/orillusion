@@ -13,9 +13,14 @@ export class RTResourceMap {
     public static rtTextureMap: Map<string, RenderTexture>;
     public static rtViewQuad: Map<string, ViewQuad>;
 
+    /**
+     * Initialise with fresh empty maps.
+     * With multi-instance engines, Engine3D._activate() assigns per-engine maps
+     * to these fields before each frame, so explicit init() calls are not required.
+     */
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        if (!this.rtTextureMap) this.rtTextureMap = new Map<string, RenderTexture>();
+        if (!this.rtViewQuad) this.rtViewQuad = new Map<string, ViewQuad>();
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {

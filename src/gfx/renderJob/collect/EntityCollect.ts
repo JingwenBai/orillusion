@@ -24,6 +24,7 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
+    /** @internal - set by Engine3D._activate() before each render frame */
     private static _instance: EntityCollect;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
@@ -61,6 +62,15 @@ export class EntityCollect {
             this._instance = new EntityCollect();
         }
         return this._instance;
+    }
+
+    /**
+     * Override the active EntityCollect instance.
+     * Called by Engine3D._activate() so each engine instance uses its own collect.
+     * @internal
+     */
+    public static setInstance(collect: EntityCollect): void {
+        this._instance = collect;
     }
 
     constructor() {
