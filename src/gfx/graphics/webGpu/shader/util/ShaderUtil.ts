@@ -24,7 +24,19 @@ export class ShaderUtil {
     public static renderShader: Map<string, RenderShaderPass>;
 
     public static init() {
-        this.renderShaderModulePool = new Map<string, GPUShaderModule>();
-        this.renderShader = new Map<string, RenderShaderPass>();
+        const maps = this.createMaps();
+        this.setMaps(maps.renderShaderModulePool, maps.renderShader);
+    }
+
+    public static createMaps(): { renderShaderModulePool: Map<string, GPUShaderModule>; renderShader: Map<string, RenderShaderPass> } {
+        return {
+            renderShaderModulePool: new Map<string, GPUShaderModule>(),
+            renderShader: new Map<string, RenderShaderPass>(),
+        };
+    }
+
+    public static setMaps(renderShaderModulePool: Map<string, GPUShaderModule>, renderShader: Map<string, RenderShaderPass>): void {
+        ShaderUtil.renderShaderModulePool = renderShaderModulePool;
+        ShaderUtil.renderShader = renderShader;
     }
 }

@@ -63,6 +63,10 @@ export class EntityCollect {
         return this._instance;
     }
 
+    public static setInstance(inst: EntityCollect): void {
+        this._instance = inst;
+    }
+
     constructor() {
         // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
         this._sceneLights = new Map<Scene3D, ILight[]>();

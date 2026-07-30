@@ -12,7 +12,10 @@ export class GBufferFrame extends RTFrame {
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    public static setGBufferMap(map: Map<string, GBufferFrame>): void {
+        GBufferFrame.gBufferMap = map;
+    }
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;

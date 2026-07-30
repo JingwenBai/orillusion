@@ -15,4 +15,12 @@ export class PipelinePool {
     public static setSharePipeline(shaderVariant: string, pipeline: GPURenderPipeline) {
         this.pipelineMap.set(shaderVariant, pipeline);
     }
+
+    public static createPipelineMap(): Map<string, GPURenderPipeline> {
+        return new Map<string, GPURenderPipeline>();
+    }
+
+    public static setPipelineMap(map: Map<string, GPURenderPipeline>): void {
+        PipelinePool.pipelineMap = map;
+    }
 }

@@ -17,10 +17,34 @@ export class GlobalBindGroup {
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
-        this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        const state = this.createState();
+        this.setState(state);
+    }
+
+    public static createState(): {
+        modelMatrixBindGroup: MatrixBindGroup;
+        cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
+        lightEntriesMap: Map<Scene3D, LightEntries>;
+        reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
+    } {
+        return {
+            modelMatrixBindGroup: new MatrixBindGroup(),
+            cameraBindGroups: new Map<Camera3D, GlobalUniformGroup>(),
+            lightEntriesMap: new Map<Scene3D, LightEntries>(),
+            reflectionEntriesMap: new Map<Scene3D, ReflectionEntries>(),
+        };
+    }
+
+    public static setState(state: {
+        modelMatrixBindGroup: MatrixBindGroup;
+        cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
+        lightEntriesMap: Map<Scene3D, LightEntries>;
+        reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
+    }): void {
+        this.modelMatrixBindGroup = state.modelMatrixBindGroup;
+        this._cameraBindGroups = state.cameraBindGroups;
+        this._lightEntriesMap = state.lightEntriesMap;
+        this._reflectionEntriesMap = state.reflectionEntriesMap;
     }
 
     public static getAllCameraGroup() {
