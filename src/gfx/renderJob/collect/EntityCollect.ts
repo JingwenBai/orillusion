@@ -1,5 +1,5 @@
 
-import { Engine3D } from '../../../Engine3D';
+import { EngineSetting } from '../../../setting/EngineSetting';
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
 import { RenderNode } from '../../../components/renderer/RenderNode';
@@ -19,12 +19,19 @@ import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
 import { RenderShaderCollect } from './RenderShaderCollect';
 
+// Module-level active instance — set by Engine3D._activateSelf() before each frame.
+// Declared here (before the class) so the class's static getter can reference it.
+let _activeEntityCollect: EntityCollect = null;
+
 /**
+ * Per-engine entity and light collector. Each Engine3D instance creates one
+ * EntityCollect so that scenes, lights, and render nodes are isolated between
+ * concurrent engine instances.
  * @internal
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    private _setting: EngineSetting;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,14 +63,18 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
+
+    /**
+     * Returns the currently-active EntityCollect (the one belonging to the
+     * engine that is currently rendering). Preserved for backward compatibility
+     * with existing call sites that use `EntityCollect.instance.*`.
+     */
+    public static get instance(): EntityCollect {
+        return _activeEntityCollect;
     }
 
-    constructor() {
+    constructor(setting: EngineSetting) {
+        this._setting = setting;
         // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
         this._sceneLights = new Map<Scene3D, ILight[]>();
         this._sceneGIProbes = new Map<Scene3D, Probe[]>();
@@ -136,7 +147,7 @@ export class EntityCollect {
             }
             map.get(root).push(renderNode);
 
-            if (Engine3D.setting.occlusionQuery.octree) {
+            if (this._setting.occlusionQuery.octree) {
                 renderNode.attachSceneOctree(this.getOctree(root));
             }
 
@@ -153,7 +164,7 @@ export class EntityCollect {
 
     private getOctree(root: Scene3D) {
         let octree: Octree;
-        let setting = Engine3D.setting.occlusionQuery.octree;
+        let setting = this._setting.occlusionQuery.octree;
         if (setting) {
             octree = this._octreeRenderNodes.get(root);
             if (!octree) {
@@ -199,8 +210,8 @@ export class EntityCollect {
             this._sceneLights.set(root, [light]);
         } else {
             let lights = this._sceneLights.get(root)
-            if (lights.length >= Engine3D.setting.light.maxLight) {
-                console.warn('Alreay meet maxmium light number:', Engine3D.setting.light.maxLight)
+            if (lights.length >= this._setting.light.maxLight) {
+                console.warn('Alreay meet maxmium light number:', this._setting.light.maxLight)
                 return
             }
             let hasLight = lights.indexOf(light) != -1;
@@ -291,7 +302,7 @@ export class EntityCollect {
         this._collectInfo.clean();
         this._collectInfo.sky = this.sky;
 
-        if (Engine3D.setting.occlusionQuery.octree) {
+        if (this._setting.occlusionQuery.octree) {
             this.rendererOctree = this.getOctree(scene);
             this.rendererOctree.getRenderNode(camera.frustum, this._collectInfo);
         } else {
@@ -323,4 +334,13 @@ export class EntityCollect {
         let viewList = this._renderShaderCollect.renderShaderUpdateList.get(view);
         return viewList;
     }
+}
+
+/**
+ * Switch the active EntityCollect to the currently-rendering engine's instance.
+ * Called by Engine3D._activateSelf() at the start of each render frame.
+ * @internal
+ */
+export function setActiveEntityCollect(ec: EntityCollect): void {
+    _activeEntityCollect = ec;
 }
