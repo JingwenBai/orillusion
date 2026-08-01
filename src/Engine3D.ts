@@ -351,6 +351,7 @@ export class Engine3D {
     private _frameRateValue: number = 0;
     private _frameRate: number = 360;
     private _time: number = 0;
+    private _lastUpdateTime: number = 0;
     private _beforeRender: Function;
     private _renderLoop: Function;
     private _lateRender: Function;
@@ -544,7 +545,11 @@ export class Engine3D {
         EngineContext.id = this._id;
         this._syncWebGPUContext();
 
-        Time.delta = time - Time.time;
+        // Use per-engine last-update time so Time.delta is accurate when
+        // multiple Engine3D instances share the page (each engine maintains
+        // its own _lastUpdateTime independent of the others).
+        Time.delta = this._lastUpdateTime > 0 ? time - this._lastUpdateTime : 0;
+        this._lastUpdateTime = time;
         Time.time = time;
         Time.frame += 1;
         Interpolator.tick(Time.delta);
@@ -561,53 +566,43 @@ export class Engine3D {
         if (this._beforeRender)
             await this._beforeRender();
 
-        for (const iterator of ComponentCollect.componentsBeforeUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
+        // Only iterate views owned by THIS engine instance to avoid cross-engine
+        // contamination when multiple Engine3D instances run on the same page.
+        for (const view of views) {
+            const comps = ComponentCollect.componentsBeforeUpdateList.get(view);
+            if (comps) {
+                for (const [comp, call] of comps) {
+                    if (comp.enable) call(view);
                 }
             }
         }
 
         let command = webGPUContext.device.createCommandEncoder();
-        for (const iterator of ComponentCollect.componentsComputeList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k, command);
+        for (const view of views) {
+            const comps = ComponentCollect.componentsComputeList.get(view);
+            if (comps) {
+                for (const [comp, call] of comps) {
+                    if (comp.enable) call(view, command);
                 }
             }
         }
 
         webGPUContext.device.queue.submit([command.finish()]);
 
-        for (const iterator of ComponentCollect.componentsUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
+        for (const view of views) {
+            const comps = ComponentCollect.componentsUpdateList.get(view);
+            if (comps) {
+                for (const [comp, call] of comps) {
+                    if (comp.enable) call(view);
                 }
             }
         }
 
-        for (const iterator of ComponentCollect.graphicComponent) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (k && f.enable) {
-                    c(k);
+        for (const view of views) {
+            const comps = ComponentCollect.graphicComponent.get(view);
+            if (comps) {
+                for (const [comp, call] of comps) {
+                    if (view && comp.enable) call(view);
                 }
             }
         }
@@ -627,14 +622,11 @@ export class Engine3D {
             v.renderFrame();
         });
 
-        for (const iterator of ComponentCollect.componentsLateUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
+        for (const view of views) {
+            const comps = ComponentCollect.componentsLateUpdateList.get(view);
+            if (comps) {
+                for (const [comp, call] of comps) {
+                    if (comp.enable) call(view);
                 }
             }
         }
@@ -655,6 +647,32 @@ export class Engine3D {
         webGPUContext.windowWidth = this._context.windowWidth;
         webGPUContext.windowHeight = this._context.windowHeight;
         webGPUContext.aspect = this._context.aspect;
+    }
+
+    // =====================================================================
+    //  Cleanup
+    // =====================================================================
+
+    /**
+     * Stop this engine and release all per-engine resources.
+     * Cleans up `ComponentCollect` entries so that a destroyed engine's views
+     * are no longer updated by any remaining active engine.
+     */
+    public destroy() {
+        this.pause();
+        for (const view of this.views ?? []) {
+            ComponentCollect.componentsUpdateList?.delete(view);
+            ComponentCollect.componentsLateUpdateList?.delete(view);
+            ComponentCollect.componentsBeforeUpdateList?.delete(view);
+            ComponentCollect.componentsComputeList?.delete(view);
+            ComponentCollect.componentsEnablePickerList?.delete(view);
+            ComponentCollect.graphicComponent?.delete(view);
+        }
+        this.renderJobs?.clear();
+        this.views = [];
+        if (Engine3D.current === this) {
+            Engine3D.current = null;
+        }
     }
 
     // =====================================================================
@@ -694,5 +712,10 @@ export class Engine3D {
     /** @deprecated Use instance method on Engine3D.current. */
     public static resume() {
         Engine3D.current?.resume();
+    }
+
+    /** @deprecated Use instance method on Engine3D.current. */
+    public static destroy() {
+        Engine3D.current?.destroy();
     }
 }
