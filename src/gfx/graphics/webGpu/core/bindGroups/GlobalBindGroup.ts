@@ -17,6 +17,11 @@ export class GlobalBindGroup {
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
+        // Guard: skip re-initialization when a second Engine3D instance starts.
+        // Camera/light/reflection maps are keyed by JS object references (Camera3D,
+        // Scene3D) so they are already safe to share across multiple engines; only
+        // modelMatrixBindGroup must be created once for the shared WASM matrix buffer.
+        if (this.modelMatrixBindGroup) return;
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();

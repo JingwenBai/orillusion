@@ -24,6 +24,9 @@ export class ShaderUtil {
     public static renderShader: Map<string, RenderShaderPass>;
 
     public static init() {
+        // Guard: GPUShaderModule objects are tied to the shared GPUDevice so they
+        // are valid for all Engine3D instances. Skip re-creation on subsequent inits.
+        if (this.renderShaderModulePool) return;
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
         this.renderShader = new Map<string, RenderShaderPass>();
     }

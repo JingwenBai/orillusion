@@ -11,7 +11,31 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
+
+    /**
+     * Global fallback GBuffer map – used when no per-engine map is active.
+     * For single-engine projects this continues to hold all GBuffer frames.
+     */
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /** The GBuffer map belonging to the currently rendering Engine3D instance. */
+    private static _currentMap: Map<string, GBufferFrame> | null = null;
+
+    /**
+     * Set the active GBuffer map for the engine that is about to render.
+     * Called by Engine3D before each frame so that GBuffer lookups are scoped
+     * to the correct engine instance.
+     * @internal
+     */
+    public static setActiveMap(map: Map<string, GBufferFrame>): void {
+        GBufferFrame._currentMap = map;
+    }
+
+    /** Returns the map that is in scope for the currently rendering engine. */
+    private static get _activeMap(): Map<string, GBufferFrame> {
+        return GBufferFrame._currentMap ?? GBufferFrame.gBufferMap;
+    }
+
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
@@ -68,8 +92,9 @@ export class GBufferFrame extends RTFrame {
      * @internal
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        const map = GBufferFrame._activeMap;
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!map.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
             // gBuffer.createGBuffer(key, size[0], size[1]);
@@ -81,9 +106,9 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            map.set(key, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = map.get(key);
         }
         return gBuffer;
     }
