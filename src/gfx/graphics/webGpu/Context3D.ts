@@ -150,4 +150,15 @@ export class Context3D extends CEventDispatcher {
 /**
  * @internal
  */
-export let webGPUContext = new Context3D();
+/** Module-level reference to the primary (first-initialised) engine's GPU context.
+ *  All code that only needs `webGPUContext.device` / `webGPUContext.adapter` is safe to
+ *  use this reference because the GPU device is shared across every Engine3D instance.
+ *  Code that needs the per-canvas swap-chain texture or canvas dimensions should use the
+ *  `Context3D` instance held on `Engine3D.context` (or `view.engine.context`).
+ */
+export let webGPUContext: Context3D = null;
+
+/** Called by the first Engine3D instance during init() to publish the shared device. */
+export function setWebGPUContext(ctx: Context3D): void {
+    webGPUContext = ctx;
+}

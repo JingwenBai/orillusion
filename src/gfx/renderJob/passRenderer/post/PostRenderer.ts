@@ -73,6 +73,8 @@ export class PostRenderer extends RendererBase {
     }
 
     public presentContent(view: View3D, texture: Texture) {
+        // Route the final blit to the correct per-engine swap-chain canvas.
+        this.finalQuadView.rendererPassState.canvasContext = view.engine?.context ?? null;
         let command = GPUContext.beginCommandEncoder();
         this.finalQuadView.renderToViewQuad(view, this.finalQuadView, command, texture);
         GPUContext.endCommandEncoder(command);

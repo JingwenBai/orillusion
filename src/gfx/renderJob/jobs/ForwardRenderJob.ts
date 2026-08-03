@@ -26,17 +26,22 @@ export class ForwardRenderJob extends RendererJob {
 
     public start(): void {
         super.start();
+        const engine = this._view.engine;
+        const engineSetting = engine?.setting ?? Engine3D.setting;
+        const engineId = engine?.id ?? '';
+        const [w, h] = engine?.context.presentationSize ?? webGPUContext.presentationSize;
+
         {
             let colorPassRenderer = new ColorPassRenderer();
-            let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+            let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer, w, h, true, undefined, engineId);
 
-            if (Engine3D.setting.render.zPrePass) {
+            if (engineSetting.render.zPrePass) {
                 rtFrame.zPreTexture = this.depthPassRenderer.rendererPassState.depthTexture;
             }
 
             colorPassRenderer.setRenderStates(rtFrame);
 
-            if (Engine3D.setting.gi.enable) {
+            if (engineSetting.gi.enable) {
                 let lightEntries = GlobalBindGroup.getLightEntries(this.view.scene);
                 this.ddgiProbeRenderer = new DDGIProbeRenderer(lightEntries.irradianceVolume);
                 this.ddgiProbeRenderer.setInputTexture([
@@ -51,13 +56,13 @@ export class ForwardRenderJob extends RendererJob {
         }
 
         {
-            let guiFrame = GBufferFrame.getGUIBufferFrame();
+            let guiFrame = GBufferFrame.getGUIBufferFrame(engineId);
             let guiPassRenderer = new GUIPassRenderer();
             guiPassRenderer.setRenderStates(guiFrame);
             this.rendererMap.addRenderer(guiPassRenderer);
         }
 
-        if (Engine3D.setting.render.debug) {
+        if (engineSetting.render.debug) {
             this.debug();
         }
     }

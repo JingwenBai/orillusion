@@ -1,5 +1,6 @@
 import { Engine3D } from "../../../../Engine3D";
 import { Camera3D } from "../../../../core/Camera3D";
+import type { Context3D } from '../../../graphics/webGpu/Context3D';
 
 import { RenderTexture } from "../../../../textures/RenderTexture";
 import { Texture } from "../../../graphics/webGpu/core/texture/Texture";
@@ -30,6 +31,8 @@ export class RendererPassState {
     public renderPassDescriptor: GPURenderPassDescriptor;
     public renderBundleEncoderDescriptor: GPURenderBundleEncoderDescriptor;
     public depthLoadOp: GPULoadOp;
+    /** Per-engine canvas context; when set, used instead of the global webGPUContext for swap-chain texture access. */
+    public canvasContext: Context3D = null;
 
     getLastRenderTexture() {
         if (this.renderTargets) {

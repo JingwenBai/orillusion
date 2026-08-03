@@ -167,11 +167,12 @@ export class GPUContext {
         } else {
             let att0 = renderPassState.renderPassDescriptor.colorAttachments[0];
             if (att0) {
+                const canvasCtx = renderPassState.canvasContext ?? webGPUContext;
                 if (renderPassState.multisample > 0) {
                     att0.view = renderPassState.multiTexture.createView();
-                    att0.resolveTarget = webGPUContext.context.getCurrentTexture().createView();
+                    att0.resolveTarget = canvasCtx.context.getCurrentTexture().createView();
                 } else {
-                    att0.view = webGPUContext.context.getCurrentTexture().createView();
+                    att0.view = canvasCtx.context.getCurrentTexture().createView();
                 }
             }
             return command.beginRenderPass(renderPassState.renderPassDescriptor);

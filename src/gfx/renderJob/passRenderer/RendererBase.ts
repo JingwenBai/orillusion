@@ -201,7 +201,8 @@ export class RendererBase extends CEventDispatcher {
 
     protected drawRenderNodes(view: View3D, encoder: GPURenderPassEncoder, command: GPUCommandEncoder, nodes: RenderNode[], occlusionSystem: OcclusionSystem, clusterLightingBuffer?: ClusterLightingBuffer) {
         GPUContext.bindCamera(encoder, view.camera);
-        for (let i = Engine3D.setting.render.drawOpMin; i < Math.min(nodes.length, Engine3D.setting.render.drawOpMax); ++i) {
+        const renderSetting = (view.engine?.setting ?? Engine3D.setting).render;
+        for (let i = renderSetting.drawOpMin; i < Math.min(nodes.length, renderSetting.drawOpMax); ++i) {
             let renderNode = nodes[i];
             // if (!occlusionSystem.renderCommitTesting(view.camera, renderNode))
             //     continue;

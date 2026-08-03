@@ -66,32 +66,33 @@ export class GBufferFrame extends RTFrame {
 
     /**
      * @internal
+     * @param engineId Optional engine ID prefix to namespace per-engine GBuffer entries.
      */
-    public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+    public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture, engineId: string = ''): GBufferFrame {
+        let scopedKey = engineId ? engineId + '_' + key : key;
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!GBufferFrame.gBufferMap.has(scopedKey)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
-                key,
+                scopedKey,
                 fixedWidth == 0 ? size[0] : fixedWidth,
                 fixedHeight == 0 ? size[1] : fixedHeight,
                 fixedWidth != 0 && fixedHeight != 0,
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            GBufferFrame.gBufferMap.set(scopedKey, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = GBufferFrame.gBufferMap.get(scopedKey);
         }
         return gBuffer;
     }
 
 
-    public static getGUIBufferFrame() {
-        let colorRTFrame = this.getGBufferFrame(this.colorPass_GBuffer);
-        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.gui_GBuffer, 0, 0, true, colorRTFrame.depthTexture);
+    public static getGUIBufferFrame(engineId: string = '') {
+        let colorRTFrame = this.getGBufferFrame(this.colorPass_GBuffer, 0, 0, true, undefined, engineId);
+        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.gui_GBuffer, 0, 0, true, colorRTFrame.depthTexture, engineId);
         return rtFrame;
     }
 

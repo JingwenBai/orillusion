@@ -104,7 +104,7 @@ export class RendererJob {
 
         this.reflectionRenderer = this.addRenderer(ReflectionRenderer, view);
 
-        if (Engine3D.setting.render.zPrePass) {
+        if ((view.engine?.setting ?? Engine3D.setting).render.zPrePass) {
             this.depthPassRenderer = this.addRenderer(PreDepthPassRenderer);
         }
 
@@ -173,7 +173,8 @@ export class RendererJob {
      */
     public addPost(post: PostBase): PostBase | PostBase[] {
         if (!this.postRenderer) {
-            let gbufferFrame = GBufferFrame.getGBufferFrame('ColorPassGBuffer');
+            let engineId = this._view.engine?.id ?? '';
+            let gbufferFrame = GBufferFrame.getGBufferFrame('ColorPassGBuffer', 0, 0, true, undefined, engineId);
             this.postRenderer = this.addRenderer(PostRenderer);
             this.postRenderer.setRenderStates(gbufferFrame);
         }
@@ -226,7 +227,7 @@ export class RendererJob {
             this.depthPassRenderer.render(view, this.occlusionSystem);
         }
 
-        if (Engine3D.setting.gi.enable && this.ddgiProbeRenderer) {
+        if ((this._view.engine?.setting ?? Engine3D.setting).gi.enable && this.ddgiProbeRenderer) {
             this.ddgiProbeRenderer.compute(view, this.occlusionSystem);
             this.ddgiProbeRenderer.render(view, this.occlusionSystem);
         }
@@ -247,7 +248,8 @@ export class RendererJob {
         guiRenderer.render(view, this.occlusionSystem, this.clusterLightingRender.clusterLightingBuffer, false);
 
         //output
-        let lastTexture = GBufferFrame.getGUIBufferFrame().getColorTexture();
+        let engineId = this._view.engine?.id ?? '';
+        let lastTexture = GBufferFrame.getGUIBufferFrame(engineId).getColorTexture();
         this.postRenderer.presentContent(view, lastTexture);
     }
 
