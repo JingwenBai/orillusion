@@ -20,11 +20,28 @@ export type FragmentPart = {
 }
 
 export class ShaderUtil {
+    /** Active instance module pool — set by EngineContext.activate() */
     public static renderShaderModulePool: Map<string, GPUShaderModule>;
+    /** Active instance shader map — set by EngineContext.activate() */
     public static renderShader: Map<string, RenderShaderPass>;
 
+    // Per-instance maps
+    public instanceModulePool: Map<string, GPUShaderModule> = new Map();
+    public instanceShader: Map<string, RenderShaderPass> = new Map();
+
+    private static _active: ShaderUtil;
+
+    public static setActive(instance: ShaderUtil) {
+        this._active = instance;
+        this.renderShaderModulePool = instance.instanceModulePool;
+        this.renderShader = instance.instanceShader;
+    }
+
+    /** @deprecated Use EngineContext.activate() instead */
     public static init() {
-        this.renderShaderModulePool = new Map<string, GPUShaderModule>();
-        this.renderShader = new Map<string, RenderShaderPass>();
+        if (!this._active) {
+            const inst = new ShaderUtil();
+            this.setActive(inst);
+        }
     }
 }

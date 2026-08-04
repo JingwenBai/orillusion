@@ -2,8 +2,19 @@ import { webGPUContext } from "../../Context3D";
 
 export class GlobalBindGroupLayout {
 
-    private static _globalDataBindGroupLayout: GPUBindGroupLayout;
+    private _globalDataBindGroupLayout: GPUBindGroupLayout;
+
+    private static _active: GlobalBindGroupLayout;
+
+    public static setActive(instance: GlobalBindGroupLayout) {
+        this._active = instance;
+    }
+
     public static getGlobalDataBindGroupLayout(): GPUBindGroupLayout {
+        return this._active._getGlobalDataBindGroupLayout();
+    }
+
+    private _getGlobalDataBindGroupLayout(): GPUBindGroupLayout {
         if (this._globalDataBindGroupLayout) return this._globalDataBindGroupLayout;
         let entries: GPUBindGroupLayoutEntry[] = [];
         entries.push({
