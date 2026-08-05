@@ -19,6 +19,9 @@ export class ShadowLightsCollect {
     public static shadowLights: Map<Scene3D, Float32Array>;
 
     public static init() {
+        // Guard: Maps are keyed by Scene3D object identity, so different engine
+        // instances with different scenes never collide — initialise once.
+        if (this.directionLightList) return;
         this.directionLightList = new Map<Scene3D, ILight[]>();
         this.pointLightList = new Map<Scene3D, ILight[]>();
         this.shadowLights = new Map<Scene3D, Float32Array>();
