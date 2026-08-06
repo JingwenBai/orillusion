@@ -351,6 +351,8 @@ export class Engine3D {
     private _frameRateValue: number = 0;
     private _frameRate: number = 360;
     private _time: number = 0;
+    private _lastFrameTime: number = 0;
+    private _frameCount: number = 0;
     private _beforeRender: Function;
     private _renderLoop: Function;
     private _lateRender: Function;
@@ -453,6 +455,9 @@ export class Engine3D {
     // =====================================================================
 
     private startRenderJob(view: View3D) {
+        Engine3D.current = this;
+        EngineContext.id = this._id;
+        this._syncWebGPUContext();
         let renderJob = new ForwardRenderJob(view);
         this.renderJobs.set(view, renderJob);
 
@@ -544,14 +549,19 @@ export class Engine3D {
         EngineContext.id = this._id;
         this._syncWebGPUContext();
 
-        Time.delta = time - Time.time;
+        // Per-engine time tracking: each engine maintains its own last-frame
+        // timestamp so Time.delta is correct even when multiple engines run
+        // sequentially in the same JS event loop.
+        Time.delta = this._lastFrameTime > 0 ? (time - this._lastFrameTime) : 0;
         Time.time = time;
-        Time.frame += 1;
+        Time.frame = ++this._frameCount;
+        this._lastFrameTime = time;
         Interpolator.tick(Time.delta);
 
-        let views = this.views;
-        let i = 0;
-        for (i = 0; i < views.length; i++) {
+        const views = this.views;
+        const viewSet = new Set<View3D>(views);
+
+        for (let i = 0; i < views.length; i++) {
             const view = views[i];
             view.scene.waitUpdate();
             let [w, h] = this._context.presentationSize;
@@ -561,54 +571,34 @@ export class Engine3D {
         if (this._beforeRender)
             await this._beforeRender();
 
-        for (const iterator of ComponentCollect.componentsBeforeUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
-                }
+        for (const [view, componentMap] of ComponentCollect.componentsBeforeUpdateList) {
+            if (!viewSet.has(view)) continue;
+            for (const [component, fn] of componentMap) {
+                if (component.enable) fn(view);
             }
         }
 
         let command = webGPUContext.device.createCommandEncoder();
-        for (const iterator of ComponentCollect.componentsComputeList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k, command);
-                }
+        for (const [view, componentMap] of ComponentCollect.componentsComputeList) {
+            if (!viewSet.has(view)) continue;
+            for (const [component, fn] of componentMap) {
+                if (component.enable) fn(view, command);
             }
         }
 
         webGPUContext.device.queue.submit([command.finish()]);
 
-        for (const iterator of ComponentCollect.componentsUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
-                }
+        for (const [view, componentMap] of ComponentCollect.componentsUpdateList) {
+            if (!viewSet.has(view)) continue;
+            for (const [component, fn] of componentMap) {
+                if (component.enable) fn(view);
             }
         }
 
-        for (const iterator of ComponentCollect.graphicComponent) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (k && f.enable) {
-                    c(k);
-                }
+        for (const [view, componentMap] of ComponentCollect.graphicComponent) {
+            if (!viewSet.has(view)) continue;
+            for (const [component, fn] of componentMap) {
+                if (view && component.enable) fn(view);
             }
         }
 
@@ -627,15 +617,10 @@ export class Engine3D {
             v.renderFrame();
         });
 
-        for (const iterator of ComponentCollect.componentsLateUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
-                }
+        for (const [view, componentMap] of ComponentCollect.componentsLateUpdateList) {
+            if (!viewSet.has(view)) continue;
+            for (const [component, fn] of componentMap) {
+                if (component.enable) fn(view);
             }
         }
 
