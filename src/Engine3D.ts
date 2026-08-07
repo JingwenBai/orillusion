@@ -24,6 +24,7 @@ import { FXAAPost } from './gfx/renderJob/post/FXAAPost';
 import { PostProcessingComponent } from './components/post/PostProcessingComponent';
 import { GBufferFrame } from './gfx/renderJob/frame/GBufferFrame';
 import { EngineContext } from './gfx/renderJob/EngineContext';
+import { GPUContext } from './gfx/renderJob/GPUContext';
 
 function deepMergeSettings(base: any, override: any): any {
     const result = { ...base };
@@ -351,6 +352,8 @@ export class Engine3D {
     private _frameRateValue: number = 0;
     private _frameRate: number = 360;
     private _time: number = 0;
+    private _lastFrameTime: number = 0;
+    private _engineFrameCount: number = 0;
     private _beforeRender: Function;
     private _renderLoop: Function;
     private _lateRender: Function;
@@ -544,12 +547,18 @@ export class Engine3D {
         EngineContext.id = this._id;
         this._syncWebGPUContext();
 
-        Time.delta = time - Time.time;
+        // Use per-engine last-frame timestamp so that Time.delta is correct when
+        // multiple Engine3D instances share the same requestAnimationFrame queue.
+        Time.delta = time - this._lastFrameTime;
+        this._lastFrameTime = time;
         Time.time = time;
-        Time.frame += 1;
+        Time.frame = ++this._engineFrameCount;
         Interpolator.tick(Time.delta);
 
         let views = this.views;
+        // Build a fast lookup set so that ComponentCollect iterations are scoped
+        // to views owned by this engine only.
+        const myViewSet = new Set<View3D>(views);
         let i = 0;
         for (i = 0; i < views.length; i++) {
             const view = views[i];
@@ -563,6 +572,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.componentsBeforeUpdateList) {
             let k = iterator[0];
+            if (!myViewSet.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -576,6 +586,7 @@ export class Engine3D {
         let command = webGPUContext.device.createCommandEncoder();
         for (const iterator of ComponentCollect.componentsComputeList) {
             let k = iterator[0];
+            if (!myViewSet.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -590,6 +601,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.componentsUpdateList) {
             let k = iterator[0];
+            if (!myViewSet.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -602,6 +614,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.graphicComponent) {
             let k = iterator[0];
+            if (!myViewSet.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -629,6 +642,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.componentsLateUpdateList) {
             let k = iterator[0];
+            if (!myViewSet.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -655,6 +669,10 @@ export class Engine3D {
         webGPUContext.windowWidth = this._context.windowWidth;
         webGPUContext.windowHeight = this._context.windowHeight;
         webGPUContext.aspect = this._context.aspect;
+        // Invalidate the GPU pipeline/geometry cache so that the newly-active
+        // engine's first draw calls are not skipped due to stale state from
+        // the previously-active engine.
+        GPUContext.cleanCache();
     }
 
     // =====================================================================
