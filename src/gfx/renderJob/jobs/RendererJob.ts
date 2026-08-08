@@ -104,7 +104,7 @@ export class RendererJob {
 
         this.reflectionRenderer = this.addRenderer(ReflectionRenderer, view);
 
-        if (Engine3D.setting.render.zPrePass) {
+        if (this._engineSetting.render.zPrePass) {
             this.depthPassRenderer = this.addRenderer(PreDepthPassRenderer);
         }
 
@@ -113,6 +113,10 @@ export class RendererJob {
         this.pointLightShadowRenderer = new PointLightShadowRenderer();
 
         this.addPost(new FXAAPost());
+    }
+
+    private get _engineSetting() {
+        return (this._view.engine ?? Engine3D).setting;
     }
 
     public addRenderer<T extends RendererBase>(c: Ctor<T>, param?: any): T {
@@ -226,7 +230,7 @@ export class RendererJob {
             this.depthPassRenderer.render(view, this.occlusionSystem);
         }
 
-        if (Engine3D.setting.gi.enable && this.ddgiProbeRenderer) {
+        if (this._engineSetting.gi.enable && this.ddgiProbeRenderer) {
             this.ddgiProbeRenderer.compute(view, this.occlusionSystem);
             this.ddgiProbeRenderer.render(view, this.occlusionSystem);
         }

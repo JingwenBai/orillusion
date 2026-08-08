@@ -7,6 +7,9 @@ import { PickFire } from "../io/PickFire";
 import { Vector4 } from "../math/Vector4";
 import { Camera3D } from "./Camera3D";
 import { Scene3D } from "./Scene3D";
+// Using `any` to avoid a circular import with Engine3D.
+// The property is typed in userland as Engine3D via the public type export.
+type Engine3DType = any;
 
 export class View3D extends CEventListener {
     private _camera: Camera3D;
@@ -17,6 +20,12 @@ export class View3D extends CEventListener {
     public pickFire: PickFire;
     public guiPick: GUIPick;
     public readonly canvasList: GUICanvas[];
+
+    /**
+     * The Engine3D instance that owns this view.
+     * Set automatically by Engine3D.startRenderView / startRenderViews.
+     */
+    public engine: Engine3DType = null;
 
     constructor(x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
         super();
@@ -52,7 +61,13 @@ export class View3D extends CEventListener {
         this._scene = value;
         value.view = this;
 
-        ShadowLightsCollect.createBuffer(this);
+        // Use the per-engine instance when available, otherwise fall back to the
+        // global static routing (which works for single-engine apps).
+        if (this.engine?.shadowLightsCollect) {
+            this.engine.shadowLightsCollect.createBuffer(this);
+        } else {
+            ShadowLightsCollect.createBuffer(this);
+        }
 
         if (value) {
             this.canvasList.forEach(canvas => {

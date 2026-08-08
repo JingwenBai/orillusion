@@ -1,5 +1,4 @@
 import { Camera3D } from '../core/Camera3D';
-import { Engine3D } from '../Engine3D';
 import { MouseCode } from '../event/MouseCode';
 import { CEventDispatcher } from '../event/CEventDispatcher';
 import { Ray } from '../math/Ray';
@@ -9,7 +8,7 @@ import { ColliderComponent } from '../components/ColliderComponent';
 import { View3D } from '../core/View3D';
 import { PointerEvent3D } from '../event/eventConst/PointerEvent3D';
 import { HitInfo } from '../components/shape/ColliderShape';
-import { ComponentCollect, Matrix4 } from '..';
+import { Matrix4 } from '..';
 
 /**
  * Management and triggering for picking 3D objects
@@ -69,15 +68,15 @@ export class PickFire extends CEventDispatcher {
     * start this manager
     */
     public start() {
-        if (Engine3D.setting.pick.enable) {
-            Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onTouchStart, this);
-            Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onTouchEnd, this);
-            Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_CLICK, this.onTouchOnce, this);
-            Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_RIGHT_CLICK, this.onTouchOnce, this);
-            Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onTouchMove, this);
+        if (this._view?.engine?.setting?.pick?.enable) {
+            this._view?.engine?.inputSystem?.addEventListener(PointerEvent3D.POINTER_DOWN, this.onTouchStart, this);
+            this._view?.engine?.inputSystem?.addEventListener(PointerEvent3D.POINTER_UP, this.onTouchEnd, this);
+            this._view?.engine?.inputSystem?.addEventListener(PointerEvent3D.POINTER_CLICK, this.onTouchOnce, this);
+            this._view?.engine?.inputSystem?.addEventListener(PointerEvent3D.POINTER_RIGHT_CLICK, this.onTouchOnce, this);
+            this._view?.engine?.inputSystem?.addEventListener(PointerEvent3D.POINTER_MOVE, this.onTouchMove, this);
         }
 
-        if (Engine3D.setting.pick.mode == `pixel`) {
+        if (this._view?.engine?.setting?.pick?.mode == `pixel`) {
             this._pickCompute = new PickCompute();
             this._pickCompute.init();
         }
@@ -88,11 +87,11 @@ export class PickFire extends CEventDispatcher {
      * stop this manager
      */
     public stop() {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onTouchStart, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onTouchEnd, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_CLICK, this.onTouchOnce, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_RIGHT_CLICK, this.onTouchOnce, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onTouchMove, this);
+        this._view?.engine?.inputSystem?.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onTouchStart, this);
+        this._view?.engine?.inputSystem?.removeEventListener(PointerEvent3D.POINTER_UP, this.onTouchEnd, this);
+        this._view?.engine?.inputSystem?.removeEventListener(PointerEvent3D.POINTER_CLICK, this.onTouchOnce, this);
+        this._view?.engine?.inputSystem?.removeEventListener(PointerEvent3D.POINTER_RIGHT_CLICK, this.onTouchOnce, this);
+        this._view?.engine?.inputSystem?.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onTouchMove, this);
     }
 
     private onTouchStart(e: PointerEvent3D) {
@@ -140,7 +139,7 @@ export class PickFire extends CEventDispatcher {
     private _lastFocus: ColliderComponent;
 
     private getPickInfo() {
-        if(Engine3D.setting.pick.mode == `pixel`)
+        if(this._view?.engine?.setting?.pick?.mode == `pixel`)
             return {
                 worldPos: this._pickCompute.getPickWorldPosition(),
                 worldNormal: this._pickCompute.getPickWorldNormal(),
@@ -243,7 +242,7 @@ export class PickFire extends CEventDispatcher {
 
     private pick(camera: Camera3D) {
         this._interestList.length = 0;
-        if (Engine3D.setting.pick.mode == `pixel`) {
+        if (this._view?.engine?.setting?.pick?.mode == `pixel`) {
             this._pickCompute.compute(this._view);
             let meshID = this._pickCompute.getPickMeshID();
             let iterator = this.mouseEnableMap.get(meshID);
@@ -252,10 +251,10 @@ export class PickFire extends CEventDispatcher {
                 let distance = Vector3.distance(position, this.ray.origin);
                 this._interestList.push({ distance: distance, collider: iterator, intersectPoint: position });
             }
-        } else if (Engine3D.setting.pick.mode == `bound`) {
-            this.ray = camera.screenPointToRay(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY);
+        } else if (this._view?.engine?.setting?.pick?.mode == `bound`) {
+            this.ray = camera.screenPointToRay(this._view?.engine?.inputSystem?.mouseX, this._view?.engine?.inputSystem?.mouseY);
             let intersect: HitInfo;
-            let colliders = ComponentCollect.componentsEnablePickerList.get(this._view);;
+            let colliders = this._view?.engine?.componentCollect?.componentsEnablePickerList.get(this._view);;
             if (colliders) {
                 for (const item of colliders) {
                     let collider = item[0];

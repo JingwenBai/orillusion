@@ -148,6 +148,23 @@ export class Context3D extends CEventDispatcher {
 }
 
 /**
+ * The WebGPU context that is currently being rendered to.
+ * Engine3D calls setActiveContext(this.context) before every render frame so
+ * that all GPU operations in that frame go to the right canvas/swapchain.
+ *
+ * Single-engine applications can treat this exactly as before.
+ * Multi-engine applications get automatic routing as long as each engine sets
+ * itself active at the start of its updateFrame().
+ *
  * @internal
  */
-export let webGPUContext = new Context3D();
+export let webGPUContext: Context3D = null;
+
+/**
+ * Switch the active WebGPU context to the given instance.
+ * Called by Engine3D at the start of each frame.
+ * @internal
+ */
+export function setActiveContext(ctx: Context3D): void {
+    webGPUContext = ctx;
+}
