@@ -3,8 +3,10 @@ import { LightType } from '../../../components/lights/LightData';
 import { Scene3D } from '../../../core/Scene3D';
 import { View3D } from '../../../core/View3D';
 import { CameraUtil } from '../../../util/CameraUtil';
+import { getActiveEngineContext } from '../../../EngineRegistry';
 import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { GlobalUniformGroup } from '../../graphics/webGpu/core/bindGroups/GlobalUniformGroup';
+
 /**
  * @internal
  * @group Lights
@@ -14,14 +16,23 @@ export class ShadowLightsCollect {
     public static maxNumDirectionShadow = 8;
     public static maxNumPointShadow = 8;
 
-    public static directionLightList: Map<Scene3D, ILight[]>;
-    public static pointLightList: Map<Scene3D, ILight[]>;
-    public static shadowLights: Map<Scene3D, Float32Array>;
+    public static get directionLightList(): Map<Scene3D, ILight[]> {
+        return getActiveEngineContext().directionLightList;
+    }
+
+    public static get pointLightList(): Map<Scene3D, ILight[]> {
+        return getActiveEngineContext().pointLightList;
+    }
+
+    public static get shadowLights(): Map<Scene3D, Float32Array> {
+        return getActiveEngineContext().shadowLights;
+    }
 
     public static init() {
-        this.directionLightList = new Map<Scene3D, ILight[]>();
-        this.pointLightList = new Map<Scene3D, ILight[]>();
-        this.shadowLights = new Map<Scene3D, Float32Array>();
+        const ctx = getActiveEngineContext();
+        ctx.directionLightList = new Map<Scene3D, ILight[]>();
+        ctx.pointLightList = new Map<Scene3D, ILight[]>();
+        ctx.shadowLights = new Map<Scene3D, Float32Array>();
     }
 
     public static createBuffer(view: View3D) {
@@ -125,8 +136,6 @@ export class ShadowLightsCollect {
             if (list.indexOf(light) == -1) {
                 list.push(light);
             }
-
-
             return list;
         }
     }

@@ -1,3 +1,5 @@
+import { getActiveEngineContext } from '../EngineRegistry';
+
 /**
  * Tool of time
  * @group Util
@@ -6,18 +8,24 @@ export class Time {
     /**
      * The time the engine has been running
      */
-    public static time: number = 0;
+    public static get time(): number { return getActiveEngineContext().time; }
+    public static set time(v: number) { getActiveEngineContext().time = v; }
+
     /**
      * the frame count engine is running
      */
-    public static frame: number = 0;
+    public static get frame(): number { return getActiveEngineContext().frame; }
+    public static set frame(v: number) { getActiveEngineContext().frame = v; }
+
     /**
      * Time from previous frame to present
      */
-    public static delta: number = 0;
+    public static get delta(): number { return getActiveEngineContext().delta; }
+    public static set delta(v: number) { getActiveEngineContext().delta = v; }
 
     private static _startTime: number = 0;
     private static _timeLabel: string = ``;
+
     /**
      * @internal
      * @param label

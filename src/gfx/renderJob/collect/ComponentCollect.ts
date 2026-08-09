@@ -2,65 +2,60 @@ import { ColliderComponent } from "../../../components/ColliderComponent";
 import { IComponent } from "../../../components/IComponent";
 import { View3D } from "../../../core/View3D";
 import { Object3D } from "../../../core/entities/Object3D";
+import { getActiveEngineContext } from "../../../EngineRegistry";
 
 export class ComponentCollect {
 
     /**
      * @internal
      */
-    public static componentsUpdateList: Map<View3D, Map<IComponent, Function>>;
+    public static get componentsUpdateList(): Map<View3D, Map<IComponent, Function>> {
+        return getActiveEngineContext().componentsUpdateList;
+    }
 
     /**
      * @internal
      */
-    public static componentsLateUpdateList: Map<View3D, Map<IComponent, Function>>;
+    public static get componentsLateUpdateList(): Map<View3D, Map<IComponent, Function>> {
+        return getActiveEngineContext().componentsLateUpdateList;
+    }
 
     /**
      * @internal
      */
-    public static componentsBeforeUpdateList: Map<View3D, Map<IComponent, Function>>;
+    public static get componentsBeforeUpdateList(): Map<View3D, Map<IComponent, Function>> {
+        return getActiveEngineContext().componentsBeforeUpdateList;
+    }
 
     /**
      * @internal
      */
-    public static componentsComputeList: Map<View3D, Map<IComponent, Function>>;
+    public static get componentsComputeList(): Map<View3D, Map<IComponent, Function>> {
+        return getActiveEngineContext().componentsComputeList;
+    }
 
     /**
      * @internal
      */
-    public static componentsEnablePickerList: Map<View3D, Map<ColliderComponent, Function>>;
+    public static get componentsEnablePickerList(): Map<View3D, Map<ColliderComponent, Function>> {
+        return getActiveEngineContext().componentsEnablePickerList;
+    }
 
     /**
      * @internal
      */
-    public static graphicComponent: Map<View3D, Map<IComponent, Function>>;
+    public static get graphicComponent(): Map<View3D, Map<IComponent, Function>> {
+        return getActiveEngineContext().graphicComponent;
+    }
 
     /**
      * @internal
      */
-    // private static waitStartComponentBak: Map<Object3D, IComponent[]>;
-    // private static waitStartComponentBody: Map<Object3D, IComponent[]>;
-    public static waitStartComponent: Map<Object3D, IComponent[]>;
-
-    private static _init: boolean = false;
-
-    private static init() {
-        if (!this._init) {
-            this._init = true;
-            this.componentsUpdateList = new Map<View3D, Map<IComponent, Function>>();
-            this.componentsLateUpdateList = new Map<View3D, Map<IComponent, Function>>();
-            this.componentsBeforeUpdateList = new Map<View3D, Map<IComponent, Function>>();
-            this.componentsComputeList = new Map<View3D, Map<IComponent, Function>>();
-            this.componentsEnablePickerList = new Map<View3D, Map<ColliderComponent, Function>>();
-            this.graphicComponent = new Map<View3D, Map<IComponent, Function>>();
-            // this.waitStartComponentBak = new Map<Object3D, IComponent[]>();
-            // this.waitStartComponentBody = new Map<Object3D, IComponent[]>();
-            this.waitStartComponent = new Map<Object3D, IComponent[]>();
-        }
+    public static get waitStartComponent(): Map<Object3D, IComponent[]> {
+        return getActiveEngineContext().waitStartComponent;
     }
 
     public static bindUpdate(view: View3D, component: IComponent, call: Function) {
-        this.init();
         let list = this.componentsUpdateList.get(view);
         if (!list) {
             list = new Map<IComponent, Function>();
@@ -70,7 +65,6 @@ export class ComponentCollect {
     }
 
     public static unBindUpdate(view: View3D, component: IComponent) {
-        this.init();
         let list = this.componentsUpdateList.get(view);
         if (list) {
             list.delete(component);
@@ -78,7 +72,6 @@ export class ComponentCollect {
     }
 
     public static bindLateUpdate(view: View3D, component: IComponent, call: Function) {
-        this.init();
         let list = this.componentsLateUpdateList.get(view);
         if (!list) {
             list = new Map<IComponent, Function>();
@@ -88,7 +81,6 @@ export class ComponentCollect {
     }
 
     public static unBindLateUpdate(view: View3D, component: IComponent) {
-        this.init();
         let list = this.componentsLateUpdateList.get(view);
         if (list) {
             list.delete(component);
@@ -96,7 +88,6 @@ export class ComponentCollect {
     }
 
     public static bindBeforeUpdate(view: View3D, component: IComponent, call: Function) {
-        this.init();
         let list = this.componentsBeforeUpdateList.get(view);
         if (!list) {
             list = new Map<IComponent, Function>();
@@ -106,7 +97,6 @@ export class ComponentCollect {
     }
 
     public static unBindBeforeUpdate(view: View3D, component: IComponent) {
-        this.init();
         let list = this.componentsBeforeUpdateList.get(view);
         if (list) {
             list.delete(component);
@@ -114,7 +104,6 @@ export class ComponentCollect {
     }
 
     public static bindCompute(view: View3D, component: IComponent, call: Function) {
-        this.init();
         let list = this.componentsComputeList.get(view);
         if (!list) {
             list = new Map<IComponent, Function>();
@@ -124,7 +113,6 @@ export class ComponentCollect {
     }
 
     public static unBindCompute(view: View3D, component: IComponent) {
-        this.init();
         let list = this.componentsComputeList.get(view);
         if (list) {
             list.delete(component);
@@ -132,7 +120,6 @@ export class ComponentCollect {
     }
 
     public static bindGraphic(view: View3D, component: IComponent, call: Function) {
-        this.init();
         let list = this.graphicComponent.get(view);
         if (!list) {
             list = new Map<IComponent, Function>();
@@ -142,7 +129,6 @@ export class ComponentCollect {
     }
 
     public static unBindGraphic(view: View3D, component: IComponent) {
-        this.init();
         let list = this.graphicComponent.get(view);
         if (list) {
             list.delete(component);
@@ -150,7 +136,6 @@ export class ComponentCollect {
     }
 
     public static appendWaitStart(component: IComponent) {
-        this.init();
         let arr = this.waitStartComponent.get(component.object3D);
         if (!arr) {
             this.waitStartComponent.set(component.object3D, [component]);
@@ -163,7 +148,6 @@ export class ComponentCollect {
     }
 
     public static removeWaitStart(obj: Object3D, component: IComponent) {
-        this.init();
         let arr = ComponentCollect.waitStartComponent.get(obj);
         if (arr) {
             let index = arr.indexOf(component);
@@ -174,7 +158,6 @@ export class ComponentCollect {
     }
 
     public static bindEnablePick(view: View3D, component: ColliderComponent, call: Function) {
-        this.init();
         let list = this.componentsEnablePickerList.get(view);
         if (!list) {
             list = new Map<ColliderComponent, Function>();
@@ -184,7 +167,6 @@ export class ComponentCollect {
     }
 
     public static unBindEnablePick(view: View3D, component: ColliderComponent) {
-        this.init();
         let list = this.componentsEnablePickerList.get(view);
         if (list) {
             list.delete(component);

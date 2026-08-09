@@ -1,4 +1,5 @@
 import { RenderShaderPass } from "../RenderShaderPass";
+import { getActiveEngineContext } from "../../../../../EngineRegistry";
 
 export type VertexPart = {
     name: string;
@@ -20,11 +21,17 @@ export type FragmentPart = {
 }
 
 export class ShaderUtil {
-    public static renderShaderModulePool: Map<string, GPUShaderModule>;
-    public static renderShader: Map<string, RenderShaderPass>;
+    public static get renderShaderModulePool(): Map<string, GPUShaderModule> {
+        return getActiveEngineContext().renderShaderModulePool;
+    }
+
+    public static get renderShader(): Map<string, RenderShaderPass> {
+        return getActiveEngineContext().renderShader;
+    }
 
     public static init() {
-        this.renderShaderModulePool = new Map<string, GPUShaderModule>();
-        this.renderShader = new Map<string, RenderShaderPass>();
+        const ctx = getActiveEngineContext();
+        ctx.renderShaderModulePool = new Map<string, GPUShaderModule>();
+        ctx.renderShader = new Map<string, RenderShaderPass>();
     }
 }

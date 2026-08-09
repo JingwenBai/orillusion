@@ -1,5 +1,6 @@
 import { Camera3D } from "../../../../../core/Camera3D";
 import { Scene3D } from "../../../../../core/Scene3D";
+import { getActiveEngineContext } from "../../../../../EngineRegistry";
 import { GlobalUniformGroup } from "./GlobalUniformGroup";
 import { LightEntries } from "./groups/LightEntries";
 import { ReflectionEntries } from "./groups/ReflectionEntries";
@@ -11,16 +12,32 @@ import { MatrixBindGroup } from "./MatrixBindGroup";
  * @group GFX
  */
 export class GlobalBindGroup {
-    private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
-    private static _lightEntriesMap: Map<Scene3D, LightEntries>;
-    private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
-    public static modelMatrixBindGroup: MatrixBindGroup;
+    private static get _cameraBindGroups(): Map<Camera3D, GlobalUniformGroup> {
+        return getActiveEngineContext().cameraBindGroups;
+    }
+
+    private static get _lightEntriesMap(): Map<Scene3D, LightEntries> {
+        return getActiveEngineContext().lightEntriesMap;
+    }
+
+    private static get _reflectionEntriesMap(): Map<Scene3D, ReflectionEntries> {
+        return getActiveEngineContext().reflectionEntriesMap;
+    }
+
+    public static get modelMatrixBindGroup(): MatrixBindGroup {
+        return getActiveEngineContext().modelMatrixBindGroup;
+    }
+
+    public static set modelMatrixBindGroup(v: MatrixBindGroup) {
+        getActiveEngineContext().modelMatrixBindGroup = v;
+    }
 
     public static init() {
-        this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        const ctx = getActiveEngineContext();
+        ctx.modelMatrixBindGroup = new MatrixBindGroup();
+        ctx.cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
+        ctx.lightEntriesMap = new Map<Scene3D, LightEntries>();
+        ctx.reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
     }
 
     public static getAllCameraGroup() {
@@ -79,7 +96,4 @@ export class GlobalBindGroup {
         }
         return this._reflectionEntriesMap.get(scene);
     }
-
-
-
 }

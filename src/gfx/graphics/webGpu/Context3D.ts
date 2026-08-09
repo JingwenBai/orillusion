@@ -2,6 +2,7 @@ import { CEvent, Texture } from '../../..';
 import { CEventDispatcher } from '../../../event/CEventDispatcher';
 import { CResizeEvent } from '../../../event/CResizeEvent';
 import { CanvasConfig } from './CanvasConfig';
+import { getActiveEngineContext } from '../../../EngineRegistry';
 
 /**
  * @internal
@@ -148,6 +149,21 @@ export class Context3D extends CEventDispatcher {
 }
 
 /**
+ * Proxy that always delegates to the active Engine3D instance's Context3D.
+ * All 65+ import sites that use `webGPUContext.device`, `.canvas`, etc. continue
+ * to work without modification — the Proxy forwards each property access and
+ * method call to the correct per-engine Context3D at runtime.
  * @internal
  */
-export let webGPUContext = new Context3D();
+export const webGPUContext: Context3D = new Proxy<Context3D>({} as Context3D, {
+    get(_target, prop: string | symbol) {
+        const ctx: Context3D = getActiveEngineContext().webGPUContext;
+        const value = (ctx as any)[prop];
+        return typeof value === 'function' ? (value as Function).bind(ctx) : value;
+    },
+    set(_target, prop: string | symbol, value: any) {
+        const ctx: Context3D = getActiveEngineContext().webGPUContext;
+        (ctx as any)[prop] = value;
+        return true;
+    },
+});

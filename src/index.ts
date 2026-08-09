@@ -1,4 +1,6 @@
 export * from "./Engine3D"
+export * from "./EngineContext"
+export * from "./EngineRegistry"
 export * from "./assets/Fonts"
 export * from "./assets/Res"
 export * from "./assets/shader/ShaderLib"
