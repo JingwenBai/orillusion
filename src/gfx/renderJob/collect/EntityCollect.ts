@@ -18,13 +18,21 @@ import { RendererMask } from '../passRenderer/state/RendererMask';
 import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
 import { RenderShaderCollect } from './RenderShaderCollect';
+import { getActiveEngine } from '../../../_activeEngine';
 
 /**
  * @internal
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    /**
+     * Returns the EntityCollect instance that belongs to the currently active
+     * Engine3D.  Each Engine3D creates its own EntityCollect in its constructor
+     * and stores it under `engine._entityCollect`.
+     */
+    public static get instance(): EntityCollect {
+        return getActiveEngine()?._entityCollect as EntityCollect;
+    }
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,12 +64,6 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
-    }
 
     constructor() {
         // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
