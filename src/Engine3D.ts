@@ -2,6 +2,7 @@ import { CanvasConfig } from './gfx/graphics/webGpu/CanvasConfig';
 import { Color } from './math/Color';
 import { EngineSetting } from './setting/EngineSetting';
 import { Time } from './util/Time';
+import { CResizeEvent } from './event/CResizeEvent';
 import { InputSystem } from './io/InputSystem';
 import { View3D } from './core/View3D';
 import { version } from '../package.json';
@@ -417,6 +418,14 @@ export class Engine3D {
         // sees the correct values for the current engine.
         this._syncWebGPUContext();
 
+        // Forward resize events from this engine's canvas context to the shared
+        // webGPUContext singleton so that listeners registered there (e.g. Camera3D,
+        // PostBase) still receive resize notifications for this engine's canvas.
+        this._context.addEventListener(CResizeEvent.RESIZE, (e: CResizeEvent) => {
+            this._syncWebGPUContext();
+            webGPUContext.dispatchEvent(e);
+        }, this);
+
         // ---- Pre-compute per-engine reflection GBuffer ----
         this.setting.reflectionSetting.width = this.setting.reflectionSetting.reflectionProbeSize * 6;
         this.setting.reflectionSetting.height = this.setting.reflectionSetting.reflectionProbeSize * this.setting.reflectionSetting.reflectionProbeMaxCount;
@@ -563,6 +572,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.componentsBeforeUpdateList) {
             let k = iterator[0];
+            if (!this.renderJobs.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -576,6 +586,7 @@ export class Engine3D {
         let command = webGPUContext.device.createCommandEncoder();
         for (const iterator of ComponentCollect.componentsComputeList) {
             let k = iterator[0];
+            if (!this.renderJobs.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -590,6 +601,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.componentsUpdateList) {
             let k = iterator[0];
+            if (!this.renderJobs.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -602,6 +614,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.graphicComponent) {
             let k = iterator[0];
+            if (!this.renderJobs.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -629,6 +642,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.componentsLateUpdateList) {
             let k = iterator[0];
+            if (!this.renderJobs.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
