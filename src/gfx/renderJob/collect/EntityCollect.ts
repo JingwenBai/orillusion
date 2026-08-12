@@ -24,7 +24,12 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    /**
+     * @internal
+     * Active instance used by the static `instance` getter.
+     * Set by Engine3D before each render frame to support multiple engine instances.
+     */
+    public static _active: EntityCollect | null = null;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,11 +61,8 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
+    public static get instance(): EntityCollect {
+        return EntityCollect._active;
     }
 
     constructor() {
