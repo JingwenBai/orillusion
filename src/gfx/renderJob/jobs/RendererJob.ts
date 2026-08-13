@@ -104,7 +104,8 @@ export class RendererJob {
 
         this.reflectionRenderer = this.addRenderer(ReflectionRenderer, view);
 
-        if (Engine3D.setting.render.zPrePass) {
+        const setting = view.engine?.setting ?? Engine3D.setting;
+        if (setting.render.zPrePass) {
             this.depthPassRenderer = this.addRenderer(PreDepthPassRenderer);
         }
 
@@ -226,7 +227,8 @@ export class RendererJob {
             this.depthPassRenderer.render(view, this.occlusionSystem);
         }
 
-        if (Engine3D.setting.gi.enable && this.ddgiProbeRenderer) {
+        const setting = this._view.engine?.setting ?? Engine3D.setting;
+        if (setting.gi.enable && this.ddgiProbeRenderer) {
             this.ddgiProbeRenderer.compute(view, this.occlusionSystem);
             this.ddgiProbeRenderer.render(view, this.occlusionSystem);
         }

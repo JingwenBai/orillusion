@@ -12,10 +12,10 @@ import { GPUTextureFormat } from '../../graphics/webGpu/WebGPUConst';
 import { GUIPassRenderer } from '../passRenderer/color/GUIPassRenderer';
 /**
  * Forward+
- * Every time a forward rendering is performed, 
- * the entity of the object is rendered, and 
- * the color and depth buffer values are calculated. 
- * The depth buffer will determine whether a tile is visible. 
+ * Every time a forward rendering is performed,
+ * the entity of the object is rendered, and
+ * the color and depth buffer values are calculated.
+ * The depth buffer will determine whether a tile is visible.
  * If visible, the values in the color buffer will be updated.
  * @group engine3D
  */
@@ -26,17 +26,18 @@ export class ForwardRenderJob extends RendererJob {
 
     public start(): void {
         super.start();
+        const setting = this.view.engine?.setting ?? Engine3D.setting;
         {
             let colorPassRenderer = new ColorPassRenderer();
             let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
 
-            if (Engine3D.setting.render.zPrePass) {
+            if (setting.render.zPrePass) {
                 rtFrame.zPreTexture = this.depthPassRenderer.rendererPassState.depthTexture;
             }
 
             colorPassRenderer.setRenderStates(rtFrame);
 
-            if (Engine3D.setting.gi.enable) {
+            if (setting.gi.enable) {
                 let lightEntries = GlobalBindGroup.getLightEntries(this.view.scene);
                 this.ddgiProbeRenderer = new DDGIProbeRenderer(lightEntries.irradianceVolume);
                 this.ddgiProbeRenderer.setInputTexture([
@@ -57,7 +58,7 @@ export class ForwardRenderJob extends RendererJob {
             this.rendererMap.addRenderer(guiPassRenderer);
         }
 
-        if (Engine3D.setting.render.debug) {
+        if (setting.render.debug) {
             this.debug();
         }
     }
