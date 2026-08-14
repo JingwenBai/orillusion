@@ -159,12 +159,12 @@ export class ReflectionRenderer extends RendererBase {
             let renderPassEncoder = encoder;
             GlobalBindGroup.updateCameraGroup(camera);
 
-            if (!maskTr && EntityCollect.instance.sky) {
+            if (!maskTr && EntityCollect.instance.getSky(scene)) {
                 GPUContext.bindCamera(renderPassEncoder, camera);
-                if (!EntityCollect.instance.sky.preInit(PassType.REFLECTION)) {
-                    EntityCollect.instance.sky.nodeUpdate(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer);
+                if (!EntityCollect.instance.getSky(scene).preInit(PassType.REFLECTION)) {
+                    EntityCollect.instance.getSky(scene).nodeUpdate(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer);
                 }
-                EntityCollect.instance.sky.renderPass2(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
+                EntityCollect.instance.getSky(scene).renderPass2(view, PassType.REFLECTION, this.rendererPassState, clusterLightingBuffer, renderPassEncoder);
             }
 
             if (collectInfo.opaqueList) {
