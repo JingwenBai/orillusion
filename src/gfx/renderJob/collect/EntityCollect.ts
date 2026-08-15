@@ -19,13 +19,17 @@ import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
 import { RenderShaderCollect } from './RenderShaderCollect';
 
+/** @internal active per-engine instance, set by Engine3D.activate() */
+let _activeEntityCollect: EntityCollect | null = null;
+export function setActiveEntityCollect(e: EntityCollect): void {
+    _activeEntityCollect = e;
+}
+
 /**
  * @internal
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
-
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
     private _sceneGIProbes: Map<Scene3D, Probe[]>;
@@ -56,11 +60,8 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
+    public static get instance(): EntityCollect {
+        return _activeEntityCollect;
     }
 
     constructor() {
