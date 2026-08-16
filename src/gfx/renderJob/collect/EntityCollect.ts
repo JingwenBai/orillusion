@@ -24,7 +24,14 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    /**
+     * Static shim for backward compat. Returns the current engine's entityCollect.
+     * Prefer accessing via engine.entityCollect or view.engine.entityCollect.
+     */
+    public static get instance(): EntityCollect {
+        const Engine3D = (globalThis as any).__Engine3D__;
+        return Engine3D?.current?.entityCollect ?? null;
+    }
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
