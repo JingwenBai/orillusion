@@ -35,7 +35,8 @@ export class EntityCollect {
     private _octreeRenderNodes: Map<Scene3D, Octree>;
     private _reflections: Map<Scene3D, Reflection[]>;
 
-    private _graphics: RenderNode[];
+    private _graphicsMap: Map<Scene3D, RenderNode[]>;
+    private _skyMap: Map<Scene3D, RenderNode>;
 
     private _op_renderGroup: Map<Scene3D, EntityBatchCollect>;
     private _tr_renderGroup: Map<Scene3D, EntityBatchCollect>;
@@ -50,8 +51,6 @@ export class EntityCollect {
     } = {
             giLightingChange: true
         }
-
-    public sky: RenderNode;
 
     private _collectInfo: CollectInfo;
 
@@ -72,7 +71,8 @@ export class EntityCollect {
         this._tr_RenderNodes = new Map<Scene3D, RenderNode[]>();
         this._reflections = new Map<Scene3D, Reflection[]>();
 
-        this._graphics = [];
+        this._graphicsMap = new Map<Scene3D, RenderNode[]>();
+        this._skyMap = new Map<Scene3D, RenderNode>();
 
         this._op_renderGroup = new Map<Scene3D, EntityBatchCollect>();
         this._tr_renderGroup = new Map<Scene3D, EntityBatchCollect>();
@@ -101,11 +101,23 @@ export class EntityCollect {
         list.push(renderNode);
     }
 
+    public getSky(scene: Scene3D): RenderNode {
+        return this._skyMap.get(scene) ?? null;
+    }
+
+    public setSky(scene: Scene3D, node: RenderNode) {
+        if (node == null) {
+            this._skyMap.delete(scene);
+        } else {
+            this._skyMap.set(scene, node);
+        }
+    }
+
     public addRenderNode(root: Scene3D, renderNode: RenderNode) {
         if (!root) return;
         let isTransparent: boolean = renderNode.renderOrder >= 3000;
         if (renderNode.hasMask(RendererMask.Sky)) {
-            this.sky = renderNode;
+            this._skyMap.set(root, renderNode);
         } else if (renderNode.hasMask(RendererMask.Reflection)) {
             this.removeRenderNode(root, renderNode);
             let maps = this._reflections.get(root);
@@ -118,8 +130,13 @@ export class EntityCollect {
                 maps.push(renderNode as Reflection);
             }
         } else if (renderNode.hasMask(RendererMask.Graphic3D)) {
-            if (this._graphics.indexOf(renderNode) == -1) {
-                this._graphics.push(renderNode);
+            let graphics = this._graphicsMap.get(root);
+            if (!graphics) {
+                graphics = [];
+                this._graphicsMap.set(root, graphics);
+            }
+            if (graphics.indexOf(renderNode) == -1) {
+                graphics.push(renderNode);
             }
         } else if (!RenderLayerUtil.hasMask(renderNode.renderLayer, RenderLayer.None)) {
             this.removeRenderNode(root, renderNode);
@@ -170,7 +187,9 @@ export class EntityCollect {
     public removeRenderNode(root: Scene3D, renderNode: RenderNode) {
         renderNode.detachSceneOctree();
         if (renderNode.hasMask(RendererMask.Sky)) {
-            this.sky = null;
+            if (this._skyMap.get(root) === renderNode) {
+                this._skyMap.delete(root);
+            }
         } else if (renderNode.hasMask(RendererMask.Reflection)) {
             let maps = this._reflections.get(root);
             if (maps) {
@@ -289,7 +308,7 @@ export class EntityCollect {
     public getRenderNodes(scene: Scene3D, camera: Camera3D): CollectInfo {
         this.autoSortRenderNodes(scene);
         this._collectInfo.clean();
-        this._collectInfo.sky = this.sky;
+        this._collectInfo.sky = this._skyMap.get(scene) ?? null;
 
         if (Engine3D.setting.occlusionQuery.octree) {
             this.rendererOctree = this.getOctree(scene);
@@ -315,8 +334,16 @@ export class EntityCollect {
         return this._tr_renderGroup.get(scene);
     }
 
-    public getGraphicList(): RenderNode[] {
-        return this._graphics;
+    public getGraphicList(scene?: Scene3D): RenderNode[] {
+        if (scene) {
+            return this._graphicsMap.get(scene) ?? [];
+        }
+        // Fallback: concatenate all graphics across all scenes (legacy path)
+        const all: RenderNode[] = [];
+        for (const list of this._graphicsMap.values()) {
+            all.push(...list);
+        }
+        return all;
     }
 
     public getRenderShaderCollect(view: View3D) {
