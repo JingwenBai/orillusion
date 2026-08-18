@@ -198,6 +198,12 @@ export class EntityCollect {
                     maps.splice(index, 1);
                 }
             }
+        } else if (renderNode.hasMask(RendererMask.Graphic3D)) {
+            const graphics = this._graphicsMap.get(root);
+            if (graphics) {
+                const idx = graphics.indexOf(renderNode);
+                if (idx !== -1) graphics.splice(idx, 1);
+            }
         } else if (!RenderLayerUtil.hasMask(renderNode.renderLayer, RenderLayer.None)) {
 
         } else {

@@ -561,54 +561,37 @@ export class Engine3D {
         if (this._beforeRender)
             await this._beforeRender();
 
-        for (const iterator of ComponentCollect.componentsBeforeUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
-                }
+        // Only process views belonging to this engine instance
+        const viewSet = new Set(views);
+
+        for (const [k, v] of ComponentCollect.componentsBeforeUpdateList) {
+            if (!viewSet.has(k)) continue;
+            for (const [f, c] of v) {
+                if (f.enable) c(k);
             }
         }
 
         let command = webGPUContext.device.createCommandEncoder();
-        for (const iterator of ComponentCollect.componentsComputeList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k, command);
-                }
+        for (const [k, v] of ComponentCollect.componentsComputeList) {
+            if (!viewSet.has(k)) continue;
+            for (const [f, c] of v) {
+                if (f.enable) c(k, command);
             }
         }
 
         webGPUContext.device.queue.submit([command.finish()]);
 
-        for (const iterator of ComponentCollect.componentsUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
-                }
+        for (const [k, v] of ComponentCollect.componentsUpdateList) {
+            if (!viewSet.has(k)) continue;
+            for (const [f, c] of v) {
+                if (f.enable) c(k);
             }
         }
 
-        for (const iterator of ComponentCollect.graphicComponent) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (k && f.enable) {
-                    c(k);
-                }
+        for (const [k, v] of ComponentCollect.graphicComponent) {
+            if (!viewSet.has(k)) continue;
+            for (const [f, c] of v) {
+                if (k && f.enable) c(k);
             }
         }
 
@@ -627,15 +610,10 @@ export class Engine3D {
             v.renderFrame();
         });
 
-        for (const iterator of ComponentCollect.componentsLateUpdateList) {
-            let k = iterator[0];
-            let v = iterator[1];
-            for (const iterator2 of v) {
-                let f = iterator2[0];
-                let c = iterator2[1];
-                if (f.enable) {
-                    c(k);
-                }
+        for (const [k, v] of ComponentCollect.componentsLateUpdateList) {
+            if (!viewSet.has(k)) continue;
+            for (const [f, c] of v) {
+                if (f.enable) c(k);
             }
         }
 
