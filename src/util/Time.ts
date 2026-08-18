@@ -16,6 +16,14 @@ export class Time {
      */
     public static delta: number = 0;
 
+    /**
+     * The last RAF timestamp that was committed to Time.time.
+     * Used to deduplicate updates when multiple Engine3D instances
+     * share the same visual frame.
+     * @internal
+     */
+    public static _lastRafTime: number = -1;
+
     private static _startTime: number = 0;
     private static _timeLabel: string = ``;
     /**

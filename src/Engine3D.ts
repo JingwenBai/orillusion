@@ -544,10 +544,15 @@ export class Engine3D {
         EngineContext.id = this._id;
         this._syncWebGPUContext();
 
-        Time.delta = time - Time.time;
-        Time.time = time;
-        Time.frame += 1;
-        Interpolator.tick(Time.delta);
+        // Only advance global time and tick interpolators once per visual frame,
+        // even when multiple Engine3D instances share the same RAF batch.
+        if (time !== Time._lastRafTime) {
+            Time.delta = time - Time.time;
+            Time.time = time;
+            Time.frame += 1;
+            Time._lastRafTime = time;
+            Interpolator.tick(Time.delta);
+        }
 
         let views = this.views;
         let i = 0;
