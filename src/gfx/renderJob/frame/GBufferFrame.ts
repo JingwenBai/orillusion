@@ -11,8 +11,13 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
+
+    /**
+     * Global GBuffer map, keyed as "{engineId}_{bufferName}" to support multiple
+     * Engine3D instances. Direct string keys (legacy) remain supported for
+     * the first/only engine instance.
+     */
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -65,25 +70,39 @@ export class GBufferFrame extends RTFrame {
     }
 
     /**
+     * Build a namespaced key that includes the active engine's ID so that
+     * each Engine3D instance gets its own independent GBuffer resources.
+     * @internal
+     */
+    private static namespacedKey(key: string): string {
+        // lazy import to avoid circular dependency at module load time
+        const Engine3D = (globalThis as any).__Engine3D_ref;
+        if (Engine3D && Engine3D.current != null) {
+            return `engine${Engine3D.current.id}_${key}`;
+        }
+        return key;
+    }
+
+    /**
      * @internal
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        const nsKey = GBufferFrame.namespacedKey(key);
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!GBufferFrame.gBufferMap.has(nsKey)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
-                key,
+                nsKey,
                 fixedWidth == 0 ? size[0] : fixedWidth,
                 fixedHeight == 0 ? size[1] : fixedHeight,
                 fixedWidth != 0 && fixedHeight != 0,
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            GBufferFrame.gBufferMap.set(nsKey, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = GBufferFrame.gBufferMap.get(nsKey);
         }
         return gBuffer;
     }

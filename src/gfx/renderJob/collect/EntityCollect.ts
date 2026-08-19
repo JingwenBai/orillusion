@@ -24,6 +24,11 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
+    /**
+     * Global default instance for backward compatibility.
+     * New code should access EntityCollect through Engine3D.current.entityCollect.
+     * @internal
+     */
     private static _instance: EntityCollect;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
@@ -56,7 +61,15 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
+    /**
+     * Returns the EntityCollect for the currently active Engine3D, or the
+     * global default instance for backward compatibility with single-engine setups.
+     */
+    public static get instance(): EntityCollect {
+        const Engine3D = (globalThis as any).__Engine3D_ref;
+        if (Engine3D && Engine3D.current != null && Engine3D.current.entityCollect) {
+            return Engine3D.current.entityCollect;
+        }
         if (!this._instance) {
             this._instance = new EntityCollect();
         }
