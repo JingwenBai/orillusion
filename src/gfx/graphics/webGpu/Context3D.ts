@@ -130,6 +130,65 @@ export class Context3D extends CEventDispatcher {
         return true;
     }
 
+    /**
+     * Initialize canvas and GPU context using a shared device from an existing Context3D.
+     * Use this when creating a secondary Engine3D instance to share the same GPU device.
+     */
+    async initCanvas(canvasConfig: CanvasConfig, sharedAdapter: GPUAdapter, sharedDevice: GPUDevice, sharedFormat: GPUTextureFormat): Promise<boolean> {
+        this.canvasConfig = canvasConfig;
+        this.adapter = sharedAdapter;
+        this.device = sharedDevice;
+        this.presentationFormat = sharedFormat;
+
+        if (canvasConfig && canvasConfig.canvas) {
+            this.canvas = canvasConfig.canvas;
+            if (this.canvas === null) throw new Error('no Canvas');
+            if (!this.canvas.style.width) this.canvas.style.width = this.canvas.width + 'px';
+            if (!this.canvas.style.height) this.canvas.style.height = this.canvas.height + 'px';
+        } else {
+            this.canvas = document.createElement('canvas');
+            this.canvas.style.position = `absolute`;
+            this.canvas.style.top = '0px';
+            this.canvas.style.left = '0px';
+            this.canvas.style.width = '100%';
+            this.canvas.style.height = '100%';
+            this.canvas.style.zIndex = canvasConfig?.zIndex ? canvasConfig.zIndex.toString() : '0';
+            document.body.appendChild(this.canvas);
+        }
+
+        if (canvasConfig && canvasConfig.backgroundImage) {
+            this.canvas.style.background = `url(${canvasConfig.backgroundImage})`;
+            this.canvas.style['background-size'] = 'cover';
+            this.canvas.style['background-position'] = 'center';
+        } else {
+            this.canvas.style.background = 'transparent';
+        }
+
+        this.canvas.style['touch-action'] = 'none';
+        this.canvas.style['object-fit'] = 'cover';
+
+        this._pixelRatio = canvasConfig?.devicePixelRatio || window.devicePixelRatio || 1;
+        this._pixelRatio = Math.min(this._pixelRatio, 2.0);
+
+        this.context = this.canvas.getContext('webgpu');
+        this.context.configure({
+            device: this.device,
+            format: this.presentationFormat,
+            usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
+            alphaMode: 'premultiplied',
+            colorSpace: `srgb`
+        });
+
+        this._resizeEvent = new CResizeEvent(CResizeEvent.RESIZE, { width: this.windowWidth, height: this.windowHeight });
+        const resizeObserver = new ResizeObserver(() => {
+            this.updateSize();
+            Texture.destroyTexture();
+        });
+        resizeObserver.observe(this.canvas);
+        this.updateSize();
+        return true;
+    }
+
     public updateSize() {
         let w = Math.floor(this.canvas.clientWidth * this.pixelRatio);
         let h = Math.floor(this.canvas.clientHeight * this.pixelRatio);

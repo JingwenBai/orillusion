@@ -17,6 +17,8 @@ export class View3D extends CEventListener {
     public pickFire: PickFire;
     public guiPick: GUIPick;
     public readonly canvasList: GUICanvas[];
+    /** @internal reference to the Engine3D instance that owns this view */
+    public engine: any; // typed as any to avoid circular import; resolved at runtime
 
     constructor(x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
         super();
