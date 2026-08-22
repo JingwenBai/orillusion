@@ -4,20 +4,30 @@
  */
 export class Time {
     /**
-     * The time the engine has been running
+     * The time the engine has been running (instance)
      */
+    public time: number = 0;
+    /**
+     * The frame count the engine is running (instance)
+     */
+    public frame: number = 0;
+    /**
+     * Time from previous frame to present (instance)
+     */
+    public delta: number = 0;
+
+    // ─── Static API (backward compat / global singleton) ──────────────────
+
+    /** The time the engine has been running */
     public static time: number = 0;
-    /**
-     * the frame count engine is running
-     */
+    /** The frame count the engine is running */
     public static frame: number = 0;
-    /**
-     * Time from previous frame to present
-     */
+    /** Time from previous frame to present */
     public static delta: number = 0;
 
     private static _startTime: number = 0;
     private static _timeLabel: string = ``;
+
     /**
      * @internal
      * @param label

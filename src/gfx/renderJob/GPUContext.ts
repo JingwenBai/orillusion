@@ -22,6 +22,8 @@ export class GPUContext {
     public static matrixCount: number = 0;
     public static lastRenderPassState: RendererPassState;
     public static LastCommand: GPUCommandEncoder;
+    /** Active canvas context for the currently-rendering engine instance */
+    public static currentCanvasContext: GPUCanvasContext | null = null;
 
     /**
      * renderPipeline before render need bind pipeline
@@ -167,11 +169,12 @@ export class GPUContext {
         } else {
             let att0 = renderPassState.renderPassDescriptor.colorAttachments[0];
             if (att0) {
+                const canvasCtx = GPUContext.currentCanvasContext ?? webGPUContext.context;
                 if (renderPassState.multisample > 0) {
                     att0.view = renderPassState.multiTexture.createView();
-                    att0.resolveTarget = webGPUContext.context.getCurrentTexture().createView();
+                    att0.resolveTarget = canvasCtx.getCurrentTexture().createView();
                 } else {
-                    att0.view = webGPUContext.context.getCurrentTexture().createView();
+                    att0.view = canvasCtx.getCurrentTexture().createView();
                 }
             }
             return command.beginRenderPass(renderPassState.renderPassDescriptor);
