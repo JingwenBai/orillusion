@@ -2,7 +2,6 @@ import { Object3D } from "..";
 import { GUIPick } from "../components/gui/GUIPick";
 import { GUICanvas } from "../components/gui/core/GUICanvas";
 import { CEventListener } from "../event/CEventListener";
-import { ShadowLightsCollect } from "../gfx/renderJob/collect/ShadowLightsCollect";
 import { PickFire } from "../io/PickFire";
 import { Vector4 } from "../math/Vector4";
 import { Camera3D } from "./Camera3D";
@@ -14,6 +13,8 @@ export class View3D extends CEventListener {
     private _viewPort: Vector4;
     private _enablePick: boolean = false;
     private _enable: boolean = true;
+    /** @internal reference to the Engine3D instance that owns this view */
+    public engine: any = null;
     public pickFire: PickFire;
     public guiPick: GUIPick;
     public readonly canvasList: GUICanvas[];
@@ -51,8 +52,8 @@ export class View3D extends CEventListener {
     public set scene(value: Scene3D) {
         this._scene = value;
         value.view = this;
-
-        ShadowLightsCollect.createBuffer(this);
+        // ShadowLightsCollect.createBuffer is called in Engine3D.startRenderJob()
+        // after the engine reference is established on this view.
 
         if (value) {
             this.canvasList.forEach(canvas => {
