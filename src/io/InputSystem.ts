@@ -82,6 +82,11 @@ export class InputSystem extends CEventDispatcher {
     protected _windowsEvent3d: CEvent;
     mouseLock: boolean = false;
 
+    // Saved handler references so destroy() can cleanly remove them.
+    private _onWheel: (e: WheelEvent) => void;
+    private _onKeyDown: (e: KeyboardEvent) => void;
+    private _onKeyUp: (e: KeyboardEvent) => void;
+
     /**
      * init the input system
      * @param canvas the reference of canvas
@@ -123,11 +128,12 @@ export class InputSystem extends CEventDispatcher {
         //     this.mouseEnd(ev);
         // }
 
-        canvas.addEventListener(`wheel`, (e: WheelEvent) => this.mouseWheel(e), { passive: false });
-
-        window.addEventListener('keydown', (e: KeyboardEvent) => this.keyDown(e), true);
-
-        window.addEventListener('keyup', (e: KeyboardEvent) => this.keyUp(e), true);
+        this._onWheel = (e: WheelEvent) => this.mouseWheel(e);
+        this._onKeyDown = (e: KeyboardEvent) => this.keyDown(e);
+        this._onKeyUp = (e: KeyboardEvent) => this.keyUp(e);
+        canvas.addEventListener(`wheel`, this._onWheel, { passive: false });
+        window.addEventListener('keydown', this._onKeyDown, true);
+        window.addEventListener('keyup', this._onKeyUp, true);
 
         canvas.oncontextmenu = function () {
             return false;
@@ -158,6 +164,31 @@ export class InputSystem extends CEventDispatcher {
         this.mouseLock = false;
         document.exitPointerLock();
         document.removeEventListener("mousemove", (e) => this.onMouseLockMove(e), false);
+    }
+
+    /**
+     * Detach every listener this InputSystem installed on its canvas and on
+     * `window`.  After destroy the instance dispatches no further events and
+     * holds no strong references to the DOM, so a per-engine InputSystem can
+     * be garbage-collected together with its Engine3D.
+     */
+    public destroy() {
+        const canvas = this.canvas;
+        if (canvas) {
+            canvas.onpointerdown = null;
+            canvas.onpointerup = null;
+            canvas.onpointerenter = null;
+            canvas.onpointermove = null;
+            canvas.onpointercancel = null;
+            canvas.oncontextmenu = null;
+            if (this._onWheel) canvas.removeEventListener(`wheel`, this._onWheel);
+        }
+        if (this._onKeyDown) window.removeEventListener('keydown', this._onKeyDown, true);
+        if (this._onKeyUp) window.removeEventListener('keyup', this._onKeyUp, true);
+        this._onWheel = null;
+        this._onKeyDown = null;
+        this._onKeyUp = null;
+        this.canvas = null;
     }
 
     public onMouseLockMove(e: MouseEvent) {

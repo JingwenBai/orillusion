@@ -399,7 +399,9 @@ export class Engine3D {
         }
 
         if (descriptor.engineSetting) {
-            this.setting = { ...this.setting, ...descriptor.engineSetting };
+            // Deep-merge so nested overrides (e.g. { render: { debug: true } })
+            // do not wipe out sibling branches of the default setting tree.
+            this.setting = deepMergeSettings(this.setting, descriptor.engineSetting);
         }
 
         // ---- One-time: WASM matrix library ----
@@ -513,6 +515,41 @@ export class Engine3D {
     public resume() {
         if (this._requestAnimationFrameID === 0)
             this._requestAnimationFrameID = requestAnimationFrame((t) => this.render(t));
+    }
+
+    /**
+     * Tear down this Engine3D instance.
+     *
+     * Stops the render loop, detaches the InputSystem's DOM listeners, and
+     * releases the per-canvas WebGPU context / ResizeObserver.  Shared GPU
+     * resources (device, shader cache, matrix bind group) intentionally
+     * survive so remaining engines can keep rendering.
+     *
+     * After destroy, calling render / resume / init on this instance is
+     * undefined behaviour.  If this instance was `Engine3D.current`, the
+     * static pointer is cleared.
+     */
+    public destroy() {
+        this.pause();
+
+        if (this.inputSystem) {
+            this.inputSystem.destroy();
+            this.inputSystem = null;
+        }
+
+        if (this._context) {
+            this._context.destroy();
+            this._context = null;
+        }
+
+        this.renderJobs?.clear();
+        this.renderJobs = null;
+        this.views = null;
+
+        if (Engine3D.current === this) {
+            Engine3D.current = null;
+            if (EngineContext.id === this._id) EngineContext.id = '';
+        }
     }
 
     // =====================================================================

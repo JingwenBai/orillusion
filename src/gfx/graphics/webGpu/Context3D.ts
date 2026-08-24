@@ -24,6 +24,7 @@ export class Context3D extends CEventDispatcher {
     public canvasConfig: CanvasConfig;
     private _pixelRatio: number = 1.0;
     private _resizeEvent: CEvent;
+    private _resizeObserver: ResizeObserver;
 
     // ---- Shared GPU accessors ----
     public get adapter(): GPUAdapter { return Context3D._adapter; }
@@ -129,14 +130,30 @@ export class Context3D extends CEventDispatcher {
         });
 
         this._resizeEvent = new CResizeEvent(CResizeEvent.RESIZE, { width: this.windowWidth, height: this.windowHeight })
-        const resizeObserver = new ResizeObserver(() => {
+        this._resizeObserver = new ResizeObserver(() => {
             this.updateSize()
             Texture.destroyTexture()
         });
 
-        resizeObserver.observe(this.canvas);
+        this._resizeObserver.observe(this.canvas);
         this.updateSize();
         return true;
+    }
+
+    /**
+     * Release per-instance canvas resources.  The shared adapter / device
+     * intentionally survive so other Engine3D instances can keep using them.
+     */
+    public destroy() {
+        if (this._resizeObserver) {
+            this._resizeObserver.disconnect();
+            this._resizeObserver = null;
+        }
+        if (this.context && (this.context as any).unconfigure) {
+            (this.context as any).unconfigure();
+        }
+        this.context = null;
+        this.canvas = null;
     }
 
     public updateSize() {
