@@ -20,11 +20,34 @@ export type FragmentPart = {
 }
 
 export class ShaderUtil {
-    public static renderShaderModulePool: Map<string, GPUShaderModule>;
-    public static renderShader: Map<string, RenderShaderPass>;
 
-    public static init() {
+    /**
+     * Active instance — set by Engine3D.activate() before each frame.
+     * @internal
+     */
+    public static current: ShaderUtil;
+
+    // ── instance state ────────────────────────────────────────────────────────
+
+    public renderShaderModulePool: Map<string, GPUShaderModule>;
+    public renderShader: Map<string, RenderShaderPass>;
+
+    constructor() {
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
         this.renderShader = new Map<string, RenderShaderPass>();
+    }
+
+    // ── static shims (delegate to ShaderUtil.current) ─────────────────────────
+
+    public static init() {
+        // No-op: instance is created in Engine3D constructor.
+    }
+
+    public static get renderShaderModulePool(): Map<string, GPUShaderModule> {
+        return ShaderUtil.current.renderShaderModulePool;
+    }
+
+    public static get renderShader(): Map<string, RenderShaderPass> {
+        return ShaderUtil.current.renderShader;
     }
 }

@@ -11,8 +11,12 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    /**
+     * Active instance registry — set by Engine3D.activate() before each frame.
+     * @internal
+     */
+    public static current: GBufferFrame.Registry;
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -64,40 +68,57 @@ export class GBufferFrame extends RTFrame {
         return this._compressGBufferTex;
     }
 
-    /**
-     * @internal
-     */
-    public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
-        let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
-            gBuffer = new GBufferFrame();
-            let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
-            gBuffer.createGBuffer(
-                key,
-                fixedWidth == 0 ? size[0] : fixedWidth,
-                fixedHeight == 0 ? size[1] : fixedHeight,
-                fixedWidth != 0 && fixedHeight != 0,
-                outColor,
-                depthTexture
-            );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
-        } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
-        }
-        return gBuffer;
-    }
-
-
-    public static getGUIBufferFrame() {
-        let colorRTFrame = this.getGBufferFrame(this.colorPass_GBuffer);
-        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.gui_GBuffer, 0, 0, true, colorRTFrame.depthTexture);
-        return rtFrame;
-    }
-
     public clone() {
         let gBufferFrame = new GBufferFrame();
         this.clone2Frame(gBufferFrame);
         return gBufferFrame;
+    }
+
+    // ── static shims (delegate to GBufferFrame.current registry) ─────────────
+
+    /**
+     * @internal
+     */
+    public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        return GBufferFrame.current.getGBufferFrame(key, fixedWidth, fixedHeight, outColor, depthTexture);
+    }
+
+    public static getGUIBufferFrame(): GBufferFrame {
+        return GBufferFrame.current.getGUIBufferFrame();
+    }
+}
+
+export namespace GBufferFrame {
+    /**
+     * Per-engine-instance G-buffer frame registry.
+     * @internal
+     */
+    export class Registry {
+        public gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+        public getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+            let gBuffer: GBufferFrame;
+            if (!this.gBufferMap.has(key)) {
+                gBuffer = new GBufferFrame();
+                let size = webGPUContext.presentationSize;
+                gBuffer.createGBuffer(
+                    key,
+                    fixedWidth == 0 ? size[0] : fixedWidth,
+                    fixedHeight == 0 ? size[1] : fixedHeight,
+                    fixedWidth != 0 && fixedHeight != 0,
+                    outColor,
+                    depthTexture
+                );
+                this.gBufferMap.set(key, gBuffer);
+            } else {
+                gBuffer = this.gBufferMap.get(key);
+            }
+            return gBuffer;
+        }
+
+        public getGUIBufferFrame(): GBufferFrame {
+            let colorRTFrame = this.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+            return this.getGBufferFrame(GBufferFrame.gui_GBuffer, 0, 0, true, colorRTFrame.depthTexture);
+        }
     }
 }
