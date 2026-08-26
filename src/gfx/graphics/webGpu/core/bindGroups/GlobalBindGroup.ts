@@ -11,16 +11,34 @@ import { MatrixBindGroup } from "./MatrixBindGroup";
  * @group GFX
  */
 export class GlobalBindGroup {
+    /**
+     * Per-engine matrix bind group. Set by Engine3D before each render frame (context-switching).
+     * Camera and scene maps are shared across engines since they are naturally keyed
+     * by unique Camera3D / Scene3D object references.
+     */
+    public static modelMatrixBindGroup: MatrixBindGroup;
+
     private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
     private static _lightEntriesMap: Map<Scene3D, LightEntries>;
     private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
-    public static modelMatrixBindGroup: MatrixBindGroup;
 
+    /**
+     * Called once per engine instance. Creates a new MatrixBindGroup for this engine.
+     * The shared Maps are only created on the first call to avoid resetting data from
+     * already-running engines.
+     */
     public static init() {
+        // Always create a new MatrixBindGroup for this engine; the caller (Engine3D)
+        // stores the returned reference and restores it via context-switching.
         this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+
+        // Only initialize the Maps on first call — they are keyed by Camera3D / Scene3D
+        // object identity so multiple engines can coexist in the same shared Maps.
+        if (!this._cameraBindGroups) {
+            this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
+            this._lightEntriesMap = new Map<Scene3D, LightEntries>();
+            this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        }
     }
 
     public static getAllCameraGroup() {
@@ -79,7 +97,4 @@ export class GlobalBindGroup {
         }
         return this._reflectionEntriesMap.get(scene);
     }
-
-
-
 }
