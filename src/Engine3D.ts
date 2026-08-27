@@ -537,6 +537,19 @@ export class Engine3D {
             this.inputSystem = null;
         }
 
+        // Remove this engine's views from the shared ComponentCollect maps so
+        // that other running engines don't iterate stale entries.
+        if (this.views) {
+            for (const view of this.views) {
+                ComponentCollect.componentsUpdateList?.delete(view);
+                ComponentCollect.componentsLateUpdateList?.delete(view);
+                ComponentCollect.componentsBeforeUpdateList?.delete(view);
+                ComponentCollect.componentsComputeList?.delete(view);
+                ComponentCollect.componentsEnablePickerList?.delete(view);
+                ComponentCollect.graphicComponent?.delete(view);
+            }
+        }
+
         if (this._context) {
             this._context.destroy();
             this._context = null;
@@ -587,6 +600,9 @@ export class Engine3D {
         Interpolator.tick(Time.delta);
 
         let views = this.views;
+        // Build a fast-lookup set so ComponentCollect iterations are scoped to
+        // this engine's views and don't accidentally process other instances' views.
+        const viewSet = new Set<View3D>(views);
         let i = 0;
         for (i = 0; i < views.length; i++) {
             const view = views[i];
@@ -600,6 +616,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.componentsBeforeUpdateList) {
             let k = iterator[0];
+            if (!viewSet.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -613,6 +630,7 @@ export class Engine3D {
         let command = webGPUContext.device.createCommandEncoder();
         for (const iterator of ComponentCollect.componentsComputeList) {
             let k = iterator[0];
+            if (!viewSet.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -627,6 +645,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.componentsUpdateList) {
             let k = iterator[0];
+            if (!viewSet.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -639,6 +658,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.graphicComponent) {
             let k = iterator[0];
+            if (!viewSet.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
@@ -666,6 +686,7 @@ export class Engine3D {
 
         for (const iterator of ComponentCollect.componentsLateUpdateList) {
             let k = iterator[0];
+            if (!viewSet.has(k)) continue;
             let v = iterator[1];
             for (const iterator2 of v) {
                 let f = iterator2[0];
