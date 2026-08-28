@@ -7,11 +7,27 @@ import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
 
+/** Active per-engine gBufferMap; set via activateGBufferMap(). */
+let _activeMap: Map<string, GBufferFrame> | null = null;
+
+/**
+ * Activate a specific gBufferMap as the current one.
+ * Engine3D calls this before rendering a frame.
+ * @internal
+ */
+export function activateGBufferMap(map: Map<string, GBufferFrame>): void {
+    _activeMap = map;
+}
+
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /** @deprecated Use per-engine gBufferMap via Engine3D instance instead. */
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        return _activeMap!;
+    }
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;

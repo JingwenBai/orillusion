@@ -19,13 +19,23 @@ import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
 import { RenderShaderCollect } from './RenderShaderCollect';
 
+/** Active per-engine EntityCollect; set via activateEntityCollect(). */
+let _activeInstance: EntityCollect | null = null;
+
+/**
+ * Activate a specific EntityCollect as the current one.
+ * Engine3D calls this before rendering a frame.
+ * @internal
+ */
+export function activateEntityCollect(ec: EntityCollect): void {
+    _activeInstance = ec;
+}
+
 /**
  * @internal
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
-
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
     private _sceneGIProbes: Map<Scene3D, Probe[]>;
@@ -56,11 +66,12 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
+    public static get instance(): EntityCollect {
+        if (!_activeInstance) {
+            // Fallback: auto-create a default instance (single-engine compat)
+            _activeInstance = new EntityCollect();
         }
-        return this._instance;
+        return _activeInstance;
     }
 
     constructor() {
