@@ -102,4 +102,27 @@ export class RTResourceMap {
         );
         GPUContext.endCommandEncoder(commandEncoder);
     }
+
+    /**
+     * Destroy and remove all RT textures and view quads that belong to the
+     * given engine instance.  Called by Engine3D.destroy() to prevent GPU
+     * memory leaks when an engine is torn down.
+     */
+    public static destroyForEngine(engineId: string) {
+        const prefix = `${engineId}_`;
+        const texKeys: string[] = [];
+        for (const [key, rt] of this.rtTextureMap) {
+            if (key.startsWith(prefix)) {
+                rt.destroy(true);
+                texKeys.push(key);
+            }
+        }
+        for (const key of texKeys) this.rtTextureMap.delete(key);
+
+        const quadKeys: string[] = [];
+        for (const [key] of this.rtViewQuad) {
+            if (key.startsWith(prefix)) quadKeys.push(key);
+        }
+        for (const key of quadKeys) this.rtViewQuad.delete(key);
+    }
 }

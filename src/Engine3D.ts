@@ -537,9 +537,11 @@ export class Engine3D {
             this.inputSystem = null;
         }
 
-        // Remove this engine's views from the shared ComponentCollect maps so
-        // that other running engines don't iterate stale entries.
         if (this.views) {
+            const cameras = this.views.map(v => v.camera).filter(Boolean);
+            const scenes = [...new Set(this.views.map(v => v.scene).filter(Boolean))];
+
+            // Remove ComponentCollect entries so surviving engines don't iterate stale views.
             for (const view of this.views) {
                 ComponentCollect.componentsUpdateList?.delete(view);
                 ComponentCollect.componentsLateUpdateList?.delete(view);
@@ -548,7 +550,15 @@ export class Engine3D {
                 ComponentCollect.componentsEnablePickerList?.delete(view);
                 ComponentCollect.graphicComponent?.delete(view);
             }
+
+            // Release scene/camera entries from shared subsystem caches.
+            GlobalBindGroup.releaseForViews(cameras, scenes);
+            ShadowLightsCollect.releaseForScenes(scenes);
         }
+
+        // Release engine-scoped GPU render targets.
+        RTResourceMap.destroyForEngine(this._id);
+        GBufferFrame.destroyForEngine(this._id);
 
         if (this._context) {
             this._context.destroy();

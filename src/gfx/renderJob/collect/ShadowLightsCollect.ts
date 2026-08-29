@@ -26,6 +26,18 @@ export class ShadowLightsCollect {
         this.shadowLights = new Map<Scene3D, Float32Array>();
     }
 
+    /**
+     * Remove all light and shadow data for the given scenes.
+     * Called by Engine3D.destroy() so destroyed engines don't leave stale entries.
+     */
+    public static releaseForScenes(scenes: Scene3D[]) {
+        for (const scene of scenes) {
+            this.directionLightList?.delete(scene);
+            this.pointLightList?.delete(scene);
+            this.shadowLights?.delete(scene);
+        }
+    }
+
     public static createBuffer(view: View3D) {
         if (!this.shadowLights.has(view.scene)) {
             let list = new Float32Array(16);

@@ -82,6 +82,17 @@ export class GlobalBindGroup {
         return this._reflectionEntriesMap.get(scene);
     }
 
-
-
+    /**
+     * Remove bind-group entries that belong to the given cameras and scenes.
+     * Called by Engine3D.destroy() to prevent memory leaks.
+     */
+    public static releaseForViews(cameras: Camera3D[], scenes: Scene3D[]) {
+        for (const camera of cameras) {
+            this._cameraBindGroups?.delete(camera);
+        }
+        for (const scene of scenes) {
+            this._lightEntriesMap?.delete(scene);
+            this._reflectionEntriesMap?.delete(scene);
+        }
+    }
 }

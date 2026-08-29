@@ -104,4 +104,24 @@ export class GBufferFrame extends RTFrame {
         this.clone2Frame(gBufferFrame);
         return gBufferFrame;
     }
+
+    /**
+     * Destroy all GBuffer frames that belong to the given engine instance and
+     * remove them from the global map.  Called by Engine3D.destroy() to release
+     * GPU render-target memory when an engine is torn down.
+     */
+    public static destroyForEngine(engineId: string) {
+        const prefix = `${engineId}_`;
+        const keysToDelete: string[] = [];
+        for (const [key, frame] of this.gBufferMap) {
+            if (!key.startsWith(prefix)) continue;
+            for (const rt of frame.renderTargets) {
+                rt?.destroy(true);
+            }
+            frame.depthTexture?.destroy(true);
+            frame.zPreTexture?.destroy(true);
+            keysToDelete.push(key);
+        }
+        for (const key of keysToDelete) this.gBufferMap.delete(key);
+    }
 }
