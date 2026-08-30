@@ -24,7 +24,11 @@ export class ShaderUtil {
     public static renderShader: Map<string, RenderShaderPass>;
 
     public static init() {
-        this.renderShaderModulePool = new Map<string, GPUShaderModule>();
-        this.renderShader = new Map<string, RenderShaderPass>();
+        // Idempotent: shader modules are device-level resources shared across
+        // all Engine3D instances on the same page.
+        if (!this.renderShaderModulePool) {
+            this.renderShaderModulePool = new Map<string, GPUShaderModule>();
+            this.renderShader = new Map<string, RenderShaderPass>();
+        }
     }
 }
