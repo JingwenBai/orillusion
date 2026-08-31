@@ -65,7 +65,23 @@ export class OutlinePostManager {
 
 }
 
+import { getActiveOutlinePostManager } from "../core/EngineRegistry";
+
 /**
+ * Proxy that always forwards to the active Engine3D instance's OutlinePostManager.
  * @internal
  */
-export let outlinePostManager: OutlinePostManager = new OutlinePostManager();
+export const outlinePostManager: OutlinePostManager = new Proxy({} as OutlinePostManager, {
+    get(_t, prop: string) {
+        const m = getActiveOutlinePostManager() as any;
+        if (!m) throw new Error('No active Engine3D instance.');
+        const val = m[prop];
+        return typeof val === 'function' ? val.bind(m) : val;
+    },
+    set(_t, prop: string, value: any) {
+        const m = getActiveOutlinePostManager() as any;
+        if (!m) throw new Error('No active Engine3D instance.');
+        m[prop] = value;
+        return true;
+    },
+});

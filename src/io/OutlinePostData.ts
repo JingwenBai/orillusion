@@ -1,4 +1,3 @@
-import { Engine3D } from "../Engine3D";
 import { Color } from "../math/Color";
 
 export class OutlinePostSlot {
@@ -16,8 +15,8 @@ export class OutlinePostData {
 
     private dataDirty: boolean = true;
 
-    constructor() {
-        let groupCount = Engine3D.setting.render.postProcessing.outline.groupCount;
+    /** @param groupCount taken from engine setting at init time */
+    constructor(groupCount: number = 4) {
         this.SlotCount = Math.max(1, Math.min(groupCount, this.SlotCount));
         for (let i = 0; i < this.SlotCount; i++) {
             let slot: OutlinePostSlot = (this.slots[i] = new OutlinePostSlot());
@@ -64,4 +63,24 @@ export class OutlinePostData {
     }
 }
 
-export let outlinePostData: OutlinePostData = new OutlinePostData();
+import { getActiveOutlinePostData } from "../core/EngineRegistry";
+
+/**
+ * Proxy that always forwards to the active Engine3D instance's OutlinePostData.
+ * Existing code that imports this symbol continues to work unchanged.
+ * @internal
+ */
+export const outlinePostData: OutlinePostData = new Proxy({} as OutlinePostData, {
+    get(_t, prop: string) {
+        const d = getActiveOutlinePostData() as any;
+        if (!d) throw new Error('No active Engine3D instance.');
+        const val = d[prop];
+        return typeof val === 'function' ? val.bind(d) : val;
+    },
+    set(_t, prop: string, value: any) {
+        const d = getActiveOutlinePostData() as any;
+        if (!d) throw new Error('No active Engine3D instance.');
+        d[prop] = value;
+        return true;
+    },
+});

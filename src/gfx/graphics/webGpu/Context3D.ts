@@ -2,6 +2,7 @@ import { CEvent, Texture } from '../../..';
 import { CEventDispatcher } from '../../../event/CEventDispatcher';
 import { CResizeEvent } from '../../../event/CResizeEvent';
 import { CanvasConfig } from './CanvasConfig';
+import { getActiveContext } from '../../../core/EngineRegistry';
 
 /**
  * @internal
@@ -148,6 +149,23 @@ export class Context3D extends CEventDispatcher {
 }
 
 /**
+ * A transparent proxy that always forwards property accesses to the Context3D
+ * of the currently active Engine3D instance.  All existing code that imports
+ * `webGPUContext` continues to work unchanged while supporting multiple engine
+ * instances.
  * @internal
  */
-export let webGPUContext = new Context3D();
+export const webGPUContext: Context3D = new Proxy({} as Context3D, {
+    get(_target, prop: string) {
+        const ctx = getActiveContext() as any;
+        if (!ctx) throw new Error('No active Engine3D instance. Call engine.init() first.');
+        const val = ctx[prop];
+        return typeof val === 'function' ? val.bind(ctx) : val;
+    },
+    set(_target, prop: string, value: any) {
+        const ctx = getActiveContext() as any;
+        if (!ctx) throw new Error('No active Engine3D instance. Call engine.init() first.');
+        ctx[prop] = value;
+        return true;
+    },
+});

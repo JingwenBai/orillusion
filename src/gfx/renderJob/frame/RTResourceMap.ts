@@ -4,19 +4,25 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+import { getActiveRTTextureMap, getActiveRTViewQuad } from '../../../core/EngineRegistry';
 /**
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
-
-    public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+    /** Returns the RT-texture map of the currently active Engine3D instance. */
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return getActiveRTTextureMap() as Map<string, RenderTexture>;
     }
+
+    /** Returns the ViewQuad map of the currently active Engine3D instance. */
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return getActiveRTViewQuad() as Map<string, ViewQuad>;
+    }
+
+    /** No-op: per-engine maps are already fresh when the engine activates. */
+    public static init() {}
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
         let rt: RenderTexture = this.rtTextureMap.get(name);
