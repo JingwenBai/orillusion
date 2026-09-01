@@ -17,10 +17,13 @@ export class GlobalBindGroup {
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
-        this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        // Idempotent: only initialize once so multiple Engine3D instances share
+        // the same per-Camera/per-Scene data structures (which are already scoped
+        // by their keys and never collide across independent engines).
+        this.modelMatrixBindGroup ||= new MatrixBindGroup();
+        this._cameraBindGroups ||= new Map<Camera3D, GlobalUniformGroup>();
+        this._lightEntriesMap ||= new Map<Scene3D, LightEntries>();
+        this._reflectionEntriesMap ||= new Map<Scene3D, ReflectionEntries>();
     }
 
     public static getAllCameraGroup() {

@@ -42,21 +42,14 @@ export class ComponentCollect {
     // private static waitStartComponentBody: Map<Object3D, IComponent[]>;
     public static waitStartComponent: Map<Object3D, IComponent[]>;
 
-    private static _init: boolean = false;
-
     private static init() {
-        if (!this._init) {
-            this._init = true;
-            this.componentsUpdateList = new Map<View3D, Map<IComponent, Function>>();
-            this.componentsLateUpdateList = new Map<View3D, Map<IComponent, Function>>();
-            this.componentsBeforeUpdateList = new Map<View3D, Map<IComponent, Function>>();
-            this.componentsComputeList = new Map<View3D, Map<IComponent, Function>>();
-            this.componentsEnablePickerList = new Map<View3D, Map<ColliderComponent, Function>>();
-            this.graphicComponent = new Map<View3D, Map<IComponent, Function>>();
-            // this.waitStartComponentBak = new Map<Object3D, IComponent[]>();
-            // this.waitStartComponentBody = new Map<Object3D, IComponent[]>();
-            this.waitStartComponent = new Map<Object3D, IComponent[]>();
-        }
+        this.componentsUpdateList ||= new Map<View3D, Map<IComponent, Function>>();
+        this.componentsLateUpdateList ||= new Map<View3D, Map<IComponent, Function>>();
+        this.componentsBeforeUpdateList ||= new Map<View3D, Map<IComponent, Function>>();
+        this.componentsComputeList ||= new Map<View3D, Map<IComponent, Function>>();
+        this.componentsEnablePickerList ||= new Map<View3D, Map<ColliderComponent, Function>>();
+        this.graphicComponent ||= new Map<View3D, Map<IComponent, Function>>();
+        this.waitStartComponent ||= new Map<Object3D, IComponent[]>();
     }
 
     public static bindUpdate(view: View3D, component: IComponent, call: Function) {
