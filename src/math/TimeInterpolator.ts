@@ -348,8 +348,18 @@ export enum InterpolatorEnum {
 export class Interpolator {
     /**
      * @internal
+     * The active interpolator list. Swapped by Engine3D to its own list before each render
+     * so animations are tracked per-engine-instance.
      */
     public static interpolators: Interpolator[] = [];
+
+    /**
+     * @internal
+     * Swap the active interpolator list to that owned by a specific engine instance.
+     */
+    public static activateForEngine(list: Interpolator[]): void {
+        Interpolator.interpolators = list;
+    }
 
     /**
      * @internal

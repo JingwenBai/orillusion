@@ -13,9 +13,35 @@ export class RTResourceMap {
     public static rtTextureMap: Map<string, RenderTexture>;
     public static rtViewQuad: Map<string, ViewQuad>;
 
+    /**
+     * @internal
+     * Create and return a fresh pair of maps for a new engine instance.
+     * The caller (Engine3D) is responsible for activating them via activateForEngine().
+     */
+    public static createInstanceMaps(): { rtTextureMap: Map<string, RenderTexture>; rtViewQuad: Map<string, ViewQuad> } {
+        return {
+            rtTextureMap: new Map<string, RenderTexture>(),
+            rtViewQuad: new Map<string, ViewQuad>(),
+        };
+    }
+
+    /**
+     * @internal
+     * Swap the active static maps to those owned by a specific engine instance.
+     * Called by Engine3D before each render to ensure GPU resources are scoped per-engine.
+     */
+    public static activateForEngine(maps: { rtTextureMap: Map<string, RenderTexture>; rtViewQuad: Map<string, ViewQuad> }): void {
+        RTResourceMap.rtTextureMap = maps.rtTextureMap;
+        RTResourceMap.rtViewQuad = maps.rtViewQuad;
+    }
+
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        if (!this.rtTextureMap) {
+            this.rtTextureMap = new Map<string, RenderTexture>();
+        }
+        if (!this.rtViewQuad) {
+            this.rtViewQuad = new Map<string, ViewQuad>();
+        }
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
