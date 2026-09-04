@@ -1,5 +1,13 @@
 
 import { Engine3D } from '../../../Engine3D';
+
+let _active: EntityCollect;
+
+/** @internal */
+export function setActiveEntityCollect(e: EntityCollect): void {
+    _active = e;
+    EntityCollect._instance = e;
+}
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
 import { RenderNode } from '../../../components/renderer/RenderNode';
