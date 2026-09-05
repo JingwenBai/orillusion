@@ -7,6 +7,8 @@ import { RenderTexture } from '../../../textures/RenderTexture';
 /**
  * @internal
  * @group Post
+ * Global render-texture registry. The active maps are swapped per-engine before
+ * each render frame so that multiple engine instances maintain isolated resources.
  */
 export class RTResourceMap {
 
@@ -16,6 +18,24 @@ export class RTResourceMap {
     public static init() {
         this.rtTextureMap = new Map<string, RenderTexture>();
         this.rtViewQuad = new Map<string, ViewQuad>();
+    }
+
+    /**
+     * @internal
+     * Capture the current active maps into a snapshot object.
+     * Used by Engine3D to save/restore per-engine resource maps.
+     */
+    public static captureSnapshot(): { rtTextureMap: Map<string, RenderTexture>; rtViewQuad: Map<string, ViewQuad> } {
+        return { rtTextureMap: this.rtTextureMap, rtViewQuad: this.rtViewQuad };
+    }
+
+    /**
+     * @internal
+     * Restore a previously captured snapshot as the active maps.
+     */
+    public static restoreSnapshot(snapshot: { rtTextureMap: Map<string, RenderTexture>; rtViewQuad: Map<string, ViewQuad> }) {
+        this.rtTextureMap = snapshot.rtTextureMap;
+        this.rtViewQuad = snapshot.rtViewQuad;
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
