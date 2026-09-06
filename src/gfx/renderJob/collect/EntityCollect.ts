@@ -1,5 +1,6 @@
 
 import { Engine3D } from '../../../Engine3D';
+import { activeEngineId } from '../../graphics/webGpu/Context3D';
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
 import { RenderNode } from '../../../components/renderer/RenderNode';
@@ -24,7 +25,7 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    private static _instances: Map<number, EntityCollect> = new Map<number, EntityCollect>();
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,11 +57,14 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
+    public static get instance(): EntityCollect {
+        const id = activeEngineId;
+        let inst = this._instances.get(id);
+        if (!inst) {
+            inst = new EntityCollect();
+            this._instances.set(id, inst);
         }
-        return this._instance;
+        return inst;
     }
 
     constructor() {

@@ -1,6 +1,6 @@
 
 import { RenderTexture } from "../../../textures/RenderTexture";
-import { webGPUContext } from "../../graphics/webGpu/Context3D";
+import { webGPUContext, activeEngineId } from "../../graphics/webGpu/Context3D";
 import { GPUTextureFormat } from "../../graphics/webGpu/WebGPUConst";
 import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
@@ -68,11 +68,12 @@ export class GBufferFrame extends RTFrame {
      * @internal
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        // Prefix with active engine ID so each engine instance has separate G-buffers
+        const scopedKey = `${activeEngineId}_${key}`;
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!GBufferFrame.gBufferMap.has(scopedKey)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -81,9 +82,9 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            GBufferFrame.gBufferMap.set(scopedKey, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = GBufferFrame.gBufferMap.get(scopedKey);
         }
         return gBuffer;
     }
