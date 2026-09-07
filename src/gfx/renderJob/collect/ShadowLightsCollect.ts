@@ -11,18 +11,39 @@ import { GlobalUniformGroup } from '../../graphics/webGpu/core/bindGroups/Global
  */
 export class ShadowLightsCollect {
 
+    // ── Constants (shared across all engines) ──────────────────────────────
     public static maxNumDirectionShadow = 8;
     public static maxNumPointShadow = 8;
 
-    public static directionLightList: Map<Scene3D, ILight[]>;
-    public static pointLightList: Map<Scene3D, ILight[]>;
-    public static shadowLights: Map<Scene3D, Float32Array>;
+    // ── Per-engine instance state ──────────────────────────────────────────
+    /** @internal */
+    public readonly directionLightListInst: Map<Scene3D, ILight[]> = new Map();
+    /** @internal */
+    public readonly pointLightListInst: Map<Scene3D, ILight[]> = new Map();
+    /** @internal */
+    public readonly shadowLightsInst: Map<Scene3D, Float32Array> = new Map();
 
-    public static init() {
-        this.directionLightList = new Map<Scene3D, ILight[]>();
-        this.pointLightList = new Map<Scene3D, ILight[]>();
-        this.shadowLights = new Map<Scene3D, Float32Array>();
+    // ── Static fields (point to the active engine's data) ─────────────────
+    public static directionLightList: Map<Scene3D, ILight[]> = new Map();
+    public static pointLightList: Map<Scene3D, ILight[]> = new Map();
+    public static shadowLights: Map<Scene3D, Float32Array> = new Map();
+
+    /**
+     * @internal
+     * Redirect the static fields to point to the given engine instance's data.
+     */
+    public static activate(inst: ShadowLightsCollect): void {
+        ShadowLightsCollect.directionLightList = inst.directionLightListInst;
+        ShadowLightsCollect.pointLightList = inst.pointLightListInst;
+        ShadowLightsCollect.shadowLights = inst.shadowLightsInst;
     }
+
+    /** @deprecated Use Engine3D.init() instead; kept for compatibility. */
+    public static init() {
+        // No-op: instance creation and activation is handled by Engine3D.
+    }
+
+    // ── Static API (unchanged – zero diff for all callers) ────────────────
 
     public static createBuffer(view: View3D) {
         if (!this.shadowLights.has(view.scene)) {
@@ -196,7 +217,7 @@ export class ShadowLightsCollect {
             group.dirShadowEnd = nDirShadowEnd;
             group.pointShadowStart = nPointShadowStart;
             group.pointShadowEnd = nPointShadowEnd;
-            group.shadowLights = shadowLights;
+            group.shadowLights = shadowLights as Float32Array;
         });
     }
 }

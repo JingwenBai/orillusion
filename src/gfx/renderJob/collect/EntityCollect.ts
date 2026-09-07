@@ -24,8 +24,6 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
-
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
     private _sceneGIProbes: Map<Scene3D, Probe[]>;
@@ -56,11 +54,24 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
+
+    // ── Static delegation (active engine's instance) ───────────────────────
+    private static _instance: EntityCollect;
+
+    /**
+     * Returns the currently active engine's EntityCollect instance.
+     * Set by Engine3D.activate() before rendering each frame.
+     */
+    public static get instance(): EntityCollect {
         return this._instance;
+    }
+
+    /**
+     * @internal
+     * Point the static accessor to the given engine instance.
+     */
+    public static activate(inst: EntityCollect): void {
+        EntityCollect._instance = inst;
     }
 
     constructor() {

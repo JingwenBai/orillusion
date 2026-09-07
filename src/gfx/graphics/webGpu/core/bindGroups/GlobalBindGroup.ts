@@ -11,17 +11,45 @@ import { MatrixBindGroup } from "./MatrixBindGroup";
  * @group GFX
  */
 export class GlobalBindGroup {
-    private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
-    private static _lightEntriesMap: Map<Scene3D, LightEntries>;
-    private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
+
+    // ── Per-engine instance state ──────────────────────────────────────────
+    /** @internal */
+    public readonly cameraBindGroups: Map<Camera3D, GlobalUniformGroup> = new Map();
+    /** @internal */
+    public readonly lightEntriesMap: Map<Scene3D, LightEntries> = new Map();
+    /** @internal */
+    public readonly reflectionEntriesMap: Map<Scene3D, ReflectionEntries> = new Map();
+    /** @internal */
+    public readonly matrixBindGroup: MatrixBindGroup;
+
+    constructor() {
+        this.matrixBindGroup = new MatrixBindGroup();
+    }
+
+    // ── Static fields (point to the active engine's data) ─────────────────
+    private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup> = new Map();
+    private static _lightEntriesMap: Map<Scene3D, LightEntries> = new Map();
+    private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries> = new Map();
+    /** @internal */
     public static modelMatrixBindGroup: MatrixBindGroup;
 
-    public static init() {
-        this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+    /**
+     * @internal
+     * Redirect the static fields to point to the given engine instance's data.
+     */
+    public static activate(inst: GlobalBindGroup): void {
+        GlobalBindGroup._cameraBindGroups = inst.cameraBindGroups;
+        GlobalBindGroup._lightEntriesMap = inst.lightEntriesMap;
+        GlobalBindGroup._reflectionEntriesMap = inst.reflectionEntriesMap;
+        GlobalBindGroup.modelMatrixBindGroup = inst.matrixBindGroup;
     }
+
+    /** @deprecated Use Engine3D.init() instead; kept for compatibility. */
+    public static init() {
+        // No-op: instance creation and activation is handled by Engine3D.
+    }
+
+    // ── Static API (unchanged – zero diff for all callers) ────────────────
 
     public static getAllCameraGroup() {
         return this._cameraBindGroups;
@@ -79,7 +107,4 @@ export class GlobalBindGroup {
         }
         return this._reflectionEntriesMap.get(scene);
     }
-
-
-
 }

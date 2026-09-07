@@ -10,13 +10,31 @@ import { RenderTexture } from '../../../textures/RenderTexture';
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    // ── Per-engine instance state ──────────────────────────────────────────
+    /** @internal */
+    public readonly textureMap: Map<string, RenderTexture> = new Map();
+    /** @internal */
+    public readonly viewQuadMap: Map<string, ViewQuad> = new Map();
 
-    public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+    // ── Static fields (point to the active engine's Maps) ─────────────────
+    public static rtTextureMap: Map<string, RenderTexture> = new Map();
+    public static rtViewQuad: Map<string, ViewQuad> = new Map();
+
+    /**
+     * @internal
+     * Redirect the static fields to point to the given engine instance's Maps.
+     */
+    public static activate(inst: RTResourceMap): void {
+        RTResourceMap.rtTextureMap = inst.textureMap;
+        RTResourceMap.rtViewQuad = inst.viewQuadMap;
     }
+
+    /** @deprecated Use Engine3D.init() instead; kept for compatibility. */
+    public static init() {
+        // No-op: instance creation and activation is handled by Engine3D.
+    }
+
+    // ── Static API (unchanged – zero diff for all callers) ────────────────
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
         let rt: RenderTexture = this.rtTextureMap.get(name);
