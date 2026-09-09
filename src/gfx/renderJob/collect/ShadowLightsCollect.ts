@@ -18,10 +18,12 @@ export class ShadowLightsCollect {
     public static pointLightList: Map<Scene3D, ILight[]>;
     public static shadowLights: Map<Scene3D, Float32Array>;
 
-    public static init() {
-        this.directionLightList = new Map<Scene3D, ILight[]>();
-        this.pointLightList = new Map<Scene3D, ILight[]>();
-        this.shadowLights = new Map<Scene3D, Float32Array>();
+    public static init(): void {
+        // Don't reset: data is keyed by Scene3D, so each engine's scenes are
+        // naturally isolated. Resetting would wipe another engine's data.
+        this.directionLightList ||= new Map<Scene3D, ILight[]>();
+        this.pointLightList     ||= new Map<Scene3D, ILight[]>();
+        this.shadowLights       ||= new Map<Scene3D, Float32Array>();
     }
 
     public static createBuffer(view: View3D) {

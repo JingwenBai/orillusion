@@ -6,13 +6,28 @@ import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
+import { getCurrentHandle } from "../../EngineContext";
 
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    // Per-engine G-buffer map: GPU textures are device-tied.
+    private static _maps: Map<object, Map<string, GBufferFrame>> = new Map();
+
+    private static getMap(): Map<string, GBufferFrame> {
+        const handle = getCurrentHandle()!;
+        if (!this._maps.has(handle)) {
+            this._maps.set(handle, new Map<string, GBufferFrame>());
+        }
+        return this._maps.get(handle)!;
+    }
+
+    /** @deprecated Use GBufferFrame.getGBufferFrame() instead. */
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        return this.getMap();
+    }
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -21,7 +36,7 @@ export class GBufferFrame extends RTFrame {
         super([], []);
     }
 
-    createGBuffer(key: string, rtWidth: number, rtHeight: number, autoResize: boolean = true, outColor: boolean = true, depthTexture?: RenderTexture) {
+    createGBuffer(key: string, rtWidth: number, rtHeight: number, autoResize: boolean = true, outColor: boolean = true, depthTexture?: RenderTexture): void {
         let attachments = this.renderTargets;
         let reDescriptors = this.rtDescriptors;
         if (outColor) {
@@ -48,19 +63,19 @@ export class GBufferFrame extends RTFrame {
         reDescriptors.push(compressGBufferRTDes);
     }
 
-    public getPositionMap() {
+    public getPositionMap(): RenderTexture {
         return this.renderTargets[1];
     }
 
-    public getNormalMap() {
+    public getNormalMap(): RenderTexture {
         return this.renderTargets[2];
     }
 
-    public getColorTexture() {
+    public getColorTexture(): RenderTexture {
         return this._colorBufferTex;
     }
 
-    public getCompressGBufferTexture() {
+    public getCompressGBufferTexture(): RenderTexture {
         return this._compressGBufferTex;
     }
 
@@ -68,11 +83,11 @@ export class GBufferFrame extends RTFrame {
      * @internal
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        const map = this.getMap();
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!map.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -81,21 +96,20 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            map.set(key, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = map.get(key);
         }
         return gBuffer;
     }
 
-
-    public static getGUIBufferFrame() {
+    public static getGUIBufferFrame(): GBufferFrame {
         let colorRTFrame = this.getGBufferFrame(this.colorPass_GBuffer);
         let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.gui_GBuffer, 0, 0, true, colorRTFrame.depthTexture);
         return rtFrame;
     }
 
-    public clone() {
+    public clone(): GBufferFrame {
         let gBufferFrame = new GBufferFrame();
         this.clone2Frame(gBufferFrame);
         return gBufferFrame;

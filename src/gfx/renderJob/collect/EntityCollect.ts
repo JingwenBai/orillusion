@@ -24,7 +24,11 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    // Per-engine registry. EntityCollect already imports Engine3D, so we can
+    // use Engine3D.current as the key without introducing a new circular dep.
+    private static _instances: Map<Engine3D, EntityCollect> = new Map();
+    // Legacy fallback for code that runs before any engine is initialized.
+    private static _fallback: EntityCollect;
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,11 +60,16 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
+    public static get instance(): EntityCollect {
+        const engine = Engine3D.current;
+        if (!engine) {
+            if (!this._fallback) this._fallback = new EntityCollect();
+            return this._fallback;
         }
-        return this._instance;
+        if (!this._instances.has(engine)) {
+            this._instances.set(engine, new EntityCollect());
+        }
+        return this._instances.get(engine)!;
     }
 
     constructor() {

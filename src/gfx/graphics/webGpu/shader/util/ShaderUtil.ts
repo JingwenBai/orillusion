@@ -1,4 +1,5 @@
 import { RenderShaderPass } from "../RenderShaderPass";
+import { getCurrentHandle } from "../../../../EngineContext";
 
 export type VertexPart = {
     name: string;
@@ -19,12 +20,31 @@ export type FragmentPart = {
     fs_frameBuffers: string;
 }
 
-export class ShaderUtil {
-    public static renderShaderModulePool: Map<string, GPUShaderModule>;
-    public static renderShader: Map<string, RenderShaderPass>;
+interface ShaderUtilState {
+    renderShaderModulePool: Map<string, GPUShaderModule>;
+    renderShader: Map<string, RenderShaderPass>;
+}
 
-    public static init() {
-        this.renderShaderModulePool = new Map<string, GPUShaderModule>();
-        this.renderShader = new Map<string, RenderShaderPass>();
+export class ShaderUtil {
+    private static _stateMap: Map<object, ShaderUtilState> = new Map();
+
+    private static getState(): ShaderUtilState {
+        return this._stateMap.get(getCurrentHandle()!)!;
+    }
+
+    public static get renderShaderModulePool(): Map<string, GPUShaderModule> {
+        return this.getState().renderShaderModulePool;
+    }
+
+    public static get renderShader(): Map<string, RenderShaderPass> {
+        return this.getState().renderShader;
+    }
+
+    public static init(): void {
+        const handle = getCurrentHandle()!;
+        this._stateMap.set(handle, {
+            renderShaderModulePool: new Map<string, GPUShaderModule>(),
+            renderShader: new Map<string, RenderShaderPass>(),
+        });
     }
 }
