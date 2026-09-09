@@ -1,7 +1,13 @@
 import { Texture } from '../../graphics/webGpu/core/texture/Texture';
 import { webGPUContext } from '../../graphics/webGpu/Context3D';
+import { getCurrentHandle } from '../../EngineContext';
 import { GPUContext } from '../../renderJob/GPUContext';
 import { RenderTexture } from '../../../textures/RenderTexture';
+
+type CubeStdState = {
+    configBuffer: GPUBuffer | null;
+    pipeline: GPUComputePipeline | null;
+};
 
 /**
  * @internal
@@ -25,10 +31,10 @@ struct SettingUniform {
 @compute @workgroup_size(8, 8, 1)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   let coord = vec2<i32>(GlobalInvocationID.xy);
-  
+
   let outTexSize = textureDimensions(outTex).xy;
   let outTexel = 1.0 / vec2<f32>(outTexSize - 1);
-  
+
   let uv_0 = vec2<f32>(coord) * outTexel;
   var oc = samplePixel(settingUniform.faceIndex, uv_0);
   textureStore(outTex, coord, oc);
@@ -37,7 +43,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 fn samplePixel(face:i32, uv01:vec2<f32>) -> vec4<f32> {
     let rectangle_v2_f32 = round(vec2<f32>(0.25, 0.33333) * vec2<f32>(textureDimensions(inputTex).xy));
     let rectangle = vec2<i32>(rectangle_v2_f32);
-    
+
     var offsetIndex = vec2<i32>(0);
     if(face == 0){
         offsetIndex.x = 2;
@@ -58,7 +64,7 @@ fn samplePixel(face:i32, uv01:vec2<f32>) -> vec4<f32> {
         offsetIndex.x = 3;
         offsetIndex.y = 1;
     }
-    
+
     let coordOffset = rectangle * offsetIndex;
     let coordIndex = vec2<i32>(vec2<f32>(rectangle - 1) * uv01);
     var oc = textureLoad(inputTex, coordOffset + coordIndex, 0);
@@ -66,14 +72,22 @@ fn samplePixel(face:i32, uv01:vec2<f32>) -> vec4<f32> {
 }
 `;
 
-    private static configBuffer: GPUBuffer = null;
-    private static blurSettingBuffer: GPUBuffer = null;
-    private static pipeline: GPUComputePipeline;
+    private static _stateMaps: Map<object, CubeStdState> = new Map();
+
+    private static getState(): CubeStdState {
+        const handle = getCurrentHandle()!;
+        if (!this._stateMaps.has(handle)) {
+            this._stateMaps.set(handle, { configBuffer: null, pipeline: null });
+        }
+        return this._stateMaps.get(handle)!;
+    }
 
     static createFace(index: number, size: number, inTex: Texture, outTex: RenderTexture): void {
         const device = webGPUContext.device;
-        if (this.pipeline == null) {
-            this.pipeline = device.createComputePipeline({
+        const state = this.getState();
+
+        if (state.pipeline == null) {
+            state.pipeline = device.createComputePipeline({
                 layout: `auto`,
                 compute: {
                     module: device.createShaderModule({
@@ -83,31 +97,22 @@ fn samplePixel(face:i32, uv01:vec2<f32>) -> vec4<f32> {
                 },
             });
         }
-        const computePipeline = this.pipeline;
+        const computePipeline = state.pipeline;
 
         //config
         const configStride = 4 * 4; //4 float
-        this.configBuffer ||= device.createBuffer({
+        state.configBuffer ||= device.createBuffer({
             size: configStride,
             usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
         });
-        device.queue.writeBuffer(this.configBuffer, 0, new Uint32Array([index, 0, 0, 0]));
-
-        const quaternionSize = 4 * 6; ////xyzw * float
-
-        //roughness
-        this.blurSettingBuffer ||= device.createBuffer({
-            size: configStride,
-            usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
-        });
-        device.queue.writeBuffer(this.blurSettingBuffer, 0, new Float32Array([0, 0, 0, 0]));
+        device.queue.writeBuffer(state.configBuffer, 0, new Uint32Array([index, 0, 0, 0]));
 
         //image
         let entries0 = [
             {
                 binding: 0,
                 resource: {
-                    buffer: this.configBuffer,
+                    buffer: state.configBuffer,
                     size: 4 * 4,
                 },
             },
