@@ -26,6 +26,14 @@ import { RenderShaderCollect } from './RenderShaderCollect';
 export class EntityCollect {
     private static _instance: EntityCollect;
 
+    /**
+     * @internal
+     * Set the active EntityCollect instance used by the currently rendering engine.
+     */
+    public static setCurrentInstance(instance: EntityCollect) {
+        this._instance = instance;
+    }
+
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
     private _sceneGIProbes: Map<Scene3D, Probe[]>;
@@ -57,9 +65,6 @@ export class EntityCollect {
 
     private rendererOctree: Octree;
     public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
         return this._instance;
     }
 
