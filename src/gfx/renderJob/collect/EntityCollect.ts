@@ -56,11 +56,20 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
+    /**
+     * Returns the currently active (per-engine) EntityCollect instance.
+     * Set by Engine3D before each frame via `EntityCollect.setActiveInstance()`.
+     */
     public static get instance() {
         if (!this._instance) {
             this._instance = new EntityCollect();
         }
         return this._instance;
+    }
+
+    /** @internal – called by Engine3D to switch the active instance */
+    public static setActiveInstance(ec: EntityCollect) {
+        this._instance = ec;
     }
 
     constructor() {
