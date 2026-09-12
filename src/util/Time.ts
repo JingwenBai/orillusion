@@ -16,6 +16,11 @@ export class Time {
      */
     public static delta: number = 0;
 
+    // Instance fields for multi-engine support
+    public time: number = 0;
+    public frame: number = 0;
+    public delta: number = 0;
+
     private static _startTime: number = 0;
     private static _timeLabel: string = ``;
     /**
