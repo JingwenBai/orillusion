@@ -16,7 +16,9 @@ export class GlobalBindGroup {
     private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
     public static modelMatrixBindGroup: MatrixBindGroup;
 
+    /** Idempotent — shared GPU resources are only created once. */
     public static init() {
+        if (this.modelMatrixBindGroup) return;
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();
