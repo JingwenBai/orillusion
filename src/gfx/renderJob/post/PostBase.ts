@@ -67,6 +67,8 @@ export class PostBase {
     public render(view: View3D, command: GPUCommandEncoder) {}
 
     public destroy(force?: boolean) {
+        webGPUContext.removeEventListener(CResizeEvent.RESIZE, this.onResize, this);
+
         this.postRenderer = null;
         for (let i = 0; i < this.rtViewQuad.size; i++) {
             const quad = this.rtViewQuad.values[i] as ViewQuad;

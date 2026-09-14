@@ -5,6 +5,8 @@ import { Time } from './util/Time';
 import { InputSystem } from './io/InputSystem';
 import { View3D } from './core/View3D';
 import { version } from '../package.json';
+import { CResizeEvent } from './event/CResizeEvent';
+import { CEvent } from './event/CEvent';
 
 import { webGPUContext, Context3D } from './gfx/graphics/webGpu/Context3D';
 import { RTResourceMap } from './gfx/renderJob/frame/RTResourceMap';
@@ -355,6 +357,7 @@ export class Engine3D {
     private _renderLoop: Function;
     private _lateRender: Function;
     private _requestAnimationFrameID: number = 0;
+    private _onCanvasResize: (evt: CEvent) => void;
 
     constructor() {
         // Deep-merge the shared _defaultSetting (which captures any pre-init
@@ -419,6 +422,14 @@ export class Engine3D {
         // sees the correct values for the current engine.
         this._syncWebGPUContext();
 
+        // Relay canvas resize events to the shared webGPUContext so PostBase
+        // resize handlers continue to fire as expected.
+        this._onCanvasResize = (evt: CEvent) => {
+            this._syncWebGPUContext();
+            webGPUContext.dispatchEvent(evt);
+        };
+        this._context.addEventListener(CResizeEvent.RESIZE, this._onCanvasResize, this);
+
         // ---- Pre-compute per-engine reflection GBuffer ----
         this.setting.reflectionSetting.width = this.setting.reflectionSetting.reflectionProbeSize * 6;
         this.setting.reflectionSetting.height = this.setting.reflectionSetting.reflectionProbeSize * this.setting.reflectionSetting.reflectionProbeMaxCount;
@@ -455,6 +466,12 @@ export class Engine3D {
     // =====================================================================
 
     private startRenderJob(view: View3D) {
+        // Ensure resource scoping uses this engine's context while the render
+        // job (and any post effects it creates) allocate GPU resources.
+        Engine3D.current = this;
+        EngineContext.id = this._id;
+        this._syncWebGPUContext();
+
         let renderJob = new ForwardRenderJob(view);
         this.renderJobs.set(view, renderJob);
 
@@ -551,6 +568,10 @@ export class Engine3D {
         }
 
         if (this._context) {
+            if (this._onCanvasResize) {
+                this._context.removeEventListener(CResizeEvent.RESIZE, this._onCanvasResize, this);
+                this._onCanvasResize = null;
+            }
             this._context.destroy();
             this._context = null;
         }
