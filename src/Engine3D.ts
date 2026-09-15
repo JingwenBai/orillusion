@@ -6,7 +6,7 @@ import { InputSystem } from './io/InputSystem';
 import { View3D } from './core/View3D';
 import { version } from '../package.json';
 
-import { webGPUContext } from './gfx/graphics/webGpu/Context3D';
+import { Context3D, setWebGPUContext, webGPUContext } from './gfx/graphics/webGpu/Context3D';
 import { RTResourceMap } from './gfx/renderJob/frame/RTResourceMap';
 
 import { ForwardRenderJob } from './gfx/renderJob/jobs/ForwardRenderJob';
@@ -23,91 +23,12 @@ import { Matrix4 } from './math/Matrix4';
 import { FXAAPost } from './gfx/renderJob/post/FXAAPost';
 import { PostProcessingComponent } from './components/post/PostProcessingComponent';
 import { GBufferFrame } from './gfx/renderJob/frame/GBufferFrame';
+import { EntityCollect } from './gfx/renderJob/collect/EntityCollect';
 
-/** 
- * Orillusion 3D Engine
- * 
- * -- Engine3D.setting.*
- * 
- * -- await Engine3D.init();
- * @group engine3D
- */
-export class Engine3D {
-
-    /**
-     * resource manager in engine3d
-     */
-    public static res: Res;
-
-    /**
-     * input system in engine3d
-     */
-    public static inputSystem: InputSystem;
-
-    /**
-     * more view in engine3d
-     */
-    public static views: View3D[];
-    private static _frameRateValue: number = 0;
-    private static _frameRate: number = 360;
-    private static _time: number = 0;
-    private static _beforeRender: Function;
-    private static _renderLoop: Function;
-    private static _lateRender: Function;
-    private static _requestAnimationFrameID: number = 0;
-
-    /**
-     * set engine render frameRate 24/30/60/114/120/144/240/360 fps or other
-     */
-    public static get frameRate(): number {
-        return this._frameRate;
-    }
-
-    /**
-     * get engine render frameRate 
-     */
-    public static set frameRate(value: number) {
-        this._frameRate = value;
-        this._frameRateValue = 1000 / value;
-        if (value >= 360) {
-            this._frameRateValue = 0;
-        }
-    }
-
-    /**
-     * get render window size width and height
-     */
-    public static get size(): number[] {
-        return webGPUContext.presentationSize;
-    }
-
-    /**
-     * get render window aspect
-     */
-    public static get aspect(): number {
-        return webGPUContext.aspect;
-    }
-
-    /**
-     * get render window size width 
-     */
-    public static get width(): number {
-        return webGPUContext.windowWidth;
-    }
-
-    /**
-     * get render window size height 
-     */
-    public static get height(): number {
-        return webGPUContext.windowHeight;
-    }
-
-    /**
-     * engine setting
-     */
-    public static setting: EngineSetting = {
+function createDefaultSetting(): EngineSetting {
+    return {
         doublePrecision: false,
-        
+
         occlusionQuery: {
             enable: true,
             debug: false,
@@ -267,7 +188,7 @@ export class Engine3D {
             normalBias: 0.25,
             depthSharpness: 1,
             hysteresis: 0.98,
-            lerpHysteresis: 0.01,//The smaller the value, the slower the reaction, which can counteract flickering
+            lerpHysteresis: 0.01,
             irradianceChebyshevBias: 0.01,
             rayNumber: 144,
             irradianceDistanceBias: 32,
@@ -283,7 +204,7 @@ export class Engine3D {
             type: 'HDRSKY',
             sky: null,
             skyExposure: 1.0,
-            defaultFar: 65536,//can't be too big
+            defaultFar: 65536,
             defaultNear: 1,
         },
         light: {
@@ -304,29 +225,250 @@ export class Engine3D {
             enable: true
         }
     };
+}
 
+/**
+ * Orillusion 3D Engine
+ *
+ * Can be used as a singleton via static methods (backward compatible):
+ *   Engine3D.setting.*
+ *   await Engine3D.init();
+ *
+ * Or instantiated for multi-instance support:
+ *   const engine = new Engine3D();
+ *   await engine.init();
+ *
+ * @group engine3D
+ */
+export class Engine3D {
+
+    // ----------------------------------------------------------------
+    // Static default-instance management (backward compat)
+    // ----------------------------------------------------------------
+
+    /** @internal The engine currently executing its render frame. */
+    private static _currentEngine: Engine3D | null = null;
+
+    /** @internal The default single-instance (created by static init()). */
+    private static _defaultInstance: Engine3D | null = null;
+
+    /** @internal Returns the default instance, creating it if needed. */
+    private static get _default(): Engine3D {
+        if (!this._defaultInstance) {
+            this._defaultInstance = new Engine3D();
+        }
+        return this._defaultInstance;
+    }
+
+    // ---- Static property accessors (forward to current / default instance) ----
+
+    /** resource manager */
+    public static get res(): Res {
+        return (this._currentEngine || this._default).res;
+    }
+    public static set res(v: Res) {
+        (this._currentEngine || this._default).res = v;
+    }
+
+    /** input system */
+    public static get inputSystem(): InputSystem {
+        return (this._currentEngine || this._default).inputSystem;
+    }
+    public static set inputSystem(v: InputSystem) {
+        (this._currentEngine || this._default).inputSystem = v;
+    }
+
+    /** active views */
+    public static get views(): View3D[] {
+        return (this._currentEngine || this._default).views;
+    }
+    public static set views(v: View3D[]) {
+        (this._currentEngine || this._default).views = v;
+    }
+
+    /** engine settings — returns the current rendering engine's setting */
+    public static get setting(): EngineSetting {
+        return (this._currentEngine || this._default).setting;
+    }
+    public static set setting(v: EngineSetting) {
+        (this._currentEngine || this._default).setting = v;
+    }
+
+    /** render jobs map */
+    public static get renderJobs(): Map<View3D, RendererJob> {
+        return (this._currentEngine || this._default).renderJobs;
+    }
+    public static set renderJobs(v: Map<View3D, RendererJob>) {
+        (this._currentEngine || this._default).renderJobs = v;
+    }
+
+    /** render window width */
+    public static get width(): number {
+        return (this._currentEngine || this._default).width;
+    }
+
+    /** render window height */
+    public static get height(): number {
+        return (this._currentEngine || this._default).height;
+    }
+
+    /** render window aspect ratio */
+    public static get aspect(): number {
+        return (this._currentEngine || this._default).aspect;
+    }
+
+    /** render window presentation size */
+    public static get size(): number[] {
+        return (this._currentEngine || this._default).size;
+    }
+
+    /** frame rate */
+    public static get frameRate(): number {
+        return (this._currentEngine || this._default).frameRate;
+    }
+    public static set frameRate(value: number) {
+        (this._currentEngine || this._default).frameRate = value;
+    }
+
+    // ---- Static method delegates ----
 
     /**
-     * @internal
+     * Create webgpu 3D engine (static API, uses the default instance).
      */
-    public static renderJobs: Map<View3D, RendererJob>;
+    public static async init(descriptor: { canvasConfig?: CanvasConfig; beforeRender?: Function; renderLoop?: Function; lateRender?: Function, engineSetting?: EngineSetting } = {}): Promise<void> {
+        this._defaultInstance = this._default;
+        await this._defaultInstance.init(descriptor);
+    }
+
+    public static startRenderView(view: View3D): RendererJob {
+        return this._default.startRenderView(view);
+    }
+
+    public static startRenderViews(views: View3D[]): void {
+        this._default.startRenderViews(views);
+    }
+
+    public static getRenderJob(view: View3D): RendererJob {
+        return this._default.getRenderJob(view);
+    }
+
+    public static pause(): void {
+        this._default.pause();
+    }
+
+    public static resume(): void {
+        this._default.resume();
+    }
+
+    // ----------------------------------------------------------------
+    // Instance API (per-engine state)
+    // ----------------------------------------------------------------
+
+    /** resource manager */
+    public res: Res;
+
+    /** input system */
+    public inputSystem: InputSystem;
+
+    /** active views */
+    public views: View3D[];
+
+    /** render jobs map */
+    public renderJobs: Map<View3D, RendererJob>;
+
+    /** per-engine settings */
+    public setting: EngineSetting = createDefaultSetting();
+
+    // Per-engine frame-rate state
+    private _frameRateValue: number = 0;
+    private _frameRate: number = 360;
+    private _time: number = 0;
+    private _beforeRender: Function;
+    private _renderLoop: Function;
+    private _lateRender: Function;
+    private _requestAnimationFrameID: number = 0;
+
+    // Per-engine subsystems
+    /** @internal */ public readonly webGPUContext: Context3D;
+    /** @internal */ public readonly componentCollect: ComponentCollect;
+    /** @internal */ public readonly globalBindGroup: GlobalBindGroup;
+    /** @internal */ public readonly shadowLightsCollect: ShadowLightsCollect;
+    /** @internal */ public readonly rtResourceMap: RTResourceMap;
+    /** @internal */ public readonly entityCollect: EntityCollect;
+    /** @internal */ public readonly gBufferMap: Map<string, GBufferFrame>;
+
+    constructor() {
+        this.webGPUContext = new Context3D();
+        this.componentCollect = new ComponentCollect();
+        this.globalBindGroup = new GlobalBindGroup();
+        this.shadowLightsCollect = new ShadowLightsCollect();
+        this.rtResourceMap = new RTResourceMap();
+        this.entityCollect = new EntityCollect();
+        this.gBufferMap = new Map<string, GBufferFrame>();
+    }
+
+    // ---- Instance property accessors ----
+
+    public get frameRate(): number {
+        return this._frameRate;
+    }
+
+    public set frameRate(value: number) {
+        this._frameRate = value;
+        this._frameRateValue = 1000 / value;
+        if (value >= 360) {
+            this._frameRateValue = 0;
+        }
+    }
+
+    public get size(): number[] {
+        return this.webGPUContext.presentationSize;
+    }
+
+    public get aspect(): number {
+        return this.webGPUContext.aspect;
+    }
+
+    public get width(): number {
+        return this.webGPUContext.windowWidth;
+    }
+
+    public get height(): number {
+        return this.webGPUContext.windowHeight;
+    }
+
+    // ---- Activate this engine's subsystems as the current context ----
+
+    private _activateContext(): void {
+        Engine3D._currentEngine = this;
+        setWebGPUContext(this.webGPUContext);
+        ComponentCollect.setCurrent(this.componentCollect);
+        GlobalBindGroup.setCurrent(this.globalBindGroup);
+        ShadowLightsCollect.setCurrent(this.shadowLightsCollect);
+        RTResourceMap.setCurrent(this.rtResourceMap);
+        EntityCollect.setCurrent(this.entityCollect);
+        GBufferFrame.setCurrentMap(this.gBufferMap);
+    }
+
+    // ---- Instance init ----
 
     /**
-     * create webgpu 3d engine
-     * @param descriptor  {@link CanvasConfig}
-     * @returns
+     * Initialize this engine instance.
      */
-    public static async init(descriptor: { canvasConfig?: CanvasConfig; beforeRender?: Function; renderLoop?: Function; lateRender?: Function, engineSetting?: EngineSetting } = {}) {
+    public async init(descriptor: { canvasConfig?: CanvasConfig; beforeRender?: Function; renderLoop?: Function; lateRender?: Function, engineSetting?: EngineSetting } = {}): Promise<void> {
         console.log('Engine Version', version);
-        if (!window.isSecureContext){
+        if (!window.isSecureContext) {
             console.warn('WebGPU is only supported in secure contexts (HTTPS or localhost)')
         }
 
-        this.setting = { ...this.setting, ...descriptor.engineSetting }
+        this.setting = { ...this.setting, ...descriptor.engineSetting };
+
+        // Activate this engine's context so subsystem inits use the right device
+        this._activateContext();
 
         await WasmMatrix.init(Matrix4.allocCount, this.setting.doublePrecision);
 
-        await webGPUContext.init(descriptor.canvasConfig);
+        await this.webGPUContext.init(descriptor.canvasConfig);
 
         //****pre compute setting****/
         this.setting.reflectionSetting.width = this.setting.reflectionSetting.reflectionProbeSize * 6;
@@ -357,11 +499,12 @@ export class Engine3D {
         this._renderLoop = descriptor.renderLoop;
         this._lateRender = descriptor.lateRender;
         this.inputSystem = new InputSystem();
-        this.inputSystem.initCanvas(webGPUContext.canvas);
-        return;
+        this.inputSystem.initCanvas(this.webGPUContext.canvas);
     }
 
-    private static startRenderJob(view: View3D){
+    // ---- Render job management ----
+
+    private _startRenderJob(view: View3D): RendererJob {
         let renderJob = new ForwardRenderJob(view);
         this.renderJobs.set(view, renderJob);
 
@@ -377,46 +520,39 @@ export class Engine3D {
     }
 
     /**
-     * set render view and start renderer
-     * @param view 
-     * @returns 
+     * Set render view and start renderer.
      */
-    public static startRenderView(view: View3D) {
+    public startRenderView(view: View3D): RendererJob {
         this.renderJobs ||= new Map<View3D, RendererJob>();
         this.views = [view];
-        let renderJob = this.startRenderJob(view);
+        let renderJob = this._startRenderJob(view);
         this.resume();
         return renderJob;
     }
 
-
     /**
-     * set render views and start renderer
-     * @param view 
-     * @returns 
+     * Set render views and start renderer.
      */
-    public static startRenderViews(views: View3D[]) {
+    public startRenderViews(views: View3D[]): void {
         this.renderJobs ||= new Map<View3D, RendererJob>();
         this.views = views;
         for (let i = 0; i < views.length; i++) {
-            this.startRenderJob(views[i])
+            this._startRenderJob(views[i]);
         }
         this.resume();
     }
 
     /**
-     * get view render job instance
-     * @param view 
-     * @returns 
+     * Get view render job instance.
      */
-    public static getRenderJob(view: View3D): RendererJob {
+    public getRenderJob(view: View3D): RendererJob {
         return this.renderJobs.get(view);
     }
 
     /**
-     * Pause the engine render
+     * Pause this engine's render loop.
      */
-    public static pause() {
+    public pause(): void {
         if (this._requestAnimationFrameID !== 0) {
             cancelAnimationFrame(this._requestAnimationFrameID);
             this._requestAnimationFrameID = 0;
@@ -424,37 +560,39 @@ export class Engine3D {
     }
 
     /**
-     * Resume the engine render
+     * Resume this engine's render loop.
      */
-    public static resume() {
-        if(this._requestAnimationFrameID === 0)
-            this._requestAnimationFrameID = requestAnimationFrame((t) => this.render(t));
+    public resume(): void {
+        if (this._requestAnimationFrameID === 0) {
+            this._requestAnimationFrameID = requestAnimationFrame((t) => this._render(t));
+        }
     }
 
-    /**
-     * start engine render
-     * @internal
-     */
-    private static async render(time: number) {
+    // ---- Render loop ----
+
+    private async _render(time: number): Promise<void> {
         if (this._frameRateValue > 0) {
             let delta = time - this._time;
-            if(delta < this._frameRateValue){
-                let t = performance.now()
-                await new Promise(res=>{
-                    setTimeout(()=>{
-                        time += (performance.now() - t)
-                        res(true)
-                    }, this._frameRateValue - delta)  
-                })
+            if (delta < this._frameRateValue) {
+                let t = performance.now();
+                await new Promise(res => {
+                    setTimeout(() => {
+                        time += (performance.now() - t);
+                        res(true);
+                    }, this._frameRateValue - delta);
+                });
             }
             this._time = time;
         }
-        await this.updateFrame(time);
+        await this._updateFrame(time);
         this._requestAnimationFrameID = 0;
-        this.resume()
+        this.resume();
     }
 
-    private static async updateFrame(time: number) {
+    private async _updateFrame(time: number): Promise<void> {
+        // Switch to this engine's context before doing anything
+        this._activateContext();
+
         Time.delta = time - Time.time;
         Time.time = time;
         Time.frame += 1;
@@ -466,15 +604,12 @@ export class Engine3D {
         for (i = 0; i < views.length; i++) {
             const view = views[i];
             view.scene.waitUpdate();
-            let [w, h] = webGPUContext.presentationSize;
+            let [w, h] = this.webGPUContext.presentationSize;
             view.camera.viewPort.setTo(0, 0, w, h);
         }
 
-        if (this._beforeRender) 
+        if (this._beforeRender)
             await this._beforeRender();
-
-        /****** auto start with component list *****/
-        // ComponentCollect.startComponents();
 
         /****** auto before update with component list *****/
         for (const iterator of ComponentCollect.componentsBeforeUpdateList) {
@@ -489,7 +624,7 @@ export class Engine3D {
             }
         }
 
-        let command = webGPUContext.device.createCommandEncoder();;
+        let command = this.webGPUContext.device.createCommandEncoder();
         for (const iterator of ComponentCollect.componentsComputeList) {
             let k = iterator[0];
             let v = iterator[1];
@@ -502,7 +637,7 @@ export class Engine3D {
             }
         }
 
-        webGPUContext.device.queue.submit([command.finish()]);
+        this.webGPUContext.device.queue.submit([command.finish()]);
 
         /****** auto update with component list *****/
         for (const iterator of ComponentCollect.componentsUpdateList) {
@@ -558,7 +693,7 @@ export class Engine3D {
             }
         }
 
-        if (this._lateRender) 
+        if (this._lateRender)
             await this._lateRender();
     }
 }
