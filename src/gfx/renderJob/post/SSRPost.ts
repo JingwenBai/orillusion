@@ -163,8 +163,9 @@ export class SSRPost extends PostBase {
 
         this.SSR_RayTraceCompute.setSamplerTexture("gBufferTexture", gBufferTexture);
 
-        if (EntityCollect.instance.sky instanceof SkyRenderer)
-            this.SSR_RayTraceCompute.setSamplerTexture(`prefilterMap`, EntityCollect.instance.sky.map);
+        const _ssrSky = EntityCollect.instance.getSky(this.view.scene);
+        if (_ssrSky instanceof SkyRenderer)
+            this.SSR_RayTraceCompute.setSamplerTexture(`prefilterMap`, _ssrSky.map);
 
         this.SSR_RayTraceCompute.workerSizeX = Math.ceil(this.isRetTexture.width / 8);
         this.SSR_RayTraceCompute.workerSizeY = Math.ceil(this.isRetTexture.height / 8);
