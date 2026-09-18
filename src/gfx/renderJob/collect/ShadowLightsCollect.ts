@@ -19,9 +19,17 @@ export class ShadowLightsCollect {
     public static shadowLights: Map<Scene3D, Float32Array>;
 
     public static init() {
-        this.directionLightList = new Map<Scene3D, ILight[]>();
-        this.pointLightList = new Map<Scene3D, ILight[]>();
-        this.shadowLights = new Map<Scene3D, Float32Array>();
+        // All data is keyed by Scene3D so multiple engine instances do not conflict.
+        // Only initialise if the maps have not been created yet.
+        if (!this.directionLightList) {
+            this.directionLightList = new Map<Scene3D, ILight[]>();
+        }
+        if (!this.pointLightList) {
+            this.pointLightList = new Map<Scene3D, ILight[]>();
+        }
+        if (!this.shadowLights) {
+            this.shadowLights = new Map<Scene3D, Float32Array>();
+        }
     }
 
     public static createBuffer(view: View3D) {

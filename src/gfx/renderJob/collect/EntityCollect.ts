@@ -13,7 +13,6 @@ import { Vector3 } from '../../../math/Vector3';
 import { zSorterUtil } from '../../../util/ZSorterUtil';
 import { RenderLayerUtil, RenderLayer } from '../config/RenderLayer';
 import { Probe } from '../passRenderer/ddgi/Probe';
-// import { Graphic3DBatchRenderer } from '../passRenderer/graphic/Graphic3DBatchRenderer';
 import { RendererMask } from '../passRenderer/state/RendererMask';
 import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
@@ -26,7 +25,6 @@ import { RenderShaderCollect } from './RenderShaderCollect';
 export class EntityCollect {
     private static _instance: EntityCollect;
 
-    // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
     private _sceneGIProbes: Map<Scene3D, Probe[]>;
 
@@ -43,20 +41,48 @@ export class EntityCollect {
     private _renderShaderCollect: RenderShaderCollect;
 
     public state: {
-        /**
-         * gi effect lighting change
-         */
         giLightingChange: boolean
     } = {
             giLightingChange: true
-        }
+        };
 
-    public sky: RenderNode;
+    /**
+     * Sky render node, keyed per scene so that multiple engine instances
+     * with different scenes do not overwrite each other's sky reference.
+     */
+    private _sky: Map<Scene3D, RenderNode> = new Map();
+
+    /**
+     * Legacy accessor: returns the sky for the first scene that has one,
+     * or the sky most recently set via `sky =`.
+     * For multi-scene usage prefer getSky(scene) / setSky(scene, node).
+     */
+    public get sky(): RenderNode {
+        // Return the first registered sky (most engines have just one scene)
+        for (const node of this._sky.values()) {
+            if (node) return node;
+        }
+        return null;
+    }
+
+    public set sky(node: RenderNode) {
+        // Legacy single-sky setter: store under a null key as a catch-all
+        this._sky.set(null, node);
+    }
+
+    public getSky(scene: Scene3D): RenderNode {
+        return this._sky.get(scene) ?? this._sky.get(null) ?? null;
+    }
+
+    public setSky(scene: Scene3D, node: RenderNode): void {
+        this._sky.set(scene, node);
+    }
 
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
+
+    public static get instance(): EntityCollect {
         if (!this._instance) {
             this._instance = new EntityCollect();
         }
@@ -64,7 +90,6 @@ export class EntityCollect {
     }
 
     constructor() {
-        // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
         this._sceneLights = new Map<Scene3D, ILight[]>();
         this._sceneGIProbes = new Map<Scene3D, Probe[]>();
 
@@ -105,7 +130,7 @@ export class EntityCollect {
         if (!root) return;
         let isTransparent: boolean = renderNode.renderOrder >= 3000;
         if (renderNode.hasMask(RendererMask.Sky)) {
-            this.sky = renderNode;
+            this.setSky(root, renderNode);
         } else if (renderNode.hasMask(RendererMask.Reflection)) {
             this.removeRenderNode(root, renderNode);
             let maps = this._reflections.get(root);
@@ -136,7 +161,8 @@ export class EntityCollect {
             }
             map.get(root).push(renderNode);
 
-            if (Engine3D.setting.occlusionQuery.octree) {
+            const occlusionSetting = Engine3D.setting.occlusionQuery;
+            if (occlusionSetting && occlusionSetting.octree) {
                 renderNode.attachSceneOctree(this.getOctree(root));
             }
 
@@ -147,13 +173,12 @@ export class EntityCollect {
             }
         }
         renderNode.object3D.renderNode = renderNode;
-
         this._renderShaderCollect.collect_add(renderNode);
     }
 
     private getOctree(root: Scene3D) {
         let octree: Octree;
-        let setting = Engine3D.setting.occlusionQuery.octree;
+        const setting = Engine3D.setting.occlusionQuery?.octree;
         if (setting) {
             octree = this._octreeRenderNodes.get(root);
             if (!octree) {
@@ -170,7 +195,7 @@ export class EntityCollect {
     public removeRenderNode(root: Scene3D, renderNode: RenderNode) {
         renderNode.detachSceneOctree();
         if (renderNode.hasMask(RendererMask.Sky)) {
-            this.sky = null;
+            this.setSky(root, null);
         } else if (renderNode.hasMask(RendererMask.Reflection)) {
             let maps = this._reflections.get(root);
             if (maps) {
@@ -180,7 +205,7 @@ export class EntityCollect {
                 }
             }
         } else if (!RenderLayerUtil.hasMask(renderNode.renderLayer, RenderLayer.None)) {
-
+            // batch
         } else {
             let list = this.getPashList(root, renderNode);
             if (list) {
@@ -190,7 +215,6 @@ export class EntityCollect {
                 }
             }
         }
-
         this._renderShaderCollect.collect_remove(renderNode);
     }
 
@@ -198,13 +222,13 @@ export class EntityCollect {
         if (!this._sceneLights.has(root)) {
             this._sceneLights.set(root, [light]);
         } else {
-            let lights = this._sceneLights.get(root)
-            if (lights.length >= Engine3D.setting.light.maxLight) {
-                console.warn('Alreay meet maxmium light number:', Engine3D.setting.light.maxLight)
-                return
+            let lights = this._sceneLights.get(root);
+            const maxLight = Engine3D.setting.light?.maxLight ?? 4096;
+            if (lights.length >= maxLight) {
+                console.warn('Already met maximum light number:', maxLight);
+                return;
             }
-            let hasLight = lights.indexOf(light) != -1;
-            if (!hasLight) {
+            if (lights.indexOf(light) === -1) {
                 lights.push(light);
             }
         }
@@ -219,6 +243,7 @@ export class EntityCollect {
             }
         }
     }
+
     public getLights(root: Scene3D): ILight[] {
         let list = this._sceneLights.get(root);
         return list ? list : [];
@@ -252,11 +277,9 @@ export class EntityCollect {
         return list ? list : [];
     }
 
-    // sort renderers by renderOrder and camera depth
     public autoSortRenderNodes(scene: Scene3D): this {
         let renderList: RenderNode[] = this._tr_RenderNodes.get(scene);
-        if (!renderList)
-            return;
+        if (!renderList) return;
 
         let needSort = false;
         for (const renderNode of renderList) {
@@ -271,11 +294,10 @@ export class EntityCollect {
                 let __renderOrder = renderNode.renderOrder;
                 if (renderNode.needSortOnCameraZ) {
                     let cameraDepth = zSorterUtil.worldToCameraDepth(renderNode.object3D);
-                    cameraDepth = 1 - Math.max(0, Math.min(1, cameraDepth));//clamp to [0, 1]
+                    cameraDepth = 1 - Math.max(0, Math.min(1, cameraDepth));
                     __renderOrder += cameraDepth;
                 }
                 renderNode['__renderOrder'] = __renderOrder;
-                //resume unchange status
                 renderNode.isRenderOrderChange = false;
             }
             renderList.sort((a: RenderNode, b: RenderNode) => {
@@ -285,13 +307,13 @@ export class EntityCollect {
         return this;
     }
 
-
     public getRenderNodes(scene: Scene3D, camera: Camera3D): CollectInfo {
         this.autoSortRenderNodes(scene);
         this._collectInfo.clean();
-        this._collectInfo.sky = this.sky;
+        this._collectInfo.sky = this.getSky(scene);
 
-        if (Engine3D.setting.occlusionQuery.octree) {
+        const occlusionSetting = Engine3D.setting.occlusionQuery;
+        if (occlusionSetting && occlusionSetting.octree) {
             this.rendererOctree = this.getOctree(scene);
             this.rendererOctree.getRenderNode(camera.frustum, this._collectInfo);
         } else {

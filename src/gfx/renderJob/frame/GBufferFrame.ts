@@ -6,13 +6,12 @@ import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
+import { EngineContext } from "../../../EngineContext";
 
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -44,7 +43,6 @@ export class GBufferFrame extends RTFrame {
 
         let compressGBufferRTDes: RTDescriptor;
         compressGBufferRTDes = new RTDescriptor();
-
         reDescriptors.push(compressGBufferRTDes);
     }
 
@@ -65,39 +63,53 @@ export class GBufferFrame extends RTFrame {
     }
 
     /**
+     * Get or create a GBufferFrame for the currently-active engine instance.
+     * Each engine stores its own gBufferMap so that separate canvases have
+     * independent GBuffer textures (different sizes, formats, etc.).
      * @internal
      */
-    public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
-        let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+    public static getGBufferFrame(
+        key: string,
+        fixedWidth: number = 0,
+        fixedHeight: number = 0,
+        outColor: boolean = true,
+        depthTexture?: RenderTexture,
+    ): GBufferFrame {
+        // Delegate to the current engine's per-engine map
+        const engine = EngineContext.current;
+        const gBufferMap: Map<string, GBufferFrame> = engine
+            ? engine.gBufferMap
+            : _fallbackGBufferMap;
+
+        let gBuffer = gBufferMap.get(key);
+        if (!gBuffer) {
             gBuffer = new GBufferFrame();
-            let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
+            const size = webGPUContext.presentationSize;
             gBuffer.createGBuffer(
                 key,
-                fixedWidth == 0 ? size[0] : fixedWidth,
-                fixedHeight == 0 ? size[1] : fixedHeight,
-                fixedWidth != 0 && fixedHeight != 0,
+                fixedWidth === 0 ? size[0] : fixedWidth,
+                fixedHeight === 0 ? size[1] : fixedHeight,
+                fixedWidth !== 0 && fixedHeight !== 0,
                 outColor,
-                depthTexture
+                depthTexture,
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
-        } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBufferMap.set(key, gBuffer);
         }
         return gBuffer;
     }
 
-
-    public static getGUIBufferFrame() {
+    public static getGUIBufferFrame(): GBufferFrame {
         let colorRTFrame = this.getGBufferFrame(this.colorPass_GBuffer);
         let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.gui_GBuffer, 0, 0, true, colorRTFrame.depthTexture);
         return rtFrame;
     }
 
-    public clone() {
+    public clone(): GBufferFrame {
         let gBufferFrame = new GBufferFrame();
         this.clone2Frame(gBufferFrame);
         return gBufferFrame;
     }
 }
+
+/** Fallback map for edge cases where no engine context is active. */
+const _fallbackGBufferMap = new Map<string, GBufferFrame>();
