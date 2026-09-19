@@ -1,10 +1,16 @@
-import { PoolNode, RenderShaderPass } from "../../..";
+export class PipelinePoolData {
+    public pipelineMap: Map<string, GPURenderPipeline> = new Map<string, GPURenderPipeline>();
+}
+
+let _current: PipelinePoolData | null = null;
+
+export function setCurrentPipelinePool(data: PipelinePoolData): void {
+    _current = data;
+}
 
 export class PipelinePool {
-    private static pipelineMap: Map<string, GPURenderPipeline> = new Map<string, GPURenderPipeline>();
-
     public static getSharePipeline(shaderVariant: string) {
-        let pipeline = this.pipelineMap.get(shaderVariant);
+        let pipeline = _current!.pipelineMap.get(shaderVariant);
         if (pipeline) {
             return pipeline;
         } else {
@@ -13,6 +19,6 @@ export class PipelinePool {
     }
 
     public static setSharePipeline(shaderVariant: string, pipeline: GPURenderPipeline) {
-        this.pipelineMap.set(shaderVariant, pipeline);
+        _current!.pipelineMap.set(shaderVariant, pipeline);
     }
 }

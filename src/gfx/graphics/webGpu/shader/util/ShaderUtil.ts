@@ -19,12 +19,27 @@ export type FragmentPart = {
     fs_frameBuffers: string;
 }
 
-export class ShaderUtil {
-    public static renderShaderModulePool: Map<string, GPUShaderModule>;
-    public static renderShader: Map<string, RenderShaderPass>;
+export class ShaderUtilData {
+    public renderShaderModulePool: Map<string, GPUShaderModule> = new Map();
+    public renderShader: Map<string, RenderShaderPass> = new Map();
+}
 
-    public static init() {
-        this.renderShaderModulePool = new Map<string, GPUShaderModule>();
-        this.renderShader = new Map<string, RenderShaderPass>();
+let _current: ShaderUtilData | null = null;
+
+export function setCurrentShaderUtil(data: ShaderUtilData): void {
+    _current = data;
+}
+
+export class ShaderUtil {
+    public static get renderShaderModulePool(): Map<string, GPUShaderModule> { return _current!.renderShaderModulePool; }
+    public static set renderShaderModulePool(v: Map<string, GPUShaderModule>) { _current!.renderShaderModulePool = v; }
+    public static get renderShader(): Map<string, RenderShaderPass> { return _current!.renderShader; }
+    public static set renderShader(v: Map<string, RenderShaderPass>) { _current!.renderShader = v; }
+
+    public static init(): void {
+        if (_current) {
+            _current.renderShaderModulePool = new Map();
+            _current.renderShader = new Map();
+        }
     }
 }
