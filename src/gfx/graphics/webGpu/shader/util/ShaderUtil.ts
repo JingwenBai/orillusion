@@ -24,6 +24,8 @@ export class ShaderUtil {
     public static renderShader: Map<string, RenderShaderPass>;
 
     public static init() {
+        // Idempotent: shader modules compile against the shared device and can be reused
+        if (this.renderShaderModulePool) return;
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
         this.renderShader = new Map<string, RenderShaderPass>();
     }
