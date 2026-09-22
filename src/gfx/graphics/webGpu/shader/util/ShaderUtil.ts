@@ -19,12 +19,37 @@ export type FragmentPart = {
     fs_frameBuffers: string;
 }
 
+/**
+ * @internal
+ * Per-engine state held by ShaderUtil.
+ */
+export class ShaderUtilState {
+    public renderShaderModulePool: Map<string, GPUShaderModule> = new Map();
+    public renderShader: Map<string, RenderShaderPass> = new Map();
+}
+
 export class ShaderUtil {
-    public static renderShaderModulePool: Map<string, GPUShaderModule>;
-    public static renderShader: Map<string, RenderShaderPass>;
+    private static _state: ShaderUtilState = new ShaderUtilState();
+
+    /** Create a fresh state object for a new Engine3D instance. */
+    public static createState(): ShaderUtilState {
+        return new ShaderUtilState();
+    }
+
+    /** Activate the given state as the current context (called by Engine3D). */
+    public static activateState(state: ShaderUtilState): void {
+        ShaderUtil._state = state;
+    }
+
+    public static get renderShaderModulePool(): Map<string, GPUShaderModule> {
+        return this._state.renderShaderModulePool;
+    }
+
+    public static get renderShader(): Map<string, RenderShaderPass> {
+        return this._state.renderShader;
+    }
 
     public static init() {
-        this.renderShaderModulePool = new Map<string, GPUShaderModule>();
-        this.renderShader = new Map<string, RenderShaderPass>();
+        this._state = this.createState();
     }
 }
