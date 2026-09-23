@@ -3,6 +3,7 @@ import { GUIPick } from "../components/gui/GUIPick";
 import { GUICanvas } from "../components/gui/core/GUICanvas";
 import { CEventListener } from "../event/CEventListener";
 import { ShadowLightsCollect } from "../gfx/renderJob/collect/ShadowLightsCollect";
+import { ComponentCollect } from "../gfx/renderJob/collect/ComponentCollect";
 import { PickFire } from "../io/PickFire";
 import { Vector4 } from "../math/Vector4";
 import { Camera3D } from "./Camera3D";
@@ -11,6 +12,12 @@ import { Scene3D } from "./Scene3D";
 export class View3D extends CEventListener {
     private _camera: Camera3D;
     private _scene: Scene3D;
+    /**
+     * The Engine3D instance that owns this view.
+     * Set automatically by engine.startRenderView() / engine.startRenderViews().
+     * @internal
+     */
+    public engine: import('../Engine3D').Engine3D | null = null;
     private _viewPort: Vector4;
     private _enablePick: boolean = false;
     private _enable: boolean = true;
@@ -22,6 +29,14 @@ export class View3D extends CEventListener {
         super();
         this.canvasList = [];
         this._viewPort = new Vector4(x, y, width, height);
+    }
+
+    /**
+     * The ComponentCollect instance for this view's engine.
+     * Falls back to the active global ComponentCollect when engine is not set.
+     */
+    public get componentCollect(): ComponentCollect {
+        return this.engine?.componentCollect ?? ComponentCollect.active;
     }
 
     public get enable(): boolean {
