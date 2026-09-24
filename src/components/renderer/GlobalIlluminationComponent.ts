@@ -1,6 +1,6 @@
 import { Engine3D } from "../../Engine3D";
 import { Scene3D } from "../../core/Scene3D";
-import { GlobalBindGroup } from "../../gfx/graphics/webGpu/core/bindGroups/GlobalBindGroup";
+import { globalBindGroup } from "../../gfx/graphics/webGpu/core/bindGroups/GlobalBindGroup";
 import { EntityCollect } from "../../gfx/renderJob/collect/EntityCollect";
 import { DDGIIrradianceVolume } from "../../gfx/renderJob/passRenderer/ddgi/DDGIIrradianceVolume";
 import { Probe } from "../../gfx/renderJob/passRenderer/ddgi/Probe";
@@ -30,7 +30,7 @@ export class GlobalIlluminationComponent extends ComponentBase {
     public init(scene: Scene3D): void {
         scene ||= Engine3D.views[0]?.scene;
         Engine3D.setting.gi.enable = true;
-        this._volume = GlobalBindGroup.getLightEntries(scene).irradianceVolume;
+        this._volume = globalBindGroup.getLightEntries(scene).irradianceVolume;
         this.initProbe(scene);
     }
 

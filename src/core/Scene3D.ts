@@ -25,7 +25,7 @@ export class Scene3D extends Object3D {
         this.skyObject = new Object3D();
         this.addChild(this.skyObject);
         this._isScene3D = true;
-        this.envMap ||= Engine3D.res.defaultSky;
+        this.envMap ||= Engine3D.current.res.defaultSky;
     }
 
     /**
@@ -73,7 +73,7 @@ export class Scene3D extends Object3D {
     public set exposure(value: number) {
         if (EntityCollect.instance.sky && `exposure` in EntityCollect.instance.sky) {
             EntityCollect.instance.sky.exposure = value;
-            Engine3D.setting.sky.skyExposure = value;
+            Engine3D.current.setting.sky.skyExposure = value;
         }
     }
 

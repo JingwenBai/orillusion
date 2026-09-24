@@ -6,7 +6,7 @@ import { Texture } from '../../../graphics/webGpu/core/texture/Texture';
 import { ComputeShader } from '../../../graphics/webGpu/shader/ComputeShader';
 import { GPUContext } from '../../GPUContext';
 import { RTResourceConfig } from '../../config/RTResourceConfig';
-import { RTResourceMap } from '../../frame/RTResourceMap';
+import { rtResourceMap } from '../../frame/RTResourceMap';
 import { OcclusionSystem } from '../../occlusion/OcclusionSystem';
 
 /**
@@ -23,7 +23,7 @@ export class ZCullingCompute {
         this.visibleBuffer = new ComputeGPUBuffer(8192 * 2);
         this.computeShader.setStorageBuffer(`visibleBuffer`, this.visibleBuffer);
 
-        this.texture = RTResourceMap.getTexture(RTResourceConfig.zBufferTexture_NAME);
+        this.texture = rtResourceMap.getTexture(RTResourceConfig.zBufferTexture_NAME);
         this.computeShader.setSamplerTexture(`zBufferTexture`, this.texture);
         this.computeShader.workerSizeX = Math.ceil(this.texture.width / 8);
         this.computeShader.workerSizeY = Math.ceil(this.texture.height / 8);

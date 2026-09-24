@@ -25,7 +25,7 @@ export class ReflectionEntries {
     constructor() {
         this.storageGPUBuffer = new StorageGPUBuffer((3 + 3) * 128);
 
-        // let reflectionSetting = Engine3D.setting.reflectionSetting;
+        // let reflectionSetting = Engine3D.current.setting.reflectionSetting;
         // let reflectionsGBufferFrame = GBufferFrame.getGBufferFrame(GBufferFrame.reflections_GBuffer, reflectionSetting.reflectionMapWidth, reflectionSetting.reflectionMapHeight);
         // this.sourceReflectionMap = reflectionsGBufferFrame.getCompressGBufferTexture();
         // this.reflectionMap = new RenderTexture(this.sourceReflectionMap.width, this.sourceReflectionMap.height, this.sourceReflectionMap.format, false, undefined, 1, 0, true, false);

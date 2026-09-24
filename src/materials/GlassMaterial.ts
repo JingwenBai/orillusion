@@ -34,9 +34,9 @@ export class GlassMaterial extends Material {
         shaderState.acceptGI = true;
         shaderState.useLight = true;
 
-        this.shader.setTexture("baseMap", Engine3D.res.whiteTexture);
-        this.shader.setTexture("normalMap", Engine3D.res.normalTexture);
-        this.shader.setTexture("emissiveMap", Engine3D.res.blackTexture);
+        this.shader.setTexture("baseMap", Engine3D.current.res.whiteTexture);
+        this.shader.setTexture("normalMap", Engine3D.current.res.normalTexture);
+        this.shader.setTexture("emissiveMap", Engine3D.current.res.blackTexture);
     }
 
     // clone(): this {

@@ -2,7 +2,7 @@ import { DDGIIrradiance_shader } from '../../../../assets/shader/compute/DDGIIrr
 import { View3D } from '../../../../core/View3D';
 import { Engine3D } from '../../../../Engine3D';
 import { RenderTexture } from '../../../../textures/RenderTexture';
-import { GlobalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { StorageGPUBuffer } from '../../../graphics/webGpu/core/buffer/StorageGPUBuffer';
 import { ComputeShader } from '../../../graphics/webGpu/shader/ComputeShader';
 import { EntityCollect } from '../../collect/EntityCollect';
@@ -45,7 +45,7 @@ export class DDGIIrradianceComputePass {
         this.computeShader.setStorageBuffer(`probes`, this.volume.probesBuffer);
         this.computeShader.setUniformBuffer(`uniformData`, this.volume.irradianceVolumeBuffer);
 
-        this.computeShader.setStorageBuffer("models", GlobalBindGroup.modelMatrixBindGroup.matrixBufferDst);
+        this.computeShader.setStorageBuffer("models", globalBindGroup.modelMatrixBindGroup.matrixBufferDst);
     }
 
     public setTextures(inputs: RenderTexture[], probeIrradianceMap: RenderTexture, probeDepthMap: RenderTexture) {

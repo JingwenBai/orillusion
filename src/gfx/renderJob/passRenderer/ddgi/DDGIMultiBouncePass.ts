@@ -23,7 +23,7 @@ export class DDGIMultiBouncePass {
     }
 
     private initPipeline() {
-        let giSetting = Engine3D.setting.gi;
+        let giSetting = Engine3D.current.setting.gi;
         this.blendTexture = new RenderTexture(giSetting.probeSourceTextureSize, giSetting.probeSourceTextureSize, GPUTextureFormat.rgba16float, false, GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
 
         this.computerShader = new ComputeShader(MultiBouncePass_cs);

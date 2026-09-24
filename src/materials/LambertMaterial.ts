@@ -36,7 +36,7 @@ export class LambertMaterial extends Material {
         let newShader = new Shader();
         newShader.addRenderPass(colorPass);
         this.shader = newShader;
-        this.baseMap = Engine3D.res.grayTexture;
+        this.baseMap = Engine3D.current.res.grayTexture;
     }
 
     /**

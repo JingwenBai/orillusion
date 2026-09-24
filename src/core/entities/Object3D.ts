@@ -4,7 +4,7 @@ import { Vector3 } from '../../math/Vector3';
 import { Entity } from './Entity';
 import { Ctor } from "../../util/Global";
 import { IComponent } from '../../components/IComponent';
-import { ComponentCollect } from '../../gfx/renderJob/collect/ComponentCollect';
+import { componentCollect } from '../../gfx/renderJob/collect/ComponentCollect';
 import { SerializeTag } from '../../util/SerializeDecoration';
 import { Color } from '../../math/Color';
 import { MeshRenderer } from '../../components/renderer/MeshRenderer';
@@ -58,7 +58,7 @@ export class Object3D extends Entity {
             instance.object3D = this;
             this.components.set(c, instance);
             instance[`__init`](param);
-            ComponentCollect.appendWaitStart(instance);
+            componentCollect.appendWaitStart(instance);
             return instance;
         }
         return this.components.get(c) as T;
@@ -89,7 +89,7 @@ export class Object3D extends Entity {
     public removeComponent<T extends IComponent>(c: Ctor<T>) {
         if (this.components.has(c)) {
             let component = this.components.get(c);
-            ComponentCollect.removeWaitStart(this, component);
+            componentCollect.removeWaitStart(this, component);
             this.components.delete(c);
             component[`__stop`]();
             component.beforeDestroy();

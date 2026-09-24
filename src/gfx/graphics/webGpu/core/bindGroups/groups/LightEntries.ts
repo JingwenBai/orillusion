@@ -21,14 +21,14 @@ export class LightEntries {
 
     constructor() {
         this.storageGPUBuffer = new StorageGPUBuffer(
-            LightData.lightSize * Engine3D.setting.light.maxLight,
+            LightData.lightSize * Engine3D.current.setting.light.maxLight,
             GPUBufferUsage.COPY_SRC
         );
 
         this.irradianceVolume = new DDGIIrradianceVolume();
-        this.irradianceVolume.init(Engine3D.setting.gi);
+        this.irradianceVolume.init(Engine3D.current.setting.gi);
 
-        for (let i = 0; i < Engine3D.setting.light.maxLight; i++) {
+        for (let i = 0; i < Engine3D.current.setting.light.maxLight; i++) {
             let memory = this.storageGPUBuffer.memory.allocation_node(LightData.lightSize * 4);
             this._lightList.push(memory);
         }

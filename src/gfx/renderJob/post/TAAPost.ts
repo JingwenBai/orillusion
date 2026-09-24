@@ -1,5 +1,5 @@
 import { VirtualTexture } from '../../../textures/VirtualTexture';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { StorageGPUBuffer } from '../../graphics/webGpu/core/buffer/StorageGPUBuffer';
 import { UniformGPUBuffer } from '../../graphics/webGpu/core/buffer/UniformGPUBuffer';
 import { WebGPUDescriptorCreator } from '../../graphics/webGpu/descriptor/WebGPUDescriptorCreator';
@@ -153,7 +153,7 @@ export class TAAPost extends PostBase {
 
         let taaSetting: UniformGPUBuffer = new UniformGPUBuffer(16 * 2 + 4 * 3); //matrix + 3 * vector4
 
-        let standUniform = GlobalBindGroup.getCameraGroup(view.camera);
+        let standUniform = globalBindGroup.getCameraGroup(view.camera);
         computeShader.setUniformBuffer('globalUniform', standUniform.uniformGPUBuffer);
         computeShader.setUniformBuffer('taaData', taaSetting);
         computeShader.setStorageBuffer(`preColorBuffer`, this.preColorBuffer);

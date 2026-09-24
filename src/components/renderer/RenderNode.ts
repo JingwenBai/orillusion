@@ -3,11 +3,11 @@ import { Engine3D } from "../../Engine3D";
 import { View3D } from "../../core/View3D";
 import { GeometryBase } from "../../core/geometry/GeometryBase";
 import { PassGenerate } from "../../gfx/generate/PassGenerate";
-import { GlobalBindGroup } from "../../gfx/graphics/webGpu/core/bindGroups/GlobalBindGroup";
+import { globalBindGroup } from "../../gfx/graphics/webGpu/core/bindGroups/GlobalBindGroup";
 import { ShaderReflection } from "../../gfx/graphics/webGpu/shader/value/ShaderReflectionInfo";
 import { GPUContext } from "../../gfx/renderJob/GPUContext";
 import { EntityCollect } from "../../gfx/renderJob/collect/EntityCollect";
-import { RTResourceMap } from "../../gfx/renderJob/frame/RTResourceMap";
+import { rtResourceMap } from "../../gfx/renderJob/frame/RTResourceMap";
 import { RenderContext } from "../../gfx/renderJob/passRenderer/RenderContext";
 import { ClusterLightingBuffer } from "../../gfx/renderJob/passRenderer/cluster/ClusterLightingBuffer";
 import { RendererMask, RendererMaskUtil } from "../../gfx/renderJob/passRenderer/state/RendererMask";
@@ -401,7 +401,7 @@ export class RenderNode extends ComponentBase {
                 if (renderShader.pipeline) {
                     if (renderShader.shaderState.splitTexture) {
                         renderContext.endRenderPass();
-                        RTResourceMap.WriteSplitColorTexture(renderNode.instanceID);
+                        rtResourceMap.WriteSplitColorTexture(renderNode.instanceID);
                         renderContext.beginOpaqueRenderPass();
 
                         GPUContext.bindCamera(renderContext.encoder, view.camera);
@@ -536,7 +536,7 @@ export class RenderNode extends ComponentBase {
                     const renderShader = pass;
 
                     if (renderShader.shaderState.splitTexture) {
-                        let splitTexture = RTResourceMap.CreateSplitTexture(node.instanceID);
+                        let splitTexture = rtResourceMap.CreateSplitTexture(node.instanceID);
                         renderShader.setTexture("splitTexture_Map", splitTexture);
                     }
 
@@ -550,7 +550,7 @@ export class RenderNode extends ComponentBase {
                     }
                     // }
 
-                    let reflectionEntries = GlobalBindGroup.getReflectionEntries(view.scene);
+                    let reflectionEntries = globalBindGroup.getReflectionEntries(view.scene);
                     if (!renderShader.reflectionMap && reflectionEntries && reflectionEntries.reflectionMap) {
                         renderShader.setTexture(`reflectionMap`, reflectionEntries.reflectionMap);
                         renderShader.setStorageBuffer(`reflectionBuffer`, reflectionEntries.storageGPUBuffer);
@@ -586,7 +586,7 @@ export class RenderNode extends ComponentBase {
                         renderShader.setTexture(`irradianceDepthMap`, renderPassState.irradianceBuffer[1]);
                     }
 
-                    let lightUniformEntries = GlobalBindGroup.getLightEntries(view.scene);
+                    let lightUniformEntries = globalBindGroup.getLightEntries(view.scene);
                     if (lightUniformEntries) {
                         renderShader.setStorageBuffer(`lightBuffer`, lightUniformEntries.storageGPUBuffer);
                         if (lightUniformEntries.irradianceVolume) {

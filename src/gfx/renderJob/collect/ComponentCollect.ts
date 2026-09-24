@@ -8,43 +8,41 @@ export class ComponentCollect {
     /**
      * @internal
      */
-    public static componentsUpdateList: Map<View3D, Map<IComponent, Function>>;
+    public componentsUpdateList: Map<View3D, Map<IComponent, Function>>;
 
     /**
      * @internal
      */
-    public static componentsLateUpdateList: Map<View3D, Map<IComponent, Function>>;
+    public componentsLateUpdateList: Map<View3D, Map<IComponent, Function>>;
 
     /**
      * @internal
      */
-    public static componentsBeforeUpdateList: Map<View3D, Map<IComponent, Function>>;
+    public componentsBeforeUpdateList: Map<View3D, Map<IComponent, Function>>;
 
     /**
      * @internal
      */
-    public static componentsComputeList: Map<View3D, Map<IComponent, Function>>;
+    public componentsComputeList: Map<View3D, Map<IComponent, Function>>;
 
     /**
      * @internal
      */
-    public static componentsEnablePickerList: Map<View3D, Map<ColliderComponent, Function>>;
+    public componentsEnablePickerList: Map<View3D, Map<ColliderComponent, Function>>;
 
     /**
      * @internal
      */
-    public static graphicComponent: Map<View3D, Map<IComponent, Function>>;
+    public graphicComponent: Map<View3D, Map<IComponent, Function>>;
 
     /**
      * @internal
      */
-    // private static waitStartComponentBak: Map<Object3D, IComponent[]>;
-    // private static waitStartComponentBody: Map<Object3D, IComponent[]>;
-    public static waitStartComponent: Map<Object3D, IComponent[]>;
+    public waitStartComponent: Map<Object3D, IComponent[]>;
 
-    private static _init: boolean = false;
+    private _init: boolean = false;
 
-    private static init() {
+    public init() {
         if (!this._init) {
             this._init = true;
             this.componentsUpdateList = new Map<View3D, Map<IComponent, Function>>();
@@ -53,13 +51,11 @@ export class ComponentCollect {
             this.componentsComputeList = new Map<View3D, Map<IComponent, Function>>();
             this.componentsEnablePickerList = new Map<View3D, Map<ColliderComponent, Function>>();
             this.graphicComponent = new Map<View3D, Map<IComponent, Function>>();
-            // this.waitStartComponentBak = new Map<Object3D, IComponent[]>();
-            // this.waitStartComponentBody = new Map<Object3D, IComponent[]>();
             this.waitStartComponent = new Map<Object3D, IComponent[]>();
         }
     }
 
-    public static bindUpdate(view: View3D, component: IComponent, call: Function) {
+    public bindUpdate(view: View3D, component: IComponent, call: Function) {
         this.init();
         let list = this.componentsUpdateList.get(view);
         if (!list) {
@@ -69,7 +65,7 @@ export class ComponentCollect {
         list.set(component, call);
     }
 
-    public static unBindUpdate(view: View3D, component: IComponent) {
+    public unBindUpdate(view: View3D, component: IComponent) {
         this.init();
         let list = this.componentsUpdateList.get(view);
         if (list) {
@@ -77,7 +73,7 @@ export class ComponentCollect {
         }
     }
 
-    public static bindLateUpdate(view: View3D, component: IComponent, call: Function) {
+    public bindLateUpdate(view: View3D, component: IComponent, call: Function) {
         this.init();
         let list = this.componentsLateUpdateList.get(view);
         if (!list) {
@@ -87,7 +83,7 @@ export class ComponentCollect {
         list.set(component, call);
     }
 
-    public static unBindLateUpdate(view: View3D, component: IComponent) {
+    public unBindLateUpdate(view: View3D, component: IComponent) {
         this.init();
         let list = this.componentsLateUpdateList.get(view);
         if (list) {
@@ -95,7 +91,7 @@ export class ComponentCollect {
         }
     }
 
-    public static bindBeforeUpdate(view: View3D, component: IComponent, call: Function) {
+    public bindBeforeUpdate(view: View3D, component: IComponent, call: Function) {
         this.init();
         let list = this.componentsBeforeUpdateList.get(view);
         if (!list) {
@@ -105,7 +101,7 @@ export class ComponentCollect {
         list.set(component, call);
     }
 
-    public static unBindBeforeUpdate(view: View3D, component: IComponent) {
+    public unBindBeforeUpdate(view: View3D, component: IComponent) {
         this.init();
         let list = this.componentsBeforeUpdateList.get(view);
         if (list) {
@@ -113,7 +109,7 @@ export class ComponentCollect {
         }
     }
 
-    public static bindCompute(view: View3D, component: IComponent, call: Function) {
+    public bindCompute(view: View3D, component: IComponent, call: Function) {
         this.init();
         let list = this.componentsComputeList.get(view);
         if (!list) {
@@ -123,7 +119,7 @@ export class ComponentCollect {
         list.set(component, call);
     }
 
-    public static unBindCompute(view: View3D, component: IComponent) {
+    public unBindCompute(view: View3D, component: IComponent) {
         this.init();
         let list = this.componentsComputeList.get(view);
         if (list) {
@@ -131,7 +127,7 @@ export class ComponentCollect {
         }
     }
 
-    public static bindGraphic(view: View3D, component: IComponent, call: Function) {
+    public bindGraphic(view: View3D, component: IComponent, call: Function) {
         this.init();
         let list = this.graphicComponent.get(view);
         if (!list) {
@@ -141,7 +137,7 @@ export class ComponentCollect {
         list.set(component, call);
     }
 
-    public static unBindGraphic(view: View3D, component: IComponent) {
+    public unBindGraphic(view: View3D, component: IComponent) {
         this.init();
         let list = this.graphicComponent.get(view);
         if (list) {
@@ -149,7 +145,7 @@ export class ComponentCollect {
         }
     }
 
-    public static appendWaitStart(component: IComponent) {
+    public appendWaitStart(component: IComponent) {
         this.init();
         let arr = this.waitStartComponent.get(component.object3D);
         if (!arr) {
@@ -162,9 +158,9 @@ export class ComponentCollect {
         }
     }
 
-    public static removeWaitStart(obj: Object3D, component: IComponent) {
+    public removeWaitStart(obj: Object3D, component: IComponent) {
         this.init();
-        let arr = ComponentCollect.waitStartComponent.get(obj);
+        let arr = this.waitStartComponent.get(obj);
         if (arr) {
             let index = arr.indexOf(component);
             if (index != -1) {
@@ -173,7 +169,7 @@ export class ComponentCollect {
         }
     }
 
-    public static bindEnablePick(view: View3D, component: ColliderComponent, call: Function) {
+    public bindEnablePick(view: View3D, component: ColliderComponent, call: Function) {
         this.init();
         let list = this.componentsEnablePickerList.get(view);
         if (!list) {
@@ -183,7 +179,7 @@ export class ComponentCollect {
         list.set(component, call);
     }
 
-    public static unBindEnablePick(view: View3D, component: ColliderComponent) {
+    public unBindEnablePick(view: View3D, component: ColliderComponent) {
         this.init();
         let list = this.componentsEnablePickerList.get(view);
         if (list) {
@@ -191,3 +187,5 @@ export class ComponentCollect {
         }
     }
 }
+
+export let componentCollect: ComponentCollect = new ComponentCollect();

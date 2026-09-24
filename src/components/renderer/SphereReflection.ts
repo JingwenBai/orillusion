@@ -39,7 +39,7 @@ export class SphereReflection extends Reflection {
         mr.geometry = new SphereGeometry(25, 30, 30);
         // mr.material = new LitMaterial();
 
-        let reflectionSetting = Engine3D.setting.reflectionSetting;
+        let reflectionSetting = Engine3D.current.setting.reflectionSetting;
         let reflectionsGBufferFrame = GBufferFrame.getGBufferFrame(GBufferFrame.reflections_GBuffer, reflectionSetting.width, reflectionSetting.height);
         let mat = new ReflectionMaterial();
         mat.reflectionIndex = index;

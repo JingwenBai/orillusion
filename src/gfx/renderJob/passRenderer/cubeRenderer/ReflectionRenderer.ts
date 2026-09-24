@@ -17,7 +17,7 @@ import { ComputeShader } from '../../../graphics/webGpu/shader/ComputeShader';
 import { VirtualTexture } from '../../../../textures/VirtualTexture';
 import { GPUTextureFormat } from '../../../graphics/webGpu/WebGPUConst';
 import { UniformGPUBuffer } from '../../../graphics/webGpu/core/buffer/UniformGPUBuffer';
-import { GlobalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { Time } from '../../../../util/Time';
 
 /**
@@ -83,7 +83,7 @@ export class ReflectionRenderer extends RendererBase {
     public compute(view: View3D, occlusionSystem: OcclusionSystem): void {
         if (this.needUpdate) {
             this.needUpdate = false;
-            let reflectionEntries = GlobalBindGroup.getReflectionEntries(view.scene);
+            let reflectionEntries = globalBindGroup.getReflectionEntries(view.scene);
             reflectionEntries.reflectionMap = this.outTexture;
 
             this.preFilteredEnvironmentCompute.workerSizeX = Math.ceil(this.probeSize * this.mipCount / 16);
@@ -157,7 +157,7 @@ export class ReflectionRenderer extends RendererBase {
         let collectInfo = EntityCollect.instance.getRenderNodes(scene, camera);
         {
             let renderPassEncoder = encoder;
-            GlobalBindGroup.updateCameraGroup(camera);
+            globalBindGroup.updateCameraGroup(camera);
 
             if (!maskTr && EntityCollect.instance.sky) {
                 GPUContext.bindCamera(renderPassEncoder, camera);

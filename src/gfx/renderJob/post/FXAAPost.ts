@@ -39,13 +39,13 @@ export class FXAAPost extends PostBase {
      * @internal
      */
     onAttach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.fxaa.enable = true;
+        Engine3D.current.setting.render.postProcessing.fxaa.enable = true;
     }
 
     /**
      * @internal
      */
     onDetach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.fxaa.enable = false;
+        Engine3D.current.setting.render.postProcessing.fxaa.enable = false;
     }
 }

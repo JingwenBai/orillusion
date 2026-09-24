@@ -24,7 +24,7 @@ export class OcclusionSystem {
      * @returns
      */
     public occlusionRenderNodeTest(index: number): number {
-        if (!Engine3D.setting.occlusionQuery.enable) return 1;
+        if (!Engine3D.current.setting.occlusionQuery.enable) return 1;
         if (this.frustumCullingList) {
             return this.frustumCullingList[index];
         } else {
@@ -60,7 +60,7 @@ export class OcclusionSystem {
         // EntityCollect.instance.autoSortRenderNodes(scene);
 
         // let collectInfo = EntityCollect.instance.getRenderNodes(scene);
-        // if (Engine3D.setting.occlusionQuery.octree) {
+        // if (Engine3D.current.setting.occlusionQuery.octree) {
         //     let rendererList: OctreeEntity[] = [];
         //     // let now = performance.now();
         //     // collectInfo.rendererOctree.boxCasts(camera.frustum.boundingBox, rendererList);

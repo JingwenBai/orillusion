@@ -40,9 +40,9 @@ export class GIProbeMaterial extends Material {
         shaderState.acceptGI = false;
         shaderState.useLight = false;
 
-        newShader.setTexture("baseMap", Engine3D.res.whiteTexture);
-        newShader.setTexture("normalMap", Engine3D.res.normalTexture);
-        newShader.setTexture("emissiveMap", Engine3D.res.blackTexture);
+        newShader.setTexture("baseMap", Engine3D.current.res.whiteTexture);
+        newShader.setTexture("normalMap", Engine3D.current.res.normalTexture);
+        newShader.setTexture("emissiveMap", Engine3D.current.res.blackTexture);
 
         this.shader = newShader;
     }

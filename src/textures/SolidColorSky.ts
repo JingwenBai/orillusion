@@ -24,7 +24,7 @@ export class SolidColorSky extends LDRTextureCube {
         this._skyColor = color;
         this._internalTexture = new Float16ArrayTexture();
         let numbers = [];
-        Engine3D.res.fillColor(numbers, this._minSize, this._minSize, this.color.r, this.color.g, this.color.b, this.color.a);
+        Engine3D.current.res.fillColor(numbers, this._minSize, this._minSize, this.color.r, this.color.g, this.color.b, this.color.a);
         this._internalTexture.create(this._minSize, this._minSize, numbers, false);
         this.createFromTexture(this._minSize, this._internalTexture);
         return this;
@@ -32,7 +32,7 @@ export class SolidColorSky extends LDRTextureCube {
 
     private changeColor(color: Color): this {
         this._skyColor = color;
-        Engine3D.res.fillColor(this._internalTexture.floatArray, this._minSize, this._minSize, this.color.r, this.color.g, this.color.b, this.color.a);
+        Engine3D.current.res.fillColor(this._internalTexture.floatArray, this._minSize, this._minSize, this.color.r, this.color.g, this.color.b, this.color.a);
         this._internalTexture.updateTexture(this._minSize, this._minSize, this._internalTexture.floatArray, false);
         this._faceData.uploadTexture(0, this._internalTexture);
         return this;

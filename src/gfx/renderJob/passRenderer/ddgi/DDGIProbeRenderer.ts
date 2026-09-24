@@ -189,8 +189,8 @@ export class DDGIProbeRenderer extends RendererBase {
         let collectInfo = EntityCollect.instance.getRenderNodes(view.scene, probeCamera);
         GPUContext.bindCamera(encoder, probeCamera);
 
-        let drawMin = Math.max(0, Engine3D.setting.render.drawOpMin);
-        let drawMax = Math.min(Engine3D.setting.render.drawOpMax, collectInfo.opaqueList.length);
+        let drawMin = Math.max(0, Engine3D.current.setting.render.drawOpMin);
+        let drawMax = Math.min(Engine3D.current.setting.render.drawOpMax, collectInfo.opaqueList.length);
 
         let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
         for (const renderList of viewRenderList) {
@@ -221,8 +221,8 @@ export class DDGIProbeRenderer extends RendererBase {
             EntityCollect.instance.sky.renderPass2(view, this.passType, this.rendererPassState, null, encoder);
         }
 
-        drawMin = Math.max(0, Engine3D.setting.render.drawTrMin);
-        drawMax = Math.min(Engine3D.setting.render.drawTrMax, collectInfo.transparentList.length);
+        drawMin = Math.max(0, Engine3D.current.setting.render.drawTrMin);
+        drawMax = Math.min(Engine3D.current.setting.render.drawTrMax, collectInfo.transparentList.length);
 
         for (let i = drawMin; i < drawMax; ++i) {
             let renderNode = collectInfo.transparentList[i];
@@ -236,7 +236,7 @@ export class DDGIProbeRenderer extends RendererBase {
     }
 
     public render(view: View3D, occlusionSystem: OcclusionSystem) {
-        if (!Engine3D.setting.gi.enable) return;
+        if (!Engine3D.current.setting.gi.enable) return;
 
         this.volume.updateOrientation();
         this.volume.isVolumeFrameChange = false;
@@ -250,7 +250,7 @@ export class DDGIProbeRenderer extends RendererBase {
         this.rendProbe(view);
         let probeBeRendered = this.probeRenderResult.count > 0;
 
-        if (EntityCollect.instance.state.giLightingChange || probeBeRendered || Engine3D.setting.gi.realTimeGI) {
+        if (EntityCollect.instance.state.giLightingChange || probeBeRendered || Engine3D.current.setting.gi.realTimeGI) {
             EntityCollect.instance.state.giLightingChange = false;
             this.lightingPass.compute(view, this.rendererPassState);
             this.bouncePass.compute(view, this.rendererPassState);
@@ -278,7 +278,7 @@ export class DDGIProbeRenderer extends RendererBase {
     }
 
     private rendProbe(view: View3D): void {
-        let autoRenderProbe = Engine3D.setting.gi.autoRenderProbe;
+        let autoRenderProbe = Engine3D.current.setting.gi.autoRenderProbe;
 
         //Determine whether to render the probe
         let execRender: boolean = false;

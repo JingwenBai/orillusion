@@ -1,5 +1,5 @@
 import { VirtualTexture } from '../../../textures/VirtualTexture';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { StorageGPUBuffer } from '../../graphics/webGpu/core/buffer/StorageGPUBuffer';
 import { UniformGPUBuffer } from '../../graphics/webGpu/core/buffer/UniformGPUBuffer';
 import { WebGPUDescriptorCreator } from '../../graphics/webGpu/descriptor/WebGPUDescriptorCreator';
@@ -193,7 +193,7 @@ export class SSGIPost extends PostBase {
         this.delayCompute = new ComputeShader(Denoising_cs);
         this.combineCompute = new ComputeShader(Combine_cs);
 
-        let globalUniform = GlobalBindGroup.getCameraGroup(this.view.camera);
+        let globalUniform = globalBindGroup.getCameraGroup(this.view.camera);
         {
             this.ssgiCompute.setSamplerTexture(`gBufferTexture`, this.gBufferTexture);
             this.ssgiCompute.setSamplerTexture(`combineTexture`, this.combineTexture);

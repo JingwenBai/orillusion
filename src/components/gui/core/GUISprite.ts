@@ -28,6 +28,6 @@ export class GUISprite {
     public yoffset: number = 0;
 
     constructor(texture?: GUITexture) {
-        this.guiTexture = texture || Engine3D.res.defaultGUITexture;
+        this.guiTexture = texture || Engine3D.current.res.defaultGUITexture;
     }
 }

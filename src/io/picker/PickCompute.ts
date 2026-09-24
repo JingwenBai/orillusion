@@ -1,6 +1,6 @@
 import { Picker_cs } from '../../assets/shader/compute/Picker_cs';
 import { View3D } from '../../core/View3D';
-import { GlobalBindGroup } from '../../gfx/graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../gfx/graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { ComputeGPUBuffer } from '../../gfx/graphics/webGpu/core/buffer/ComputeGPUBuffer';
 import { ComputeShader } from '../../gfx/graphics/webGpu/shader/ComputeShader';
 import { GPUContext } from '../../gfx/renderJob/GPUContext';
@@ -26,7 +26,7 @@ export class PickCompute {
     }
 
     compute(view: View3D) {
-        let stand = GlobalBindGroup.getCameraGroup(view.camera);
+        let stand = globalBindGroup.getCameraGroup(view.camera);
         this._computeShader.setStorageBuffer('globalUniform', stand.uniformGPUBuffer);
 
         let command = GPUContext.beginCommandEncoder();

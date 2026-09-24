@@ -102,7 +102,7 @@ export class GUIMaterial extends Material {
      */
     public setTextures(list: Texture[]) {
         for (let i = 0; i < 7; i++) {
-            let texture = list[i] || Engine3D.res.whiteTexture;
+            let texture = list[i] || Engine3D.current.res.whiteTexture;
             this.shader.setTexture(`tex_${i}`, texture);
             this.setVideoTextureDefine(i, texture.isVideoTexture);
         }

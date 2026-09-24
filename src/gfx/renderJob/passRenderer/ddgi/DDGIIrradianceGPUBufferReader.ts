@@ -22,7 +22,7 @@ export class DDGIIrradianceGPUBufferReader extends CEventDispatcher {
         this.probeRenderer = probeRender;
         this.srcColorMap = colorMap;
         this.srcDepthMap = depthMap;
-        let giSetting = Engine3D.setting.gi;
+        let giSetting = Engine3D.current.setting.gi;
         let pixelCount = giSetting.octRTMaxSize * giSetting.octRTMaxSize;
 
         this.opColorBuffer = webGPUContext.device.createBuffer({

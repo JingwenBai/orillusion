@@ -281,19 +281,19 @@ export class OrbitController extends ComponentBase {
      * @internal
      */
     private addEventListener() {
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
+        Engine3D.current.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
+        Engine3D.current.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
+        Engine3D.current.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
+        Engine3D.current.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
     }
     /**
      * @internal
      */
     private removeEventListener() {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
+        Engine3D.current.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
+        Engine3D.current.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
+        Engine3D.current.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
+        Engine3D.current.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
     }
 }
 

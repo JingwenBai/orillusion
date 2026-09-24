@@ -6,7 +6,7 @@ import { Matrix4 } from "../../../../../math/Matrix4";
 import { UUID } from "../../../../../util/Global";
 import { ProfilerUtil } from "../../../../../util/ProfilerUtil";
 import { Time } from "../../../../../util/Time";
-import { ShadowLightsCollect } from "../../../../renderJob/collect/ShadowLightsCollect";
+import { shadowLightsCollect } from "../../../../renderJob/collect/ShadowLightsCollect";
 import { webGPUContext } from "../../Context3D";
 import { UniformGPUBuffer } from "../buffer/UniformGPUBuffer";
 import { GlobalBindGroupLayout } from "./GlobalBindGroupLayout";
@@ -89,7 +89,7 @@ export class GlobalUniformGroup {
         this.uniformGPUBuffer.setMatrix(`pvMatrixInv`, camera.projectionMatrixInv);
         this.uniformGPUBuffer.setMatrix(`viewToWorld`, camera.cameraToWorld);
 
-        let shadowLightList = ShadowLightsCollect.getDirectShadowLightWhichScene(camera.transform.scene3D);
+        let shadowLightList = shadowLightsCollect.getDirectShadowLightWhichScene(camera.transform.scene3D);
 
         this.csmShadowBias.fill(0.0001);
         this.shadowMatrixRaw.fill(0);

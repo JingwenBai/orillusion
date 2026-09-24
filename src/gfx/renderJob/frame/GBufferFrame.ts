@@ -5,7 +5,7 @@ import { GPUTextureFormat } from "../../graphics/webGpu/WebGPUConst";
 import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
-import { RTResourceMap } from "./RTResourceMap";
+import { rtResourceMap } from "./RTResourceMap";
 
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
@@ -27,7 +27,7 @@ export class GBufferFrame extends RTFrame {
         if (outColor) {
             let colorDec = new RTDescriptor();
             colorDec.loadOp = 'clear';
-            this._colorBufferTex = RTResourceMap.createRTTexture(key + RTResourceConfig.colorBufferTex_NAME, rtWidth, rtHeight, GPUTextureFormat.rgba16float, true);
+            this._colorBufferTex = rtResourceMap.createRTTexture(key + RTResourceConfig.colorBufferTex_NAME, rtWidth, rtHeight, GPUTextureFormat.rgba16float, true);
             attachments.push(this._colorBufferTex);
             reDescriptors.push(colorDec);
         }

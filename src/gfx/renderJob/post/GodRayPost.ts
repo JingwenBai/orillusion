@@ -1,5 +1,5 @@
 import { VirtualTexture } from '../../../textures/VirtualTexture';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { StorageGPUBuffer } from '../../graphics/webGpu/core/buffer/StorageGPUBuffer';
 import { UniformGPUBuffer } from '../../graphics/webGpu/core/buffer/UniformGPUBuffer';
 import { WebGPUDescriptorCreator } from '../../graphics/webGpu/descriptor/WebGPUDescriptorCreator';
@@ -149,14 +149,14 @@ export class GodRayPost extends PostBase {
             this.createResource();
             this.createCompute(view);
 
-            let lightUniformEntries = GlobalBindGroup.getLightEntries(view.scene);
+            let lightUniformEntries = globalBindGroup.getLightEntries(view.scene);
             this.godRayCompute.setStorageBuffer("lightBuffer", lightUniformEntries.storageGPUBuffer);
-            this.godRayCompute.setStorageBuffer("models", GlobalBindGroup.modelMatrixBindGroup.matrixBufferDst);
+            this.godRayCompute.setStorageBuffer("models", globalBindGroup.modelMatrixBindGroup.matrixBufferDst);
 
             this.rendererPassState = WebGPUDescriptorCreator.createRendererPassState(this.rtFrame, null);
             this.rendererPassState.label = "GodRay";
 
-            let globalUniform = GlobalBindGroup.getCameraGroup(view.camera);
+            let globalUniform = globalBindGroup.getCameraGroup(view.camera);
             this.godRayCompute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);
         }
 

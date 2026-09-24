@@ -186,11 +186,11 @@ export class Camera3D extends ComponentBase {
     public getShadowBias(depthTexSize: number): number {
         let sizeOnePixel = 2.0 * this.getShadowWorldExtents() / depthTexSize;
         let depth = this.far - this.near;
-        return sizeOnePixel / depth - Engine3D.setting.shadow.shadowBias * 0.01;
+        return sizeOnePixel / depth - Engine3D.current.setting.shadow.shadowBias * 0.01;
     }
 
     public getShadowWorldExtents(): number {
-        let shadowBound = Engine3D.setting.shadow.shadowBound;
+        let shadowBound = Engine3D.current.setting.shadow.shadowBound;
         if (!shadowBound) {
             shadowBound = Math.round(0.05 * this.frustum.boundingBox.extents.length);
         } else {
@@ -493,7 +493,7 @@ export class Camera3D extends ComponentBase {
         }
         this.frustum.update(this.pvMatrix);
         this.frustum.updateBoundBox(this.pvMatrixInv);
-        let shadow = Engine3D.setting.shadow;
+        let shadow = Engine3D.current.setting.shadow;
         this.enableCSM && this.csm?.update(this._projectionMatrix, this._pvMatrixInv, this.near, this.far, shadow);
     }
 
@@ -538,7 +538,7 @@ export class Camera3D extends ComponentBase {
     }
 
     private getJitteredProjectionMatrix() {
-        let setting = Engine3D.setting.render.postProcessing.taa;
+        let setting = Engine3D.current.setting.render.postProcessing.taa;
         let mat = this._projectionMatrix;
         let temporalJitterScale: number = setting.temporalJitterScale;
         let offsetIndex = this._jitterFrameIndex % setting.jitterSeedCount;
@@ -606,7 +606,7 @@ export class Camera3D extends ComponentBase {
     //     }
 
     //     // Tune this parameter according to the scene
-    //     let zMult = Engine3D.setting.shadow.shadowQuality;
+    //     let zMult = Engine3D.current.setting.shadow.shadowQuality;
 
     //     if (minZ < 0) {
     //         minZ *= zMult;

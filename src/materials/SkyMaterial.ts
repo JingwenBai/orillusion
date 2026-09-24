@@ -49,10 +49,10 @@ export class SkyMaterial extends Material {
     }
 
     public get exposure() {
-        return Engine3D.setting.sky.skyExposure;
+        return Engine3D.current.setting.sky.skyExposure;
     }
     public set exposure(value: number) {
-        Engine3D.setting.sky.skyExposure = value;
+        Engine3D.current.setting.sky.skyExposure = value;
     }
 
     public get roughness() {

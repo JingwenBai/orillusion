@@ -7,8 +7,8 @@ export class KHR_materials_emissive_strength {
         let extensions = dmaterial.extensions;
         if (extensions && extensions[`KHR_materials_emissive_strength`]) {
             tMaterial.emissiveIntensity = extensions[`KHR_materials_emissive_strength`].emissiveStrength;
-            if (tMaterial.emissiveMap == Engine3D.res.blackTexture) {
-                tMaterial.emissiveMap = Engine3D.res.whiteTexture;
+            if (tMaterial.emissiveMap == Engine3D.current.res.blackTexture) {
+                tMaterial.emissiveMap = Engine3D.current.res.whiteTexture;
             }
         } else {
             tMaterial.emissiveIntensity = 1;

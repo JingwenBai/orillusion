@@ -2,8 +2,8 @@ import { Scene3D } from '../../../core/Scene3D';
 import { View3D } from '../../../core/View3D';
 import { Engine3D } from '../../../Engine3D';
 import { PickFire } from '../../../io/PickFire';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
-import { ShadowLightsCollect } from '../collect/ShadowLightsCollect';
+import { globalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { shadowLightsCollect } from '../collect/ShadowLightsCollect';
 import { ColorPassRenderer } from '../passRenderer/color/ColorPassRenderer';
 import { GBufferFrame } from '../frame/GBufferFrame';
 import { OcclusionSystem } from '../occlusion/OcclusionSystem';
@@ -206,14 +206,14 @@ export class RendererJob {
 
         ProfilerUtil.startView(view);
 
-        GlobalBindGroup.getLightEntries(view.scene).update(view);
-        GlobalBindGroup.getReflectionEntries(view.scene).update(view);
+        globalBindGroup.getLightEntries(view.scene).update(view);
+        globalBindGroup.getReflectionEntries(view.scene).update(view);
 
         this.occlusionSystem.update(view.camera, view.scene);
         this.clusterLightingRender.render(view, this.occlusionSystem);
 
         if (this.shadowMapPassRenderer) {
-            ShadowLightsCollect.update(view);
+            shadowLightsCollect.update(view);
             this.shadowMapPassRenderer.render(view, this.occlusionSystem);
         }
 

@@ -40,8 +40,8 @@ export class ColorLitMaterial extends Material {
         shaderState.acceptGI = true;
         shaderState.useLight = true;
 
-        renderShader.setTexture("normalMap", Engine3D.res.normalTexture);
-        renderShader.setTexture("emissiveMap", Engine3D.res.blackTexture);
+        renderShader.setTexture("normalMap", Engine3D.current.res.normalTexture);
+        renderShader.setTexture("emissiveMap", Engine3D.current.res.blackTexture);
     }
 
     clone(): this {

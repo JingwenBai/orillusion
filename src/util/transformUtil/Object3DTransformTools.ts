@@ -113,17 +113,17 @@ export class Object3DTransformTools extends Object3D {
     }
 
     protected activate() {
-        Engine3D.inputSystem.addEventListener(KeyEvent.KEY_DOWN, this.onKeyDown, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this, null, 99999);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this, null, 99999);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this, null, 99999);
+        Engine3D.current.inputSystem.addEventListener(KeyEvent.KEY_DOWN, this.onKeyDown, this);
+        Engine3D.current.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this, null, 99999);
+        Engine3D.current.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this, null, 99999);
+        Engine3D.current.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this, null, 99999);
     }
 
     protected unactivate() {
-        Engine3D.inputSystem.removeEventListener(KeyEvent.KEY_DOWN, this.onKeyDown, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this);
+        Engine3D.current.inputSystem.removeEventListener(KeyEvent.KEY_DOWN, this.onKeyDown, this);
+        Engine3D.current.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
+        Engine3D.current.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this);
+        Engine3D.current.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this);
     }
 
     protected onKeyDown(e: KeyEvent) {

@@ -396,7 +396,7 @@ export class RenderShaderPass extends ShaderPassBase {
             this.defineValue[`USEGBUFFER`] = false;
         }
 
-        if (Engine3D.setting.render.useCompressGBuffer) {
+        if (Engine3D.current.setting.render.useCompressGBuffer) {
             this.defineValue[`USE_COMPRESSGBUFFER`] = true;
         } else {
             this.defineValue[`USE_COMPRESSGBUFFER`] = false;
@@ -524,7 +524,7 @@ export class RenderShaderPass extends ShaderPassBase {
                     case `sampler`:
                         {
                             let textureName = info.varName.replace(`Sampler`, ``);
-                            let texture = this.textures[textureName] ? this.textures[textureName] : Engine3D.res.redTexture;
+                            let texture = this.textures[textureName] ? this.textures[textureName] : Engine3D.current.res.redTexture;
                             let entry: GPUBindGroupLayoutEntry = {
                                 binding: info.binding,
                                 visibility: texture.visibility,
@@ -537,7 +537,7 @@ export class RenderShaderPass extends ShaderPassBase {
                     case `sampler_comparison`:
                         {
                             let textureName = info.varName.replace(`Sampler`, ``);
-                            let texture = this.textures[textureName] ? this.textures[textureName] : Engine3D.res.redTexture;
+                            let texture = this.textures[textureName] ? this.textures[textureName] : Engine3D.current.res.redTexture;
                             let entry: GPUBindGroupLayoutEntry = {
                                 binding: info.binding,
                                 visibility: texture.visibility,
@@ -555,7 +555,7 @@ export class RenderShaderPass extends ShaderPassBase {
                     case `texture_depth_cube`:
                     case `texture_depth_cube_array`:
                         {
-                            let texture = this.textures[info.varName] ? this.textures[info.varName] : Engine3D.res.redTexture;
+                            let texture = this.textures[info.varName] ? this.textures[info.varName] : Engine3D.current.res.redTexture;
                             let entry: GPUBindGroupLayoutEntry = {
                                 binding: info.binding,
                                 visibility: texture.visibility,
@@ -568,7 +568,7 @@ export class RenderShaderPass extends ShaderPassBase {
                         break;
                     case `texture_external`:
                         {
-                            let texture = this.textures[info.varName] ? this.textures[info.varName] : Engine3D.res.redTexture;
+                            let texture = this.textures[info.varName] ? this.textures[info.varName] : Engine3D.current.res.redTexture;
                             let entry: GPUBindGroupLayoutEntry = {
                                 binding: info.binding,
                                 visibility: texture.visibility,
@@ -581,7 +581,7 @@ export class RenderShaderPass extends ShaderPassBase {
                         break;
                     default:
                         {
-                            let texture = this.textures[info.varName] ? this.textures[info.varName] : Engine3D.res.redTexture;
+                            let texture = this.textures[info.varName] ? this.textures[info.varName] : Engine3D.current.res.redTexture;
                             let entry: GPUBindGroupLayoutEntry = {
                                 binding: info.binding,
                                 visibility: texture.visibility,
@@ -660,7 +660,7 @@ export class RenderShaderPass extends ShaderPassBase {
                         let textureName = refs.varName.replace(`Sampler`, ``);
                         let texture = this.textures[textureName];
                         if (!texture) {
-                            texture = Engine3D.res.blackTexture;
+                            texture = Engine3D.current.res.blackTexture;
                             this.setTexture(textureName, texture);
                         }
                         if (texture) {
@@ -687,7 +687,7 @@ export class RenderShaderPass extends ShaderPassBase {
                     } else {
                         let texture = this.textures[refs.varName];
                         if (!texture) {
-                            texture = Engine3D.res.whiteTexture;
+                            texture = Engine3D.current.res.whiteTexture;
                             this.setTexture(refs.varName, texture);
                         }
                         if (texture) {
@@ -775,7 +775,7 @@ export class RenderShaderPass extends ShaderPassBase {
 
         if (renderPassState.zPreTexture || renderPassState.depthTexture) {
             let blendEnable = shaderState.blendMode != BlendMode.NONE;
-            if (Engine3D.setting.render.zPrePass && renderPassState.zPreTexture && shaderState.useZ) {
+            if (Engine3D.current.setting.render.zPrePass && renderPassState.zPreTexture && shaderState.useZ) {
                 renderPipelineDescriptor[`depthStencil`] = {
                     depthWriteEnabled: false,
                     depthCompare: GPUCompareFunction.less,
@@ -880,17 +880,17 @@ export class RenderShaderPass extends ShaderPassBase {
         this.defineValue[`USE_LIGHT`] = useLight;
         this.defineValue[`USE_VERTXCOLOR`] = useVertexColor;
 
-        if (Engine3D.setting.pick.mode == `pixel`) {
+        if (Engine3D.current.setting.pick.mode == `pixel`) {
             this.defineValue[`USE_WORLDPOS`] = true;
         }
 
-        if (Engine3D.setting.gi.enable) {
+        if (Engine3D.current.setting.gi.enable) {
             this.defineValue[`USEGI`] = true;
         } else {
             this.defineValue[`USEGI`] = false;
         }
 
-        if (Engine3D.setting.render.debug) {
+        if (Engine3D.current.setting.render.debug) {
             this.defineValue[`USE_DEBUG`] = true;
             this.defineValue[`DEBUG_CLUSTER`] = true;
         }
@@ -901,7 +901,7 @@ export class RenderShaderPass extends ShaderPassBase {
             this.defineValue[`USE_LIGHT`] = false;
         }
 
-        if (Engine3D.setting.render.useLogDepth) {
+        if (Engine3D.current.setting.render.useLogDepth) {
             this.defineValue[`USE_LOGDEPTH`] = true;
             this.shaderState.useFragDepth = true;
         } else {
@@ -914,9 +914,9 @@ export class RenderShaderPass extends ShaderPassBase {
             this.defineValue[`USE_OUTDEPTH`] = false;
         }
 
-        this.defineValue[`USE_PCF_SHADOW`] = Engine3D.setting.shadow.type == `PCF`;
-        this.defineValue[`USE_HARD_SHADOW`] = Engine3D.setting.shadow.type == `HARD`;
-        this.defineValue[`USE_SOFT_SHADOW`] = Engine3D.setting.shadow.type == `SOFT`;
+        this.defineValue[`USE_PCF_SHADOW`] = Engine3D.current.setting.shadow.type == `PCF`;
+        this.defineValue[`USE_HARD_SHADOW`] = Engine3D.current.setting.shadow.type == `HARD`;
+        this.defineValue[`USE_SOFT_SHADOW`] = Engine3D.current.setting.shadow.type == `SOFT`;
         this.defineValue[`USE_CSM`] = CSM.Cascades > 1;
         this.defineValue[`USE_IES_PROFILE`] = IESProfiles.use;
 

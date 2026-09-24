@@ -3,7 +3,7 @@ import { Scene3D } from "../core/Scene3D";
 import { View3D } from "../core/View3D";
 import { Object3D } from "../core/entities/Object3D";
 import { CEvent } from "../event/CEvent";
-import { ComponentCollect } from "../gfx/renderJob/collect/ComponentCollect";
+import { componentCollect } from "../gfx/renderJob/collect/ComponentCollect";
 import { MathUtil } from "../math/MathUtil";
 import { Matrix4, makeMatrix44, append } from "../math/Matrix4";
 import { Orientation3D } from "../math/Orientation3D";
@@ -160,7 +160,7 @@ export class Transform extends ComponentBase {
             } else {
                 this._scene3d = hasRoot;
                 this.object3D.components.forEach((c) => {
-                    ComponentCollect.appendWaitStart(c);
+                    componentCollect.appendWaitStart(c);
                 });
             }
 

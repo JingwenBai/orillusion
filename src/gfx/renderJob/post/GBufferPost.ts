@@ -1,5 +1,5 @@
 import { VirtualTexture } from '../../../textures/VirtualTexture';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { StorageGPUBuffer } from '../../graphics/webGpu/core/buffer/StorageGPUBuffer';
 import { UniformGPUBuffer } from '../../graphics/webGpu/core/buffer/UniformGPUBuffer';
 import { WebGPUDescriptorCreator } from '../../graphics/webGpu/descriptor/WebGPUDescriptorCreator';
@@ -126,7 +126,7 @@ export class GBufferPost extends PostBase {
         this.uniformBuffer = new UniformGPUBuffer(4);
         this.uniformBuffer.setInt32("state", this._state);
 
-        let globalUniform = GlobalBindGroup.getCameraGroup(this.view.camera);
+        let globalUniform = globalBindGroup.getCameraGroup(this.view.camera);
         let rtFrame = GBufferFrame.getGBufferFrame("ColorPassGBuffer");
         let gBufferTexture = rtFrame.getCompressGBufferTexture();
 

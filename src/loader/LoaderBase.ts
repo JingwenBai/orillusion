@@ -56,7 +56,7 @@ export class LoaderBase {
         bitmapTexture.url = url;
         bitmapTexture.name = StringUtil.getURLName(url);
         await bitmapTexture.load(url, loaderFunctions);
-        Engine3D.res.addTexture(url, bitmapTexture);
+        Engine3D.current.res.addTexture(url, bitmapTexture);
         return bitmapTexture;
     }
 

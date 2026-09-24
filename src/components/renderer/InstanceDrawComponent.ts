@@ -1,5 +1,5 @@
 import { GPUContext } from "../../gfx/renderJob/GPUContext";
-import { RTResourceMap } from "../../gfx/renderJob/frame/RTResourceMap";
+import { rtResourceMap } from "../../gfx/renderJob/frame/RTResourceMap";
 import { RenderContext } from "../../gfx/renderJob/passRenderer/RenderContext";
 import { MeshRenderer } from "./MeshRenderer";
 import { RenderNode } from "./RenderNode";
@@ -8,7 +8,7 @@ import { View3D } from "../../core/View3D";
 import { RendererPassState } from "../../gfx/renderJob/passRenderer/state/RendererPassState";
 import { PassType } from "../../gfx/renderJob/passRenderer/state/PassType";
 import { ClusterLightingBuffer } from "../../gfx/renderJob/passRenderer/cluster/ClusterLightingBuffer";
-import { ComponentCollect } from "../../gfx/renderJob/collect/ComponentCollect";
+import { componentCollect } from "../../gfx/renderJob/collect/ComponentCollect";
 
 export class InstanceDrawComponent extends RenderNode {
 
@@ -117,7 +117,7 @@ export class InstanceDrawComponent extends RenderNode {
                 const renderShader = matPass;
                 if (renderShader.shaderState.splitTexture) {
                     renderContext.endRenderPass();
-                    RTResourceMap.WriteSplitColorTexture(renderNode.instanceID);
+                    rtResourceMap.WriteSplitColorTexture(renderNode.instanceID);
                     renderContext.beginOpaqueRenderPass();
 
                     GPUContext.bindCamera(renderContext.encoder, view.camera);
@@ -145,6 +145,6 @@ export class InstanceDrawComponent extends RenderNode {
         this._keyIdsGroup.clear();
         //@ts-ignore
         this._keyRenderGroup = this._keyBufferGroup = this._keyIdsGroup = undefined;
-        ComponentCollect.removeWaitStart(this.object3D, this);
+        componentCollect.removeWaitStart(this.object3D, this);
     }
 }

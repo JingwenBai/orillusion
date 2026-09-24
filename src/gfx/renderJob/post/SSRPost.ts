@@ -1,7 +1,7 @@
 import { Engine3D } from '../../../Engine3D';
 import { Vector3 } from '../../../math/Vector3';
 import { VirtualTexture } from '../../../textures/VirtualTexture';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { StorageGPUBuffer } from '../../graphics/webGpu/core/buffer/StorageGPUBuffer';
 import { UniformGPUBuffer } from '../../graphics/webGpu/core/buffer/UniformGPUBuffer';
 import { WebGPUDescriptorCreator } from '../../graphics/webGpu/descriptor/WebGPUDescriptorCreator';
@@ -154,7 +154,7 @@ export class SSRPost extends PostBase {
     }
 
     private createRayTraceShader() {
-        let globalUniform = GlobalBindGroup.getCameraGroup(this.view.camera);
+        let globalUniform = globalBindGroup.getCameraGroup(this.view.camera);
 
         this.SSR_RayTraceCompute = new ComputeShader(SSR_RayTrace_cs);
         this.SSR_RayTraceCompute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);
@@ -192,7 +192,7 @@ export class SSRPost extends PostBase {
     }
 
     private createBlendShader(input: VirtualTexture): void {
-        let globalUniform = GlobalBindGroup.getCameraGroup(this.view.camera);
+        let globalUniform = globalBindGroup.getCameraGroup(this.view.camera);
         this.SSR_Blend_Compute = new ComputeShader(SSR_BlendColor_cs);
 
         this.SSR_Blend_Compute.setStorageBuffer(`rayTraceBuffer`, this.rayTraceData);
@@ -261,7 +261,7 @@ export class SSRPost extends PostBase {
             this.createBlendShader(this.isRetTexture);
             this.rendererPassState = WebGPUDescriptorCreator.createRendererPassState(this.rtFrame, null);
 
-            let standUniform = GlobalBindGroup.getCameraGroup(view.camera);
+            let standUniform = globalBindGroup.getCameraGroup(view.camera);
             this.SSR_RayTraceCompute.setUniformBuffer('standUniform', standUniform.uniformGPUBuffer);
         }
 

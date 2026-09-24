@@ -17,7 +17,7 @@ export class UnLitMaterial extends Material {
         super();
         this.shader = new UnLitShader();
         // default value
-        this.baseMap = Engine3D.res.whiteTexture;
+        this.baseMap = Engine3D.current.res.whiteTexture;
     }
 
     public set baseMap(texture: Texture) {

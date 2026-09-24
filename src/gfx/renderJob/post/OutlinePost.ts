@@ -19,7 +19,7 @@ import { OutlineCalcOutline_cs } from '../../../assets/shader/compute/OutlineCal
 import { Outline_cs } from '../../../assets/shader/compute/Outline_cs';
 import { OutLineBlendColor_cs } from '../../../assets/shader/compute/OutLineBlendColor_cs';
 import { OutlinePostSlot, outlinePostData } from '../../../io/OutlinePostData';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 
 
 /**
@@ -169,7 +169,7 @@ export class OutlinePost extends PostBase {
 
         this.calcWeightCompute = new ComputeShader(OutlineCalcOutline_cs);
 
-        let globalUniform = GlobalBindGroup.getCameraGroup(this.view.camera);
+        let globalUniform = globalBindGroup.getCameraGroup(this.view.camera);
 
         this.calcWeightCompute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);
         this.calcWeightCompute.setStorageBuffer('outlineSetting', this.outlineSetting);

@@ -1,4 +1,4 @@
-import { ComponentCollect } from '../..';
+import { componentCollect } from '../..';
 import { IComponent } from '../../components/IComponent';
 import { RenderNode } from '../../components/renderer/RenderNode';
 import { Transform } from '../../components/Transform';
@@ -313,11 +313,11 @@ export class Entity extends CEventDispatcher {
             });
             this.components.clear();
         } else {
-            ComponentCollect.waitStartComponent.forEach((v, k) => {
+            componentCollect.waitStartComponent.forEach((v, k) => {
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();
-                    ComponentCollect.waitStartComponent.delete(element.object3D);
+                    componentCollect.waitStartComponent.delete(element.object3D);
                 }
             });
         }

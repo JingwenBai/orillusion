@@ -2,7 +2,7 @@ import { Camera3D } from "../../core/Camera3D";
 import { GeometryBase } from "../../core/geometry/GeometryBase";
 import { ProfilerUtil } from "../../util/ProfilerUtil";
 import { webGPUContext } from "../graphics/webGpu/Context3D";
-import { GlobalBindGroup } from "../graphics/webGpu/core/bindGroups/GlobalBindGroup";
+import { globalBindGroup } from "../graphics/webGpu/core/bindGroups/GlobalBindGroup";
 import { Texture } from "../graphics/webGpu/core/texture/Texture";
 import { ComputeShader } from "../graphics/webGpu/shader/ComputeShader";
 import { RenderShaderPass } from "../graphics/webGpu/shader/RenderShaderPass";
@@ -56,7 +56,7 @@ export class GPUContext {
      * @param camera use camera {@link Camera3D}
      */
     public static bindCamera(encoder: GPURenderPassEncoder | GPURenderBundleEncoder, camera: Camera3D) {
-        let cameraBindGroup = GlobalBindGroup.getCameraGroup(camera);
+        let cameraBindGroup = globalBindGroup.getCameraGroup(camera);
         encoder.setBindGroup(0, cameraBindGroup.globalBindGroup);
     }
 

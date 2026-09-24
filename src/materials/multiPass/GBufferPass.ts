@@ -23,6 +23,6 @@ export class GBufferPass extends RenderShaderPass {
         this.setUniformFloat(`normalScale`, 1);
         this.setUniformFloat(`alphaCutoff`, 1);
         this.blendMode = BlendMode.NONE;
-        this.setTexture(`normalMap`, Engine3D.res.normalTexture);
+        this.setTexture(`normalMap`, Engine3D.current.res.normalTexture);
     }
 }

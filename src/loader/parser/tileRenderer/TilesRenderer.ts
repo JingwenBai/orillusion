@@ -20,7 +20,7 @@ export class TilesRenderer {
         this._modelList = [];
         this._rootPath = rootPath;
         let combinePath = rootPath + '/' + file;
-        this._tileSet = (await Engine3D.res.loadJSON(combinePath)) as TileSet;
+        this._tileSet = (await Engine3D.current.res.loadJSON(combinePath)) as TileSet;
         if (this._tileSet.root.transform) {
             let rootMatrix = new Matrix4();
             for (let i = 0; i < 16; i++) {
@@ -68,7 +68,7 @@ export class TilesRenderer {
                 };
                 let tileObject3D: Object3D;
                 if (url.endsWith('.glb')) {
-                    tileObject3D = (await Engine3D.res.loadGltf(url, functions)) as Object3D;
+                    tileObject3D = (await Engine3D.current.res.loadGltf(url, functions)) as Object3D;
                     this.applyTransform(tileObject3D.transform, adjustmentTransform)
                 } else if (url.endsWith('tileset.json')) {
                     let childTilesetUrl = url.replace('/tileset.json', '');
@@ -76,9 +76,9 @@ export class TilesRenderer {
                     await tilesRenderer.loadTileSet(childTilesetUrl, 'tileset.json');
                     tileObject3D = tilesRenderer.group;
                 } else if (url.endsWith('.i3dm')) {
-                    tileObject3D = (await Engine3D.res.loadI3DM(url, functions, adjustmentTransform)) as Object3D;
+                    tileObject3D = (await Engine3D.current.res.loadI3DM(url, functions, adjustmentTransform)) as Object3D;
                 } else if (url.endsWith('.b3dm')) {
-                    tileObject3D = (await Engine3D.res.loadB3DM(url, functions, adjustmentTransform)) as Object3D;
+                    tileObject3D = (await Engine3D.current.res.loadB3DM(url, functions, adjustmentTransform)) as Object3D;
                 }
 
                 if (tileObject3D) {

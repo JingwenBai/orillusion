@@ -25,7 +25,7 @@ export class QuadShader extends Shader {
         shaderState.depthCompare = GPUCompareFunction.always;
         shaderState.multisample = 0;
 
-        this.setTexture("baseMap", Engine3D.res.blackTexture);
+        this.setTexture("baseMap", Engine3D.current.res.blackTexture);
         this.setUniformFloat(`x`, 0);
         this.setUniformFloat(`y`, 0);
         this.setUniformFloat(`width`, 100);

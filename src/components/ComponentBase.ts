@@ -1,7 +1,7 @@
 import { View3D } from "../core/View3D";
 import { Object3D } from "../core/entities/Object3D";
 import { CEventDispatcher } from "../event/CEventDispatcher";
-import { ComponentCollect } from "../gfx/renderJob/collect/ComponentCollect";
+import { componentCollect } from "../gfx/renderJob/collect/ComponentCollect";
 import { IComponent } from "./IComponent";
 import { Transform } from "./Transform";
 
@@ -138,9 +138,9 @@ export class ComponentBase implements IComponent {
      */
     private _onUpdate(call: Function) {
         if (call != null) {
-            ComponentCollect.bindUpdate(this.transform.view3D, this, call);
+            componentCollect.bindUpdate(this.transform.view3D, this, call);
         } else {
-            ComponentCollect.unBindUpdate(this.transform.view3D, this);
+            componentCollect.unBindUpdate(this.transform.view3D, this);
         }
     }
 
@@ -150,9 +150,9 @@ export class ComponentBase implements IComponent {
      */
     private _onLateUpdate(call: Function) {
         if (call != null) {
-            ComponentCollect.bindLateUpdate(this.transform.view3D, this, call);
+            componentCollect.bindLateUpdate(this.transform.view3D, this, call);
         } else {
-            ComponentCollect.unBindLateUpdate(this.transform.view3D, this);
+            componentCollect.unBindLateUpdate(this.transform.view3D, this);
         }
     }
 
@@ -162,9 +162,9 @@ export class ComponentBase implements IComponent {
      */
     private _onBeforeUpdate(call: Function) {
         if (call != null) {
-            ComponentCollect.bindBeforeUpdate(this.transform.view3D, this, call);
+            componentCollect.bindBeforeUpdate(this.transform.view3D, this, call);
         } else {
-            ComponentCollect.unBindBeforeUpdate(this.transform.view3D, this);
+            componentCollect.unBindBeforeUpdate(this.transform.view3D, this);
         }
     }
 
@@ -175,9 +175,9 @@ export class ComponentBase implements IComponent {
      */
     private _onCompute(call: Function) {
         if (call != null) {
-            ComponentCollect.bindCompute(this.transform.view3D, this, call);
+            componentCollect.bindCompute(this.transform.view3D, this, call);
         } else {
-            ComponentCollect.unBindCompute(this.transform.view3D, this);
+            componentCollect.unBindCompute(this.transform.view3D, this);
         }
     }
 
@@ -187,9 +187,9 @@ export class ComponentBase implements IComponent {
      */
     private _onGraphic(call: Function) {
         if (call != null) {
-            ComponentCollect.bindGraphic(this.transform.view3D, this, call);
+            componentCollect.bindGraphic(this.transform.view3D, this, call);
         } else {
-            ComponentCollect.unBindGraphic(this.transform.view3D, this);
+            componentCollect.unBindGraphic(this.transform.view3D, this);
         }
     }
 
@@ -197,7 +197,7 @@ export class ComponentBase implements IComponent {
      * before release this component, object refrences are not be set null now.
      */
     public beforeDestroy(force?: boolean) {
-        ComponentCollect.removeWaitStart(this.object3D, this);
+        componentCollect.removeWaitStart(this.object3D, this);
     }
 
     /**

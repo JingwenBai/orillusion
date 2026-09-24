@@ -150,4 +150,4 @@ export class Context3D extends CEventDispatcher {
 /**
  * @internal
  */
-export let webGPUContext = new Context3D();
+export let webGPUContext: Context3D = null;

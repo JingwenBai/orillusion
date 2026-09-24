@@ -1,5 +1,5 @@
 import { VirtualTexture } from '../../../textures/VirtualTexture';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { StorageGPUBuffer } from '../../graphics/webGpu/core/buffer/StorageGPUBuffer';
 import { UniformGPUBuffer } from '../../graphics/webGpu/core/buffer/UniformGPUBuffer';
 import { WebGPUDescriptorCreator } from '../../graphics/webGpu/descriptor/WebGPUDescriptorCreator';
@@ -7,7 +7,7 @@ import { ComputeShader } from '../../graphics/webGpu/shader/ComputeShader';
 import { GPUTextureFormat } from '../../graphics/webGpu/WebGPUConst';
 import { webGPUContext } from '../../graphics/webGpu/Context3D';
 import { GPUContext } from '../GPUContext';
-import { RTResourceMap } from '../frame/RTResourceMap';
+import { rtResourceMap } from '../frame/RTResourceMap';
 import { RendererPassState } from '../passRenderer/state/RendererPassState';
 import { PostBase } from './PostBase';
 import { Engine3D } from '../../../Engine3D';
@@ -172,7 +172,7 @@ export class DepthOfFieldPost extends PostBase {
         if (!this.blurComputes) {
             this.createResource();
             this.createBlurCompute();
-            let standUniform = GlobalBindGroup.getCameraGroup(view.camera);
+            let standUniform = globalBindGroup.getCameraGroup(view.camera);
             for (let i = 0; i < this.blurComputes.length; i++) {
                 const blurCompute = this.blurComputes[i];
                 blurCompute.setUniformBuffer('globalUniform', standUniform.uniformGPUBuffer);

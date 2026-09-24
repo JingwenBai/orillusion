@@ -21,7 +21,7 @@ export class ReflectionMaterial extends Material {
         super();
         this.shader = new ReflectionShader();
         // default value
-        this.baseMap = Engine3D.res.whiteTexture;
+        this.baseMap = Engine3D.current.res.whiteTexture;
         this.setDefine("USE_CUSTOMUNIFORM", true);
         this.reflectionIndex = 0;
     }

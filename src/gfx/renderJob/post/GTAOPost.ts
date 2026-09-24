@@ -1,5 +1,5 @@
 import { VirtualTexture } from '../../../textures/VirtualTexture';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { StorageGPUBuffer } from '../../graphics/webGpu/core/buffer/StorageGPUBuffer';
 import { UniformGPUBuffer } from '../../graphics/webGpu/core/buffer/UniformGPUBuffer';
 import { WebGPUDescriptorCreator } from '../../graphics/webGpu/descriptor/WebGPUDescriptorCreator';
@@ -209,7 +209,7 @@ export class GTAOPost extends PostBase {
             this.rendererPassState = WebGPUDescriptorCreator.createRendererPassState(this.rtFrame, null);
             this.rendererPassState.label = "GTAO";
 
-            let globalUniform = GlobalBindGroup.getCameraGroup(view.camera);
+            let globalUniform = globalBindGroup.getCameraGroup(view.camera);
             this.gtaoCompute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);
         }
         let cfg = Engine3D.setting.render.postProcessing.gtao;

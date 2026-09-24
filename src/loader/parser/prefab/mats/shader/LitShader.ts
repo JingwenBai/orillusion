@@ -59,9 +59,9 @@ export class LitShader extends Shader {
         this.setUniformColor(`clearcoatColor`, new Color(1, 1, 1));
         this.setUniformFloat(`clearcoatWeight`, 0.0);
 
-        this._MainTex = Engine3D.res.grayTexture;
-        this._BumpMap = Engine3D.res.normalTexture;
-        this._MaskTex = Engine3D.res.maskTexture;
+        this._MainTex = Engine3D.current.res.grayTexture;
+        this._BumpMap = Engine3D.current.res.normalTexture;
+        this._MaskTex = Engine3D.current.res.maskTexture;
     }
 
     public set _MainTex(value: Texture) {

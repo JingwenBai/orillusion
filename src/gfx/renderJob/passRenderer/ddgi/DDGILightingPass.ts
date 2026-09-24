@@ -2,7 +2,7 @@ import { DDGILighting_shader } from '../../../../assets/shader/compute/DDGILight
 import { View3D } from '../../../../core/View3D';
 import { Engine3D } from '../../../../Engine3D';
 import { RenderTexture } from '../../../../textures/RenderTexture';
-import { GlobalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { Texture } from '../../../graphics/webGpu/core/texture/Texture';
 import { ComputeShader } from '../../../graphics/webGpu/shader/ComputeShader';
 import { GPUTextureFormat } from '../../../graphics/webGpu/WebGPUConst';
@@ -27,15 +27,15 @@ export class DDGILightingPass {
     }
 
     private create(view: View3D) {
-        let lightUniformEntries = GlobalBindGroup.getLightEntries(view.scene);
+        let lightUniformEntries = globalBindGroup.getLightEntries(view.scene);
 
         this.computeShader = new ComputeShader(DDGILighting_shader);
-        let cameraBindGroup = GlobalBindGroup.getCameraGroup(view.camera);
+        let cameraBindGroup = globalBindGroup.getCameraGroup(view.camera);
         this.computeShader.setUniformBuffer("globalUniform", cameraBindGroup.uniformGPUBuffer);
 
         this.computeShader.setStorageTexture("outputBuffer", this.lightingTexture);
         this.computeShader.setStorageBuffer("lightBuffer", lightUniformEntries.storageGPUBuffer);
-        this.computeShader.setStorageBuffer("models", GlobalBindGroup.modelMatrixBindGroup.matrixBufferDst);
+        this.computeShader.setStorageBuffer("models", globalBindGroup.modelMatrixBindGroup.matrixBufferDst);
 
         this.computeShader.setSamplerTexture("positionMap", this.worldPosMap);
         this.computeShader.setSamplerTexture("normalMap", this.worldNormalMap);

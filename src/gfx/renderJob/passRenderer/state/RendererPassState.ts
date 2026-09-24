@@ -33,9 +33,9 @@ export class RendererPassState {
 
     getLastRenderTexture() {
         if (this.renderTargets) {
-            return this.renderTargets.length > 0 ? this.renderTargets[0] : Engine3D.res.redTexture;
+            return this.renderTargets.length > 0 ? this.renderTargets[0] : Engine3D.current.res.redTexture;
         } else {
-            return Engine3D.res.redTexture
+            return Engine3D.current.res.redTexture
         }
     }
 }

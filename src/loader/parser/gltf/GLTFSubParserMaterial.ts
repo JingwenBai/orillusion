@@ -84,7 +84,7 @@ export class GLTFSubParserMaterial {
                 if (texture) {
                     dmaterial.baseColorTexture = texture;
                 } else {
-                    dmaterial.baseColorTexture = Engine3D.res.redTexture;
+                    dmaterial.baseColorTexture = Engine3D.current.res.redTexture;
                 }
             }
 
@@ -107,7 +107,7 @@ export class GLTFSubParserMaterial {
                 if (texture) {
                     dmaterial.normalTexture = texture;
                 } else {
-                    dmaterial.normalTexture = Engine3D.res.normalTexture;
+                    dmaterial.normalTexture = Engine3D.current.res.normalTexture;
                 }
             }
 
@@ -130,7 +130,7 @@ export class GLTFSubParserMaterial {
                 if (texture) {
                     dmaterial.metallicRoughnessTexture = texture;
                 } else {
-                    dmaterial.metallicRoughnessTexture = Engine3D.res.blackTexture;
+                    dmaterial.metallicRoughnessTexture = Engine3D.current.res.blackTexture;
                 }
             }
         } else {
@@ -162,7 +162,7 @@ export class GLTFSubParserMaterial {
             if (texture) {
                 dmaterial.normalTexture = texture;
             } else {
-                dmaterial.normalTexture = Engine3D.res.normalTexture;
+                dmaterial.normalTexture = Engine3D.current.res.normalTexture;
             }
         }
 
@@ -182,7 +182,7 @@ export class GLTFSubParserMaterial {
             if (texture) {
                 dmaterial.emissiveTexture = texture;
             } else {
-                dmaterial.emissiveTexture = Engine3D.res.blackTexture;
+                dmaterial.emissiveTexture = Engine3D.current.res.blackTexture;
             }
         }
 

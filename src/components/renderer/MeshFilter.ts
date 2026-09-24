@@ -25,12 +25,12 @@ export class MeshFilter extends MeshRenderer {
     }
 
     public set meshURL(value: string) {
-        let geometry = Engine3D.res.getGeometry(value);
+        let geometry = Engine3D.current.res.getGeometry(value);
         if (geometry) {
             this.geometry = geometry;
         } else {
             console.error("no geometry set", value);
         }
-        // this.material = Engine3D.res.defaltMaterial;
+        // this.material = Engine3D.current.res.defaltMaterial;
     }
 }

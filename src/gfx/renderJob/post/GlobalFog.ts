@@ -19,7 +19,7 @@ import { UniformGPUBuffer } from '../../graphics/webGpu/core/buffer/UniformGPUBu
 import { GPUContext } from '../GPUContext';
 import { RendererPassState } from '../passRenderer/state/RendererPassState';
 import { WebGPUDescriptorCreator } from '../../graphics/webGpu/descriptor/WebGPUDescriptorCreator';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 /**
  * screen space fog
  * @group Post Effects
@@ -56,7 +56,7 @@ export class GlobalFog extends PostBase {
         this.rendererPassState = WebGPUDescriptorCreator.createRendererPassState(this.rtFrame, null);
         this.rendererPassState.label = "FOG";
 
-        let lightUniformEntries = GlobalBindGroup.getLightEntries(view.scene);
+        let lightUniformEntries = globalBindGroup.getLightEntries(view.scene);
         this.fogCompute.setStorageBuffer(`lightBuffer`, lightUniformEntries.storageGPUBuffer);
     }
 
@@ -234,7 +234,7 @@ export class GlobalFog extends PostBase {
             this.onResize();
 
 
-            let globalUniform = GlobalBindGroup.getCameraGroup(view.camera);
+            let globalUniform = globalBindGroup.getCameraGroup(view.camera);
             this.fogCompute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);
         }
 

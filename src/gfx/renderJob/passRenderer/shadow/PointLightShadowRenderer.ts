@@ -1,5 +1,5 @@
 import { LightType } from '../../../../components/lights/LightData';
-import { ShadowLightsCollect } from '../../collect/ShadowLightsCollect';
+import { shadowLightsCollect } from '../../collect/ShadowLightsCollect';
 import { Camera3D } from '../../../../core/Camera3D';
 import { CubeCamera } from '../../../../core/CubeCamera';
 import { Engine3D } from '../../../../Engine3D';
@@ -22,7 +22,7 @@ import { RendererPassState } from '../state/RendererPassState';
 import { PassType } from '../state/PassType';
 import { ILight } from '../../../../components/lights/ILight';
 import { Reference } from '../../../../util/Reference';
-import { GlobalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { globalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { RenderContext } from '../RenderContext';
 import { ClusterLightingBuffer } from '../cluster/ClusterLightingBuffer';
 
@@ -107,7 +107,7 @@ export class PointLightShadowRenderer extends RendererBase {
         //*********************/
         //***shadow light******/
         //*********************/
-        let shadowLight = ShadowLightsCollect.getPointShadowLightWhichScene(scene);
+        let shadowLight = shadowLightsCollect.getPointShadowLightWhichScene(scene);
         let li = 0;
         let shadowLightCount = shadowLight.length;
         for (let si = 0; si < shadowLightCount; si++) {
@@ -206,7 +206,7 @@ export class PointLightShadowRenderer extends RendererBase {
     }
 
     protected drawShadowRenderNodes(view: View3D, shadowCamera: Camera3D, renderContext: RenderContext, nodes: RenderNode[], occlusionSystem: OcclusionSystem) {
-        GlobalBindGroup.updateCameraGroup(shadowCamera);
+        globalBindGroup.updateCameraGroup(shadowCamera);
         GPUContext.bindCamera(renderContext.encoder, shadowCamera);
 
         let scene = view.scene;

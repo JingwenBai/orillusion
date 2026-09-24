@@ -1,7 +1,7 @@
 import { Engine3D } from "../../../../Engine3D";
 import { RenderNode } from "../../../../components/renderer/RenderNode";
 import { View3D } from "../../../../core/View3D";
-import { GlobalBindGroup } from "../../../graphics/webGpu/core/bindGroups/GlobalBindGroup";
+import { globalBindGroup } from "../../../graphics/webGpu/core/bindGroups/GlobalBindGroup";
 import { GPUContext } from "../../GPUContext";
 import { EntityCollect } from "../../collect/EntityCollect";
 import { GBufferFrame } from "../../frame/GBufferFrame";
@@ -40,7 +40,7 @@ export class GUIPassRenderer extends RendererBase {
         let scene = view.scene;
         let camera = view.camera;
 
-        GlobalBindGroup.updateCameraGroup(camera);
+        globalBindGroup.updateCameraGroup(camera);
 
         this.rendererPassState.camera3D = camera;
 

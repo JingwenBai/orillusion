@@ -6,7 +6,7 @@ import { ComponentBase } from '../ComponentBase';
 import { Transform } from '../Transform';
 import { GILighting } from './GILighting';
 import { LightData } from './LightData';
-import { ShadowLightsCollect } from '../../gfx/renderJob/collect/ShadowLightsCollect';
+import { shadowLightsCollect } from '../../gfx/renderJob/collect/ShadowLightsCollect';
 import { IESProfiles } from './IESProfiles';
 import { ILight } from './ILight';
 import { Engine3D } from '../../Engine3D';
@@ -71,9 +71,9 @@ export class LightBase extends ComponentBase implements ILight {
 
         if (this._castShadow) {
             this.needUpdateShadow = true;
-            ShadowLightsCollect.addShadowLight(this);
+            shadowLightsCollect.addShadowLight(this);
         } else {
-            ShadowLightsCollect.removeShadowLight(this);
+            shadowLightsCollect.removeShadowLight(this);
         }
 
         if (this.transform.view3D && Engine3D.renderJobs) {
@@ -119,7 +119,7 @@ export class LightBase extends ComponentBase implements ILight {
     public onDisable(): void {
         this.onChange();
         EntityCollect.instance.removeLight(this.transform.scene3D, this);
-        ShadowLightsCollect.removeShadowLight(this);
+        shadowLightsCollect.removeShadowLight(this);
     }
 
     public set iesProfiles(iesProfiles: IESProfiles) {
@@ -281,7 +281,7 @@ export class LightBase extends ComponentBase implements ILight {
     public destroy(force?: boolean): void {
         this.bindOnChange = null;
         EntityCollect.instance.removeLight(this.transform.scene3D, this);
-        ShadowLightsCollect.removeShadowLight(this);
+        shadowLightsCollect.removeShadowLight(this);
         this.transform.eventDispatcher.removeEventListener(Transform.ROTATION_ONCHANGE, this.onRotChange, this);
         this.transform.eventDispatcher.removeEventListener(Transform.SCALE_ONCHANGE, this.onScaleChange, this);
         super.destroy(force);

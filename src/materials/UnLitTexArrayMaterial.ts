@@ -19,7 +19,7 @@ export class UnLitTexArrayMaterial extends Material {
         super();
         this.shader = new UnLitTexArrayShader();
         // default value
-        this.baseMap = Engine3D.res.whiteTexture;
+        this.baseMap = Engine3D.current.res.whiteTexture;
     }
 
     public set baseMap(texture: Texture) {
