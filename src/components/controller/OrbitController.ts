@@ -50,7 +50,8 @@ export class OrbitController extends ComponentBase {
     private _isMouseDown: boolean = false;
     private _lastMouseX: number = -1;
     private _lastMouseY: number = -1;
-    private _isPanning: boolean = false
+    private _isPanning: boolean = false;
+    private _inputSystem: any = null;
 
     /**
      * @constructor
@@ -292,19 +293,20 @@ export class OrbitController extends ComponentBase {
      * @internal
      */
     private addEventListener() {
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
+        this._inputSystem ??= Engine3D.inputSystem;
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
     }
     /**
      * @internal
      */
     private removeEventListener() {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
     }
 }
 

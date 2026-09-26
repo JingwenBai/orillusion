@@ -455,6 +455,7 @@ export class Engine3D {
     // =====================================================================
 
     private startRenderJob(view: View3D) {
+        view.engine = this;
         let renderJob = new ForwardRenderJob(view);
         this.renderJobs.set(view, renderJob);
 
