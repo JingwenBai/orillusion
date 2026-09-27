@@ -2,7 +2,6 @@ import { View3D } from '../../../../core/View3D';
 import { GlobalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { ComputeShader } from '../../../graphics/webGpu/shader/ComputeShader';
 import { webGPUContext } from '../../../graphics/webGpu/Context3D';
-import { EntityCollect } from '../../collect/EntityCollect';
 import { GPUContext } from '../../GPUContext';
 import { OcclusionSystem } from '../../occlusion/OcclusionSystem';
 import { RendererBase } from '../RendererBase';

@@ -4,7 +4,6 @@ import { View3D } from "../../../../core/View3D";
 import { ProfilerUtil } from "../../../../util/ProfilerUtil";
 import { GlobalBindGroup } from "../../../graphics/webGpu/core/bindGroups/GlobalBindGroup";
 import { GPUContext } from "../../GPUContext";
-import { EntityCollect } from "../../collect/EntityCollect";
 import { OcclusionSystem } from "../../occlusion/OcclusionSystem";
 import { RenderContext } from "../RenderContext";
 import { RendererBase } from "../RendererBase";
@@ -35,7 +34,7 @@ export class ColorPassRenderer extends RendererBase {
 
         this.rendererPassState.camera3D = camera;
 
-        let collectInfo = EntityCollect.instance.getRenderNodes(scene, camera);
+        let collectInfo = view.engine.entityCollect.getRenderNodes(scene, camera);
 
         let op_bundleList = this.renderBundleOp(view, collectInfo, occlusionSystem, clusterLightingBuffer);
         let tr_bundleList = maskTr ? [] : this.renderBundleTr(view, collectInfo, occlusionSystem, clusterLightingBuffer);
