@@ -12,10 +12,8 @@ import { GPUContext } from '../GPUContext';
 import { RendererPassState } from '../passRenderer/state/RendererPassState';
 import { PostBase } from './PostBase';
 import { clamp } from '../../../math/MathUtil';
-import { EntityCollect } from '../collect/EntityCollect';
 import { RTDescriptor } from '../../graphics/webGpu/descriptor/RTDescriptor';
 import { RTFrame } from '../frame/RTFrame';
-import { GBufferFrame } from '../frame/GBufferFrame';
 import { SSRSetting } from '../../../setting/post/SSRSetting';
 import { View3D } from '../../../core/View3D';
 import { SkyRenderer } from '../../../components/renderer/SkyRenderer';
@@ -162,13 +160,13 @@ export class SSRPost extends PostBase {
         this.SSR_RayTraceCompute.setStorageBuffer(`rayTraceBuffer`, this.rayTraceData);
         this.SSR_RayTraceCompute.setStorageBuffer(`historyPosition`, this.historyPosition);
 
-        let rtFrame = GBufferFrame.getGBufferFrame("ColorPassGBuffer");
+        let rtFrame = this.view.engine.getGBufferFrame("ColorPassGBuffer");
         let gBufferTexture = rtFrame.getCompressGBufferTexture();
 
         this.SSR_RayTraceCompute.setSamplerTexture("gBufferTexture", gBufferTexture);
 
-        if (EntityCollect.instance.sky instanceof SkyRenderer)
-            this.SSR_RayTraceCompute.setSamplerTexture(`prefilterMap`, EntityCollect.instance.sky.map);
+        if (this.view.engine.entityCollect.sky instanceof SkyRenderer)
+            this.SSR_RayTraceCompute.setSamplerTexture(`prefilterMap`, this.view.engine.entityCollect.sky.map);
 
         this.SSR_RayTraceCompute.workerSizeX = Math.ceil(this.isRetTexture.width / 8);
         this.SSR_RayTraceCompute.workerSizeY = Math.ceil(this.isRetTexture.height / 8);
@@ -198,7 +196,7 @@ export class SSRPost extends PostBase {
         this.SSR_Blend_Compute.setStorageBuffer(`rayTraceBuffer`, this.rayTraceData);
         this.SSR_Blend_Compute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);
 
-        let rtFrame = GBufferFrame.getGBufferFrame("ColorPassGBuffer");
+        let rtFrame = this.view.engine.getGBufferFrame("ColorPassGBuffer");
         let gBufferTexture = rtFrame.getCompressGBufferTexture();
 
         this.SSR_Blend_Compute.setSamplerTexture("gBufferTexture", gBufferTexture);

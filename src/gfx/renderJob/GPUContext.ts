@@ -1,7 +1,7 @@
 import { Camera3D } from "../../core/Camera3D";
 import { GeometryBase } from "../../core/geometry/GeometryBase";
 import { ProfilerUtil } from "../../util/ProfilerUtil";
-import { webGPUContext } from "../graphics/webGpu/Context3D";
+import { Context3D, webGPUContext } from "../graphics/webGpu/Context3D";
 import { GlobalBindGroup } from "../graphics/webGpu/core/bindGroups/GlobalBindGroup";
 import { Texture } from "../graphics/webGpu/core/texture/Texture";
 import { ComputeShader } from "../graphics/webGpu/shader/ComputeShader";
@@ -97,6 +97,10 @@ export class GPUContext {
      * @param gpuRenderPipeline {@link GPURenderPipelineDescriptor}
      * @returns 
      */
+    private static get _ctx(): Context3D {
+        return Context3D.currentContext || webGPUContext;
+    }
+
     public static createPipeline(gpuRenderPipeline: GPURenderPipelineDescriptor) {
         ProfilerUtil.countStart("GPUContext", "pipeline");
         let pipeline: GPURenderPipeline = webGPUContext.device.createRenderPipeline(gpuRenderPipeline);
@@ -104,7 +108,7 @@ export class GPUContext {
     }
 
     /**
-     * auto get webgpu commandEncoder and start a command encoder 
+     * auto get webgpu commandEncoder and start a command encoder
      * @returns commandEncoder {@link GPUCommandEncoder}
      */
     public static beginCommandEncoder(): GPUCommandEncoder {
@@ -129,7 +133,7 @@ export class GPUContext {
     }
 
     /**
-     * create a renderBundle gpu object by GPURenderBundleEncoderDescriptor 
+     * create a renderBundle gpu object by GPURenderBundleEncoderDescriptor
      * @param des {@link GPURenderBundleEncoderDescriptor}
      * @returns renderBundleEncoder {@link GPURenderBundleEncoder}
      */
@@ -169,9 +173,9 @@ export class GPUContext {
             if (att0) {
                 if (renderPassState.multisample > 0) {
                     att0.view = renderPassState.multiTexture.createView();
-                    att0.resolveTarget = webGPUContext.context.getCurrentTexture().createView();
+                    att0.resolveTarget = this._ctx.context.getCurrentTexture().createView();
                 } else {
-                    att0.view = webGPUContext.context.getCurrentTexture().createView();
+                    att0.view = this._ctx.context.getCurrentTexture().createView();
                 }
             }
             return command.beginRenderPass(renderPassState.renderPassDescriptor);

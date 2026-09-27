@@ -9,7 +9,7 @@ import { ColliderComponent } from '../components/ColliderComponent';
 import { View3D } from '../core/View3D';
 import { PointerEvent3D } from '../event/eventConst/PointerEvent3D';
 import { HitInfo } from '../components/shape/ColliderShape';
-import { ComponentCollect, Matrix4 } from '..';
+import { Matrix4 } from '..';
 
 /**
  * Management and triggering for picking 3D objects
@@ -253,9 +253,9 @@ export class PickFire extends CEventDispatcher {
                 this._interestList.push({ distance: distance, collider: iterator, intersectPoint: position });
             }
         } else if (Engine3D.setting.pick.mode == `bound`) {
-            this.ray = camera.screenPointToRay(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY);
+            this.ray = camera.screenPointToRay(this._view.engine.inputSystem.mouseX, this._view.engine.inputSystem.mouseY);
             let intersect: HitInfo;
-            let colliders = ComponentCollect.componentsEnablePickerList.get(this._view);;
+            let colliders = this._view.engine.componentCollect.componentsEnablePickerList.get(this._view);
             if (colliders) {
                 for (const item of colliders) {
                     let collider = item[0];

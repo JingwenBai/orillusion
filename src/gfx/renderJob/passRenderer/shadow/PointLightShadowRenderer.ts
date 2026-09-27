@@ -1,12 +1,10 @@
 import { LightType } from '../../../../components/lights/LightData';
-import { ShadowLightsCollect } from '../../collect/ShadowLightsCollect';
 import { Camera3D } from '../../../../core/Camera3D';
 import { CubeCamera } from '../../../../core/CubeCamera';
 import { Engine3D } from '../../../../Engine3D';
 import { VirtualTexture } from '../../../../textures/VirtualTexture';
 import { GPUTextureFormat } from '../../../graphics/webGpu/WebGPUConst';
 import { CollectInfo } from '../../collect/CollectInfo';
-import { EntityCollect } from '../../collect/EntityCollect';
 import { GPUContext } from '../../GPUContext';
 import { RTFrame } from '../../frame/RTFrame';
 import { OcclusionSystem } from '../../occlusion/OcclusionSystem';
@@ -107,7 +105,7 @@ export class PointLightShadowRenderer extends RendererBase {
         //*********************/
         //***shadow light******/
         //*********************/
-        let shadowLight = ShadowLightsCollect.getPointShadowLightWhichScene(scene);
+        let shadowLight = view.engine.shadowLightsCollect.getPointShadowLightWhichScene(scene);
         let li = 0;
         let shadowLightCount = shadowLight.length;
         for (let si = 0; si < shadowLightCount; si++) {
@@ -129,27 +127,27 @@ export class PointLightShadowRenderer extends RendererBase {
                 cubeShadowMapInfo.cubeCamera.transform.updateWorldMatrix(true);
                 {
                     occlusionSystem.update(cubeShadowMapInfo.cubeCamera.right_camera, scene);
-                    collectInfo = EntityCollect.instance.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.right_camera);
+                    collectInfo = view.engine.entityCollect.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.right_camera);
                     this.renderSceneOnce(0, cubeShadowMapInfo, view, cubeShadowMapInfo.cubeCamera.right_camera, collectInfo, occlusionSystem);
 
                     occlusionSystem.update(cubeShadowMapInfo.cubeCamera.left_camera, scene);
-                    collectInfo = EntityCollect.instance.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.left_camera);
+                    collectInfo = view.engine.entityCollect.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.left_camera);
                     this.renderSceneOnce(1, cubeShadowMapInfo, view, cubeShadowMapInfo.cubeCamera.left_camera, collectInfo, occlusionSystem);
 
                     occlusionSystem.update(cubeShadowMapInfo.cubeCamera.up_camera, scene);
-                    collectInfo = EntityCollect.instance.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.up_camera);
+                    collectInfo = view.engine.entityCollect.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.up_camera);
                     this.renderSceneOnce(2, cubeShadowMapInfo, view, cubeShadowMapInfo.cubeCamera.up_camera, collectInfo, occlusionSystem);
 
                     occlusionSystem.update(cubeShadowMapInfo.cubeCamera.down_camera, scene);
-                    collectInfo = EntityCollect.instance.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.down_camera);
+                    collectInfo = view.engine.entityCollect.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.down_camera);
                     this.renderSceneOnce(3, cubeShadowMapInfo, view, cubeShadowMapInfo.cubeCamera.down_camera, collectInfo, occlusionSystem);
 
                     occlusionSystem.update(cubeShadowMapInfo.cubeCamera.front_camera, scene);
-                    collectInfo = EntityCollect.instance.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.front_camera);
+                    collectInfo = view.engine.entityCollect.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.front_camera);
                     this.renderSceneOnce(4, cubeShadowMapInfo, view, cubeShadowMapInfo.cubeCamera.front_camera, collectInfo, occlusionSystem);
 
                     occlusionSystem.update(cubeShadowMapInfo.cubeCamera.back_camera, scene);
-                    collectInfo = EntityCollect.instance.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.back_camera);
+                    collectInfo = view.engine.entityCollect.getRenderNodes(scene, cubeShadowMapInfo.cubeCamera.back_camera);
                     this.renderSceneOnce(5, cubeShadowMapInfo, view, cubeShadowMapInfo.cubeCamera.back_camera, collectInfo, occlusionSystem);
                 }
                 let qCommand = GPUContext.beginCommandEncoder();
@@ -262,7 +260,7 @@ export class PointLightShadowRenderer extends RendererBase {
 
     public drawNodes(view: View3D, camera: Camera3D, renderContext: RenderContext, nodes: RenderNode[], occlusionSystem: OcclusionSystem, clusterLightingBuffer: ClusterLightingBuffer) {
 
-        let viewRenderList = EntityCollect.instance.getRenderShaderCollect(view);
+        let viewRenderList = view.engine.entityCollect.getRenderShaderCollect(view);
         if (viewRenderList) {
             for (const renderList of viewRenderList) {
                 let nodeMap = renderList[1];
