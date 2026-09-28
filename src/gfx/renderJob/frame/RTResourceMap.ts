@@ -18,6 +18,15 @@ export class RTResourceMap {
         this.rtViewQuad = new Map<string, ViewQuad>();
     }
 
+    /**
+     * @internal
+     * Swap in a per-engine instance's maps. Called by Engine3D before each frame.
+     */
+    public static setActiveMaps(rtTextureMap: Map<string, RenderTexture>, rtViewQuad: Map<string, ViewQuad>): void {
+        this.rtTextureMap = rtTextureMap;
+        this.rtViewQuad = rtViewQuad;
+    }
+
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
         let rt: RenderTexture = this.rtTextureMap.get(name);
         if (!rt) {
