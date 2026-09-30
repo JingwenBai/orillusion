@@ -76,10 +76,11 @@ export class LightBase extends ComponentBase implements ILight {
             ShadowLightsCollect.removeShadowLight(this);
         }
 
-        if (this.transform.view3D && Engine3D.renderJobs) {
-            let renderer = Engine3D.renderJobs.get(this.transform.view3D).reflectionRenderer;
+        const engineInst = this.transform.view3D?.engine;
+        if (this.transform.view3D && engineInst?.renderJobs) {
+            let renderer = engineInst.renderJobs.get(this.transform.view3D)?.reflectionRenderer;
             if (renderer)
-                Engine3D.renderJobs.get(this.transform.view3D).reflectionRenderer.forceUpdate();
+                engineInst.renderJobs.get(this.transform.view3D).reflectionRenderer.forceUpdate();
         }
     }
 

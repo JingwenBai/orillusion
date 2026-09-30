@@ -1,4 +1,4 @@
-import { ComponentCollect } from '../..';
+import { waitStartComponents } from '../../gfx/renderJob/collect/ComponentCollect';
 import { IComponent } from '../../components/IComponent';
 import { RenderNode } from '../../components/renderer/RenderNode';
 import { Transform } from '../../components/Transform';
@@ -313,11 +313,16 @@ export class Entity extends CEventDispatcher {
             });
             this.components.clear();
         } else {
-            ComponentCollect.waitStartComponent.forEach((v, k) => {
+            // Process the global pending-start queue, but only start components
+            // whose object3D belongs to the scene calling waitUpdate().
+            // This ensures each engine only starts its own scene's components.
+            const currentScene = (this as any).view?.scene ?? this;
+            waitStartComponents.forEach((v, k) => {
+                if (k.transform?.scene3D !== currentScene) return;
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();
-                    ComponentCollect.waitStartComponent.delete(element.object3D);
+                    waitStartComponents.delete(element.object3D);
                 }
             });
         }

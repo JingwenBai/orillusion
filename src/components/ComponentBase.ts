@@ -5,6 +5,11 @@ import { ComponentCollect } from "../gfx/renderJob/collect/ComponentCollect";
 import { IComponent } from "./IComponent";
 import { Transform } from "./Transform";
 
+/** Helper: resolve the ComponentCollect for a component's owning engine. */
+function getCollect(view3D: View3D): ComponentCollect | null {
+    return view3D?.engine?.componentCollect ?? null;
+}
+
 /**
  * Components are used to attach functionality to object3D, it has an owner object3D.
  * The component can receive update events at each frame.
@@ -137,10 +142,12 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onUpdate(call: Function) {
+        const collect = getCollect(this.transform.view3D);
+        if (!collect) return;
         if (call != null) {
-            ComponentCollect.bindUpdate(this.transform.view3D, this, call);
+            collect.bindUpdate(this.transform.view3D, this, call);
         } else {
-            ComponentCollect.unBindUpdate(this.transform.view3D, this);
+            collect.unBindUpdate(this.transform.view3D, this);
         }
     }
 
@@ -149,10 +156,12 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onLateUpdate(call: Function) {
+        const collect = getCollect(this.transform.view3D);
+        if (!collect) return;
         if (call != null) {
-            ComponentCollect.bindLateUpdate(this.transform.view3D, this, call);
+            collect.bindLateUpdate(this.transform.view3D, this, call);
         } else {
-            ComponentCollect.unBindLateUpdate(this.transform.view3D, this);
+            collect.unBindLateUpdate(this.transform.view3D, this);
         }
     }
 
@@ -161,10 +170,12 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onBeforeUpdate(call: Function) {
+        const collect = getCollect(this.transform.view3D);
+        if (!collect) return;
         if (call != null) {
-            ComponentCollect.bindBeforeUpdate(this.transform.view3D, this, call);
+            collect.bindBeforeUpdate(this.transform.view3D, this, call);
         } else {
-            ComponentCollect.unBindBeforeUpdate(this.transform.view3D, this);
+            collect.unBindBeforeUpdate(this.transform.view3D, this);
         }
     }
 
@@ -174,10 +185,12 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onCompute(call: Function) {
+        const collect = getCollect(this.transform.view3D);
+        if (!collect) return;
         if (call != null) {
-            ComponentCollect.bindCompute(this.transform.view3D, this, call);
+            collect.bindCompute(this.transform.view3D, this, call);
         } else {
-            ComponentCollect.unBindCompute(this.transform.view3D, this);
+            collect.unBindCompute(this.transform.view3D, this);
         }
     }
 
@@ -186,10 +199,12 @@ export class ComponentBase implements IComponent {
      * @param call callback
      */
     private _onGraphic(call: Function) {
+        const collect = getCollect(this.transform.view3D);
+        if (!collect) return;
         if (call != null) {
-            ComponentCollect.bindGraphic(this.transform.view3D, this, call);
+            collect.bindGraphic(this.transform.view3D, this, call);
         } else {
-            ComponentCollect.unBindGraphic(this.transform.view3D, this);
+            collect.unBindGraphic(this.transform.view3D, this);
         }
     }
 
@@ -197,7 +212,10 @@ export class ComponentBase implements IComponent {
      * before release this component, object refrences are not be set null now.
      */
     public beforeDestroy(force?: boolean) {
-        ComponentCollect.removeWaitStart(this.object3D, this);
+        const collect = getCollect(this.transform.view3D);
+        if (collect) {
+            collect.removeWaitStart(this.object3D, this);
+        }
     }
 
     /**

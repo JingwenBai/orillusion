@@ -4,7 +4,7 @@ import { Vector3 } from '../../math/Vector3';
 import { Entity } from './Entity';
 import { Ctor } from "../../util/Global";
 import { IComponent } from '../../components/IComponent';
-import { ComponentCollect } from '../../gfx/renderJob/collect/ComponentCollect';
+import { waitStartComponents } from '../../gfx/renderJob/collect/ComponentCollect';
 import { SerializeTag } from '../../util/SerializeDecoration';
 import { Color } from '../../math/Color';
 import { MeshRenderer } from '../../components/renderer/MeshRenderer';
@@ -58,7 +58,13 @@ export class Object3D extends Entity {
             instance.object3D = this;
             this.components.set(c, instance);
             instance[`__init`](param);
-            ComponentCollect.appendWaitStart(instance);
+            // Add to global pending-start queue; processed by the owning engine's waitUpdate()
+            let arr = waitStartComponents.get(this);
+            if (!arr) {
+                waitStartComponents.set(this, [instance]);
+            } else {
+                if (arr.indexOf(instance) === -1) arr.push(instance);
+            }
             return instance;
         }
         return this.components.get(c) as T;
@@ -89,7 +95,13 @@ export class Object3D extends Entity {
     public removeComponent<T extends IComponent>(c: Ctor<T>) {
         if (this.components.has(c)) {
             let component = this.components.get(c);
-            ComponentCollect.removeWaitStart(this, component);
+            // Remove from global pending-start queue
+            const arr = waitStartComponents.get(this);
+            if (arr) {
+                const idx = arr.indexOf(component);
+                if (idx !== -1) arr.splice(idx, 1);
+                if (arr.length === 0) waitStartComponents.delete(this);
+            }
             this.components.delete(c);
             component[`__stop`]();
             component.beforeDestroy();

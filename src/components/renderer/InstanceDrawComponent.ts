@@ -8,7 +8,7 @@ import { View3D } from "../../core/View3D";
 import { RendererPassState } from "../../gfx/renderJob/passRenderer/state/RendererPassState";
 import { PassType } from "../../gfx/renderJob/passRenderer/state/PassType";
 import { ClusterLightingBuffer } from "../../gfx/renderJob/passRenderer/cluster/ClusterLightingBuffer";
-import { ComponentCollect } from "../../gfx/renderJob/collect/ComponentCollect";
+import { waitStartComponents } from "../../gfx/renderJob/collect/ComponentCollect";
 
 export class InstanceDrawComponent extends RenderNode {
 
@@ -145,6 +145,12 @@ export class InstanceDrawComponent extends RenderNode {
         this._keyIdsGroup.clear();
         //@ts-ignore
         this._keyRenderGroup = this._keyBufferGroup = this._keyIdsGroup = undefined;
-        ComponentCollect.removeWaitStart(this.object3D, this);
+        // Remove from global pending-start queue
+        const arr = waitStartComponents.get(this.object3D);
+        if (arr) {
+            const idx = arr.indexOf(this);
+            if (idx !== -1) arr.splice(idx, 1);
+            if (arr.length === 0) waitStartComponents.delete(this.object3D);
+        }
     }
 }
