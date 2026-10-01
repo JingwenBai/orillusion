@@ -6,6 +6,7 @@ import { ShadowLightsCollect } from "../gfx/renderJob/collect/ShadowLightsCollec
 import { PickFire } from "../io/PickFire";
 import { Vector4 } from "../math/Vector4";
 import { Camera3D } from "./Camera3D";
+import { EngineContext } from "./EngineContext";
 import { Scene3D } from "./Scene3D";
 
 export class View3D extends CEventListener {
@@ -17,6 +18,12 @@ export class View3D extends CEventListener {
     public pickFire: PickFire;
     public guiPick: GUIPick;
     public readonly canvasList: GUICanvas[];
+
+    /**
+     * The EngineContext this view belongs to.
+     * Set by Engine3D.startRenderView / startRenderViews.
+     */
+    public engineContext: EngineContext | null = null;
 
     constructor(x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
         super();

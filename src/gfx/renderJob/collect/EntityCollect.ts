@@ -1,5 +1,5 @@
 
-import { Engine3D } from '../../../Engine3D';
+import { EngineContext } from '../../../core/EngineContext';
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
 import { RenderNode } from '../../../components/renderer/RenderNode';
@@ -24,7 +24,16 @@ import { RenderShaderCollect } from './RenderShaderCollect';
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
+    /**
+     * Backward-compatible singleton accessor.
+     * Returns the EntityCollect of the currently-rendering engine
+     * (set by Engine3D at the top of each frame via EngineContext.setCurrent).
+     * For multi-instance scenarios access the entity-collect directly from
+     * `view.engineContext.entityCollect`.
+     */
+    public static get instance(): EntityCollect {
+        return EngineContext.getCurrent()?.entityCollect;
+    }
 
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
@@ -56,12 +65,6 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
-    }
 
     constructor() {
         // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
@@ -136,7 +139,7 @@ export class EntityCollect {
             }
             map.get(root).push(renderNode);
 
-            if (Engine3D.setting.occlusionQuery.octree) {
+            if (EngineContext.getCurrent()?.setting?.occlusionQuery?.octree) {
                 renderNode.attachSceneOctree(this.getOctree(root));
             }
 
@@ -153,7 +156,7 @@ export class EntityCollect {
 
     private getOctree(root: Scene3D) {
         let octree: Octree;
-        let setting = Engine3D.setting.occlusionQuery.octree;
+        let setting = EngineContext.getCurrent()?.setting?.occlusionQuery?.octree;
         if (setting) {
             octree = this._octreeRenderNodes.get(root);
             if (!octree) {
@@ -199,8 +202,9 @@ export class EntityCollect {
             this._sceneLights.set(root, [light]);
         } else {
             let lights = this._sceneLights.get(root)
-            if (lights.length >= Engine3D.setting.light.maxLight) {
-                console.warn('Alreay meet maxmium light number:', Engine3D.setting.light.maxLight)
+            let maxLight = EngineContext.getCurrent()?.setting?.light?.maxLight ?? 4096;
+            if (lights.length >= maxLight) {
+                console.warn('Already reached max light count:', maxLight)
                 return
             }
             let hasLight = lights.indexOf(light) != -1;
@@ -291,7 +295,7 @@ export class EntityCollect {
         this._collectInfo.clean();
         this._collectInfo.sky = this.sky;
 
-        if (Engine3D.setting.occlusionQuery.octree) {
+        if (EngineContext.getCurrent()?.setting?.occlusionQuery?.octree) {
             this.rendererOctree = this.getOctree(scene);
             this.rendererOctree.getRenderNode(camera.frustum, this._collectInfo);
         } else {

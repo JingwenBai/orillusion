@@ -6,12 +6,20 @@ import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
+import { EngineContext } from "../../../core/EngineContext";
 
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /**
+     * @deprecated Use `EngineContext.getCurrent().gBufferFrameMap` for multi-instance.
+     * Kept for backward compatibility — points to the current engine's map.
+     */
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        return EngineContext.getCurrent()?.gBufferFrameMap ?? _fallbackMap;
+    }
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
@@ -66,24 +74,26 @@ export class GBufferFrame extends RTFrame {
 
     /**
      * @internal
+     * Routes to the currently-active engine's gBufferFrameMap.
+     * For multi-instance scenarios this is always correct because
+     * Engine3D.updateFrame() calls EngineContext.setCurrent() before any
+     * render job creation or execution.
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
-        let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        const map = EngineContext.getCurrent()?.gBufferFrameMap ?? _fallbackMap;
+        let gBuffer = map.get(key);
+        if (!gBuffer) {
             gBuffer = new GBufferFrame();
-            let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
+            const size = webGPUContext.presentationSize;
             gBuffer.createGBuffer(
                 key,
-                fixedWidth == 0 ? size[0] : fixedWidth,
-                fixedHeight == 0 ? size[1] : fixedHeight,
-                fixedWidth != 0 && fixedHeight != 0,
+                fixedWidth === 0 ? size[0] : fixedWidth,
+                fixedHeight === 0 ? size[1] : fixedHeight,
+                fixedWidth !== 0 && fixedHeight !== 0,
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
-        } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            map.set(key, gBuffer);
         }
         return gBuffer;
     }
@@ -101,3 +111,6 @@ export class GBufferFrame extends RTFrame {
         return gBufferFrame;
     }
 }
+
+/** Fallback for callers that run before any EngineContext is set. */
+const _fallbackMap: Map<string, GBufferFrame> = new Map();
