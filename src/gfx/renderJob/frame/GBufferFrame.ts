@@ -11,7 +11,18 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /**
+     * @internal
+     * The active per-engine GBuffer map.
+     * Set by Engine3D before init and before each frame.
+     */
+    public static _activeMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /** @deprecated Use GBufferFrame._activeMap directly or access via Engine3D.current.gBufferFrameMap */
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        return GBufferFrame._activeMap;
+    }
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;

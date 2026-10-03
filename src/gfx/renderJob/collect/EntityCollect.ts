@@ -26,6 +26,13 @@ import { RenderShaderCollect } from './RenderShaderCollect';
 export class EntityCollect {
     private static _instance: EntityCollect;
 
+    /**
+     * @internal
+     * The active instance for the currently rendering engine.
+     * Set by Engine3D before init and before each frame.
+     */
+    public static _activeInstance: EntityCollect;
+
     // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
     private _sceneLights: Map<Scene3D, ILight[]>;
     private _sceneGIProbes: Map<Scene3D, Probe[]>;
@@ -57,6 +64,11 @@ export class EntityCollect {
 
     private rendererOctree: Octree;
     public static get instance() {
+        // Prefer the per-engine-instance active instance if one is set.
+        if (EntityCollect._activeInstance) {
+            return EntityCollect._activeInstance;
+        }
+        // Fallback: legacy singleton for code that runs before Engine3D.init().
         if (!this._instance) {
             this._instance = new EntityCollect();
         }
