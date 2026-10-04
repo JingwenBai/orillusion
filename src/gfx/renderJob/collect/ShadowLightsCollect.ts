@@ -5,8 +5,11 @@ import { View3D } from '../../../core/View3D';
 import { CameraUtil } from '../../../util/CameraUtil';
 import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { GlobalUniformGroup } from '../../graphics/webGpu/core/bindGroups/GlobalUniformGroup';
+
 /**
  * @internal
+ * Shadow light collection. Keyed by Scene3D/View3D so multiple Engine3D instances
+ * are naturally isolated when each uses distinct scenes and views.
  * @group Lights
  */
 export class ShadowLightsCollect {
@@ -125,8 +128,6 @@ export class ShadowLightsCollect {
             if (list.indexOf(light) == -1) {
                 list.push(light);
             }
-
-
             return list;
         }
     }
@@ -156,7 +157,6 @@ export class ShadowLightsCollect {
             return list;
         }
     }
-
 
     public static update(view: View3D) {
 

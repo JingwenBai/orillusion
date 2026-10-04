@@ -314,6 +314,8 @@ export class Entity extends CEventDispatcher {
             this.components.clear();
         } else {
             ComponentCollect.waitStartComponent.forEach((v, k) => {
+                // Only start components whose object belongs to this scene
+                if ((k.transform.scene3D as unknown) !== this) return;
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();

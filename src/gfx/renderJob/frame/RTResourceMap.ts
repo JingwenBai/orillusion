@@ -4,8 +4,13 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+
 /**
  * @internal
+ * Render texture resource registry. String keys identify specific render targets.
+ * Multiple Engine3D instances sharing a page should use distinct key namespaces
+ * if they require different-sized render targets; in the common case (multiple
+ * canvases with the same resolution) the shared textures are re-used.
  * @group Post
  */
 export class RTResourceMap {

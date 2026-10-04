@@ -7,7 +7,8 @@ import { MatrixBindGroup } from "./MatrixBindGroup";
 
 /**
  * @internal
- * Use Global DO Matrix ArrayBuffer Descriptor
+ * Global GPU bind group manager. Keyed by Camera3D and Scene3D, so multiple
+ * Engine3D instances are naturally isolated as long as they use different cameras/scenes.
  * @group GFX
  */
 export class GlobalBindGroup {
@@ -69,7 +70,7 @@ export class GlobalBindGroup {
 
     public static getReflectionEntries(scene: Scene3D): ReflectionEntries {
         if (!scene) {
-            console.log(`getLightEntries scene is null`);
+            console.log(`getReflectionEntries scene is null`);
         }
 
         let reflectionEntries = this._reflectionEntriesMap.get(scene);
@@ -79,7 +80,4 @@ export class GlobalBindGroup {
         }
         return this._reflectionEntriesMap.get(scene);
     }
-
-
-
 }
