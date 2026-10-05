@@ -12,6 +12,13 @@ export class GBufferFrame extends RTFrame {
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /**
+     * Namespace prefix set by the active Engine3D instance before each render.
+     * Prevents G-buffer collisions when multiple Engine3D instances run on the same page.
+     * @internal
+     */
+    public static activeNamespace: string = '';
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
@@ -68,22 +75,22 @@ export class GBufferFrame extends RTFrame {
      * @internal
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        const nsKey = this.activeNamespace + key;
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!GBufferFrame.gBufferMap.has(nsKey)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
-                key,
+                nsKey,
                 fixedWidth == 0 ? size[0] : fixedWidth,
                 fixedHeight == 0 ? size[1] : fixedHeight,
                 fixedWidth != 0 && fixedHeight != 0,
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            GBufferFrame.gBufferMap.set(nsKey, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = GBufferFrame.gBufferMap.get(nsKey);
         }
         return gBuffer;
     }
@@ -91,7 +98,7 @@ export class GBufferFrame extends RTFrame {
 
     public static getGUIBufferFrame() {
         let colorRTFrame = this.getGBufferFrame(this.colorPass_GBuffer);
-        let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.gui_GBuffer, 0, 0, true, colorRTFrame.depthTexture);
+        let rtFrame = GBufferFrame.getGBufferFrame(this.gui_GBuffer, 0, 0, true, colorRTFrame.depthTexture);
         return rtFrame;
     }
 

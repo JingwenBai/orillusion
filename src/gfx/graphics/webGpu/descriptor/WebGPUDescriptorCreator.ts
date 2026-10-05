@@ -35,7 +35,7 @@ export class WebGPUDescriptorCreator {
             if (rps.renderPassDescriptor.depthStencilAttachment) {
                 rps.renderPassDescriptor.depthStencilAttachment.depthLoadOp = rtFrame.depthLoadOp;
             }
-            if (loadOp == 'load' && rtFrame?.renderTargets[0] && rtFrame.renderTargets[0].name.startsWith(GBufferFrame.gui_GBuffer)) {
+            if (loadOp == 'load' && rtFrame?.renderTargets[0] && rtFrame.renderTargets[0].name.includes(GBufferFrame.gui_GBuffer)) {
                 rps.renderPassDescriptor.colorAttachments[0].loadOp = 'load'
             }
             rps.depthLoadOp = rtFrame.depthLoadOp;
