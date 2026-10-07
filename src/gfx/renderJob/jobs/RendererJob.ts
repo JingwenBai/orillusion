@@ -104,7 +104,7 @@ export class RendererJob {
 
         this.reflectionRenderer = this.addRenderer(ReflectionRenderer, view);
 
-        if (Engine3D.setting.render.zPrePass) {
+        if (this._engineSetting.render.zPrePass) {
             this.depthPassRenderer = this.addRenderer(PreDepthPassRenderer);
         }
 
@@ -198,22 +198,34 @@ export class RendererJob {
         }
     }
 
+    protected get _engineSetting() {
+        return this._view?.engine?.setting ?? Engine3D.setting;
+    }
+
+    protected get _globalBindGroup(): GlobalBindGroup {
+        return this._view?.engine?.globalBindGroup ?? GlobalBindGroup as any;
+    }
+
+    protected get _shadowLightsCollect(): ShadowLightsCollect {
+        return this._view?.engine?.shadowLightsCollect ?? ShadowLightsCollect as any;
+    }
+
     /**
-     * To render a frame of the scene 
+     * To render a frame of the scene
      */
     public renderFrame() {
         let view = this._view;
 
         ProfilerUtil.startView(view);
 
-        GlobalBindGroup.getLightEntries(view.scene).update(view);
-        GlobalBindGroup.getReflectionEntries(view.scene).update(view);
+        this._globalBindGroup.getLightEntries(view.scene).update(view);
+        this._globalBindGroup.getReflectionEntries(view.scene).update(view);
 
         this.occlusionSystem.update(view.camera, view.scene);
         this.clusterLightingRender.render(view, this.occlusionSystem);
 
         if (this.shadowMapPassRenderer) {
-            ShadowLightsCollect.update(view);
+            this._shadowLightsCollect.update(view);
             this.shadowMapPassRenderer.render(view, this.occlusionSystem);
         }
 
@@ -226,7 +238,7 @@ export class RendererJob {
             this.depthPassRenderer.render(view, this.occlusionSystem);
         }
 
-        if (Engine3D.setting.gi.enable && this.ddgiProbeRenderer) {
+        if (this._engineSetting.gi.enable && this.ddgiProbeRenderer) {
             this.ddgiProbeRenderer.compute(view, this.occlusionSystem);
             this.ddgiProbeRenderer.render(view, this.occlusionSystem);
         }

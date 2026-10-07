@@ -1,5 +1,4 @@
 
-import { Engine3D } from '../../../Engine3D';
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
 import { RenderNode } from '../../../components/renderer/RenderNode';
@@ -18,6 +17,16 @@ import { RendererMask } from '../passRenderer/state/RendererMask';
 import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
 import { RenderShaderCollect } from './RenderShaderCollect';
+import { EngineSetting } from '../../../setting/EngineSetting';
+
+// Module-level "current active" instance – set by Engine3D before each frame
+let _activeInstance: EntityCollect | null = null;
+let _defaultInstance: EntityCollect | null = null;
+
+/** @internal Called by Engine3D to set the active EntityCollect for the current render frame */
+export function setActiveEntityCollect(ec: EntityCollect): void {
+    _activeInstance = ec;
+}
 
 /**
  * @internal
@@ -56,11 +65,17 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
+
+    /** Per-engine settings reference, set by Engine3D when assigning the entity collect */
+    public engineSetting: EngineSetting;
+
+    public static get instance(): EntityCollect {
+        if (_activeInstance) return _activeInstance;
+        if (!_defaultInstance) {
+            _defaultInstance = new EntityCollect();
+            this._instance = _defaultInstance;
         }
-        return this._instance;
+        return _defaultInstance;
     }
 
     constructor() {
@@ -136,7 +151,7 @@ export class EntityCollect {
             }
             map.get(root).push(renderNode);
 
-            if (Engine3D.setting.occlusionQuery.octree) {
+            if (this.engineSetting?.occlusionQuery?.octree) {
                 renderNode.attachSceneOctree(this.getOctree(root));
             }
 
@@ -153,7 +168,7 @@ export class EntityCollect {
 
     private getOctree(root: Scene3D) {
         let octree: Octree;
-        let setting = Engine3D.setting.occlusionQuery.octree;
+        let setting = this.engineSetting?.occlusionQuery?.octree;
         if (setting) {
             octree = this._octreeRenderNodes.get(root);
             if (!octree) {
@@ -198,10 +213,11 @@ export class EntityCollect {
         if (!this._sceneLights.has(root)) {
             this._sceneLights.set(root, [light]);
         } else {
-            let lights = this._sceneLights.get(root)
-            if (lights.length >= Engine3D.setting.light.maxLight) {
-                console.warn('Alreay meet maxmium light number:', Engine3D.setting.light.maxLight)
-                return
+            let lights = this._sceneLights.get(root);
+            const maxLight = this.engineSetting?.light?.maxLight ?? 4096;
+            if (lights.length >= maxLight) {
+                console.warn('Alreay meet maxmium light number:', maxLight);
+                return;
             }
             let hasLight = lights.indexOf(light) != -1;
             if (!hasLight) {
@@ -291,7 +307,7 @@ export class EntityCollect {
         this._collectInfo.clean();
         this._collectInfo.sky = this.sky;
 
-        if (Engine3D.setting.occlusionQuery.octree) {
+        if (this.engineSetting?.occlusionQuery?.octree) {
             this.rendererOctree = this.getOctree(scene);
             this.rendererOctree.getRenderNode(camera.frustum, this._collectInfo);
         } else {
