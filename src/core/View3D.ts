@@ -18,6 +18,13 @@ export class View3D extends CEventListener {
     public guiPick: GUIPick;
     public readonly canvasList: GUICanvas[];
 
+    /**
+     * The Engine3D instance that owns this view.
+     * Set by Engine3D.startRenderView() / startRenderViews().
+     * @internal
+     */
+    public engine: any = null;
+
     constructor(x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
         super();
         this.canvasList = [];
@@ -52,7 +59,14 @@ export class View3D extends CEventListener {
         this._scene = value;
         value.view = this;
 
-        ShadowLightsCollect.createBuffer(this);
+        // Create shadow buffer immediately if engine is already assigned,
+        // otherwise deferred to Engine3D.startRenderView()
+        if (this.engine) {
+            this.engine.shadowLightsCollect.createBuffer(this);
+        } else {
+            // Fallback to static delegation (works for single-engine use)
+            ShadowLightsCollect.createBuffer(this);
+        }
 
         if (value) {
             this.canvasList.forEach(canvas => {

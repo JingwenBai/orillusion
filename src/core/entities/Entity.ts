@@ -313,7 +313,12 @@ export class Entity extends CEventDispatcher {
             });
             this.components.clear();
         } else {
+            // Only start components belonging to this scene to prevent cross-engine interference.
+            // When multiple Engine3D instances are running, each scene's waitUpdate() should
+            // only process its own pending components.
+            const isScene = (this as any)._isScene3D === true;
             ComponentCollect.waitStartComponent.forEach((v, k) => {
+                if (isScene && k.transform && k.transform.scene3D !== this) return;
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();
