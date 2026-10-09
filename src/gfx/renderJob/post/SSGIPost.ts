@@ -9,7 +9,7 @@ import { webGPUContext } from '../../graphics/webGpu/Context3D';
 import { GPUContext } from '../GPUContext';
 import { RendererPassState } from '../passRenderer/state/RendererPassState';
 import { PostBase } from './PostBase';
-import { Engine3D } from '../../../Engine3D';
+import { activeEngine } from '../../../Engine3D';
 import { Time } from '../../../util/Time';
 import { clamp } from '../../../math/MathUtil';
 import { View3D } from '../../../core/View3D';
@@ -29,7 +29,7 @@ import { Combine_cs, Vector3, mergeFunctions } from '../../..';
  * Let the intersection of the object and the object imitate the effect of the light being cross-occluded
  * ```
  * gtao setting
- * let cfg = {@link Engine3D.setting.render.postProcessing.gtao};
+ * let cfg = {@link activeEngine?.setting.render.postProcessing.gtao};
  *```
  * @group Post Effects
  */
@@ -84,7 +84,7 @@ export class SSGIPost extends PostBase {
      */
     onAttach(view: View3D,) {
         this.view = view;
-        // Engine3D.setting.render.useCompressGBuffer = true;
+        // activeEngine?.setting.render.useCompressGBuffer = true;
 
 
         view.camera.transform.onPositionChange = view.camera.transform.onPositionChange ?
@@ -101,7 +101,7 @@ export class SSGIPost extends PostBase {
      * @internal
      */Render
     onDetach(view: View3D,) {
-        // Engine3D.setting.render.useCompressGBuffer = false;
+        // activeEngine?.setting.render.useCompressGBuffer = false;
     }
 
     set ins(v: number) {

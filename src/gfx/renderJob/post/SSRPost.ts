@@ -1,4 +1,4 @@
-import { Engine3D } from '../../../Engine3D';
+import { activeEngine } from '../../../Engine3D';
 import { Vector3 } from '../../../math/Vector3';
 import { VirtualTexture } from '../../../textures/VirtualTexture';
 import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
@@ -26,7 +26,7 @@ import { SSR_BlendColor_cs } from '../../../assets/shader/compute/SSR_BlendColor
  * Screen space reflection
  * ```
  *       //setting
- *       let cfg = {@link Engine3D.setting.render.postProcessing.ssr};
+ *       let cfg = {@link activeEngine?.setting.render.postProcessing.ssr};
  *         let view = new View3D();
         view.scene = this.scene;
         view.camera = mainCamera;
@@ -76,80 +76,80 @@ export class SSRPost extends PostBase {
      */
     public onAttach(view: View3D,) {
         this.view = view;
-        Engine3D.setting.render.postProcessing.ssr.enable = true;
+        activeEngine?.setting.render.postProcessing.ssr.enable = true;
     }
     /**
      * @internal
      */
     public onDetach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.ssr.enable = false;
+        activeEngine?.setting.render.postProcessing.ssr.enable = false;
     }
 
     private reflectionRatio: number = 0.5;//sqrt
 
     public get fadeEdgeRatio() {
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         return setting.fadeEdgeRatio;
     }
 
     public set fadeEdgeRatio(value: number) {
         value = clamp(value, 0, 1);
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         setting.fadeEdgeRatio = value;
     }
 
     public get rayMarchRatio() {
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         return setting.rayMarchRatio;
     }
 
     public set rayMarchRatio(value: number) {
         value = clamp(value, 0, 1);
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         setting.rayMarchRatio = value;
     }
 
     public get roughnessThreshold() {
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         return setting.roughnessThreshold;
     }
 
     public set roughnessThreshold(value: number) {
         value = clamp(value, 0, 1);
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         setting.roughnessThreshold = value;
     }
 
     public get fadeDistanceMin() {
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         return setting.fadeDistanceMin;
     }
 
     public set fadeDistanceMin(value: number) {
         value = clamp(value, 0, 10000);
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         setting.fadeDistanceMin = value;
     }
 
     public get fadeDistanceMax() {
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         return setting.fadeDistanceMax;
     }
 
     public set fadeDistanceMax(value: number) {
         value = clamp(value, 0, 10000);
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         setting.fadeDistanceMax = value;
     }
 
     public get powDotRN() {
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         return setting.powDotRN;
     }
 
     public set powDotRN(value: number) {
         value = clamp(value, 0, 1);
-        let setting = Engine3D.setting.render.postProcessing.ssr;
+        let setting = activeEngine?.setting.render.postProcessing.ssr;
         setting.powDotRN = value;
     }
 
@@ -220,8 +220,8 @@ export class SSRPost extends PostBase {
         rtDec.clearValue = [0, 0, 0, 0];
         rtDec.loadOp = `clear`;
 
-        let ssrWidth = Math.ceil(w * Engine3D.setting.render.postProcessing.ssr.pixelRatio);
-        let ssrHeight = Math.ceil(h * Engine3D.setting.render.postProcessing.ssr.pixelRatio);
+        let ssrWidth = Math.ceil(w * activeEngine?.setting.render.postProcessing.ssr.pixelRatio);
+        let ssrHeight = Math.ceil(h * activeEngine?.setting.render.postProcessing.ssr.pixelRatio);
 
         this.isRetTexture = new VirtualTexture(ssrWidth, ssrHeight, GPUTextureFormat.rgba16float, false, GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING);
         this.isRetTexture.name = 'ssrTextureIn';
@@ -265,7 +265,7 @@ export class SSRPost extends PostBase {
             this.SSR_RayTraceCompute.setUniformBuffer('standUniform', standUniform.uniformGPUBuffer);
         }
 
-        let setting: SSRSetting = Engine3D.setting.render.postProcessing.ssr;
+        let setting: SSRSetting = activeEngine?.setting.render.postProcessing.ssr;
         this.ssrUniformBuffer.setFloat('fadeEdgeRatio', setting.fadeEdgeRatio);
         this.ssrUniformBuffer.setFloat('rayMarchRatio', setting.rayMarchRatio);
         this.ssrUniformBuffer.setFloat('fadeDistanceMin', setting.fadeDistanceMin);
@@ -289,8 +289,8 @@ export class SSRPost extends PostBase {
     public onResize(): void {
         let [w, h] = webGPUContext.presentationSize;
 
-        let ssrWidth = Math.ceil(w * Engine3D.setting.render.postProcessing.ssr.pixelRatio);
-        let ssrHeight = Math.ceil(h * Engine3D.setting.render.postProcessing.ssr.pixelRatio);
+        let ssrWidth = Math.ceil(w * activeEngine?.setting.render.postProcessing.ssr.pixelRatio);
+        let ssrHeight = Math.ceil(h * activeEngine?.setting.render.postProcessing.ssr.pixelRatio);
 
         this.finalTexture.resize(w, h);
         this.isRetTexture.resize(ssrWidth, ssrHeight);

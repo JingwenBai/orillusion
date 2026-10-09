@@ -1,6 +1,6 @@
 import { DDGILighting_shader } from '../../../../assets/shader/compute/DDGILighting_CSShader';
 import { View3D } from '../../../../core/View3D';
-import { Engine3D } from '../../../../Engine3D';
+import { activeEngine } from '../../../../Engine3D';
 import { RenderTexture } from '../../../../textures/RenderTexture';
 import { GlobalBindGroup } from '../../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { Texture } from '../../../graphics/webGpu/core/texture/Texture';
@@ -22,7 +22,7 @@ export class DDGILightingPass {
 
     public lightingTexture: RenderTexture;
     constructor() {
-        let giSetting = Engine3D.setting.gi;
+        let giSetting = activeEngine?.setting.gi;
         this.lightingTexture = new RenderTexture(giSetting.probeSourceTextureSize, giSetting.probeSourceTextureSize, GPUTextureFormat.rgba16float, false, GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
     }
 
@@ -42,7 +42,7 @@ export class DDGILightingPass {
         this.computeShader.setSamplerTexture("colorMap", this.colorMap);
         this.computeShader.setSamplerTexture("shadowMap", this.shadowMap);
         this.computeShader.setSamplerTexture("pointShadowMap", this.pointShadowMap);
-        this.computeShader.setSamplerTexture("prefilterMap", Engine3D.res.defaultSky);
+        this.computeShader.setSamplerTexture("prefilterMap", activeEngine?.res.defaultSky);
     }
 
     public setInputs(inputs: Texture[]) {
@@ -59,7 +59,7 @@ export class DDGILightingPass {
         }
         // EntityCollect.instance.sky ? EntityCollect.instance.sky.materials : defaultRes.defaultSky
         let command = GPUContext.beginCommandEncoder();
-        let giSetting = Engine3D.setting.gi;
+        let giSetting = activeEngine?.setting.gi;
 
         this.computeShader.workerSizeX = giSetting.probeSourceTextureSize / 8;
         this.computeShader.workerSizeY = giSetting.probeSourceTextureSize / 8;

@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../../Engine3D";
+import { activeEngine } from "../../../../Engine3D";
 import { DirectLight } from "../../../../components/lights/DirectLight";
 import { RenderNode } from "../../../../components/renderer/RenderNode";
 import { Camera3D } from "../../../../core/Camera3D";
@@ -35,7 +35,7 @@ export class ShadowMapPassRenderer extends RendererBase {
 
     constructor() {
         super();
-        this.setShadowMap(Engine3D.setting.shadow.shadowSize, CSM.Cascades);
+        this.setShadowMap(activeEngine?.setting.shadow.shadowSize, CSM.Cascades);
         this.passType = PassType.SHADOW;
 
     }
@@ -59,7 +59,7 @@ export class ShadowMapPassRenderer extends RendererBase {
     }
 
     render(view: View3D, occlusionSystem: OcclusionSystem) {
-        let shadowSetting = Engine3D.setting.shadow;
+        let shadowSetting = activeEngine?.setting.shadow;
         if (!shadowSetting.enable)
             return;
         let camera = view.camera;
@@ -247,7 +247,7 @@ export class ShadowMapPassRenderer extends RendererBase {
         GlobalBindGroup.updateCameraGroup(shadowCamera);
         GPUContext.bindCamera(encoder, shadowCamera);
         if (nodes) {
-            for (let i = Engine3D.setting.render.drawOpMin; i < Math.min(nodes.length, Engine3D.setting.render.drawOpMax); ++i) {
+            for (let i = activeEngine?.setting.render.drawOpMin; i < Math.min(nodes.length, activeEngine?.setting.render.drawOpMax); ++i) {
                 let renderNode = nodes[i];
                 // let matrixIndex = renderNode.transform.worldMatrix.index;
                 // if (!occlusionSystem.renderCommitTesting(camera,renderNode) ) continue;

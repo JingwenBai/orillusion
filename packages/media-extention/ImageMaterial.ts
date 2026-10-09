@@ -1,4 +1,4 @@
-import { Engine3D, ShaderLib, Vector4, Color, Texture, Material, RenderShaderPass, Shader, PassType } from "@orillusion/core";
+import { activeEngine, ShaderLib, Vector4, Color, Texture, Material, RenderShaderPass, Shader, PassType } from "@orillusion/core";
 import ImageMaterialShader from "./ImageMaterialShader.wgsl?raw";
 
 
@@ -37,7 +37,7 @@ export class ImageMaterial extends Material {
         this.shader = newShader;
 
         // default value
-        this.shader.setTexture(`baseMap`, Engine3D.res.whiteTexture);
+        this.shader.setTexture(`baseMap`, activeEngine?.res.whiteTexture);
     }
 
     public set baseMap(value: Texture) {

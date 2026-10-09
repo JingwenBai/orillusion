@@ -2,7 +2,7 @@ import { LightType } from '../../../../components/lights/LightData';
 import { ShadowLightsCollect } from '../../collect/ShadowLightsCollect';
 import { Camera3D } from '../../../../core/Camera3D';
 import { CubeCamera } from '../../../../core/CubeCamera';
-import { Engine3D } from '../../../../Engine3D';
+import { activeEngine } from '../../../../Engine3D';
 import { VirtualTexture } from '../../../../textures/VirtualTexture';
 import { GPUTextureFormat } from '../../../graphics/webGpu/WebGPUConst';
 import { CollectInfo } from '../../collect/CollectInfo';
@@ -48,7 +48,7 @@ export class PointLightShadowRenderer extends RendererBase {
         super();
         this.passType = PassType.POINT_SHADOW;
 
-        // this.shadowSize = Engine3D.setting.shadow.pointShadowSize;
+        // this.shadowSize = activeEngine?.setting.shadow.pointShadowSize;
         this._shadowCameraDic = new Map<ILight, CubeShadowMapInfo>();
         this.cubeArrayTexture = new DepthCubeArrayTexture(this.shadowSize, this.shadowSize, 8);
         this.colorTexture = new VirtualTexture(this.shadowSize, this.shadowSize, GPUTextureFormat.bgra8unorm, false);
@@ -92,7 +92,7 @@ export class PointLightShadowRenderer extends RendererBase {
 
     render(view: View3D, occlusionSystem: OcclusionSystem) {
         // return ;
-        if (!Engine3D.setting.shadow.enable)
+        if (!activeEngine?.setting.shadow.enable)
             return;
         // return ;
         this.shadowPassCount = 0;
@@ -215,7 +215,7 @@ export class PointLightShadowRenderer extends RendererBase {
         this.drawNodes(view, shadowCamera, renderContext, nodes, occlusionSystem, null);
 
         // if (nodes) {
-        //     for (let i = Engine3D.setting.render.drawOpMin; i < Math.min(nodes.length, Engine3D.setting.render.drawOpMax); ++i) {
+        //     for (let i = activeEngine?.setting.render.drawOpMin; i < Math.min(nodes.length, activeEngine?.setting.render.drawOpMax); ++i) {
         //         let renderNode = nodes[i];
         //         let matrixIndex = renderNode.transform.worldMatrix.index;
         //         if (!renderNode.transform.enable)
@@ -275,7 +275,7 @@ export class PointLightShadowRenderer extends RendererBase {
                 }
             }
 
-            for (let i = Engine3D.setting.render.drawOpMin; i < Math.min(nodes.length, Engine3D.setting.render.drawOpMax); ++i) {
+            for (let i = activeEngine?.setting.render.drawOpMin; i < Math.min(nodes.length, activeEngine?.setting.render.drawOpMax); ++i) {
                 let renderNode = nodes[i];
                 // if (!occlusionSystem.renderCommitTesting(view.camera, renderNode))
                 //     continue;

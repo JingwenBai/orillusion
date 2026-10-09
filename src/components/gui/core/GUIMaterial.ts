@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../Engine3D";
+import { activeEngine } from "../../../Engine3D";
 import { ShaderLib } from "../../../assets/shader/ShaderLib";
 import { GPUCompareFunction, GPUCullMode } from "../../../gfx/graphics/webGpu/WebGPUConst";
 import { Texture } from "../../../gfx/graphics/webGpu/core/texture/Texture";
@@ -102,7 +102,7 @@ export class GUIMaterial extends Material {
      */
     public setTextures(list: Texture[]) {
         for (let i = 0; i < 7; i++) {
-            let texture = list[i] || Engine3D.res.whiteTexture;
+            let texture = list[i] || activeEngine?.res.whiteTexture;
             this.shader.setTexture(`tex_${i}`, texture);
             this.setVideoTextureDefine(i, texture.isVideoTexture);
         }

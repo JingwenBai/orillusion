@@ -1,4 +1,4 @@
-import { Engine3D } from "../../Engine3D";
+import { activeEngine } from "../../Engine3D";
 import { ColliderComponent } from "../../components/ColliderComponent";
 import { ComponentBase } from "../../components/ComponentBase";
 import { MeshRenderer } from "../../components/renderer/MeshRenderer";
@@ -98,18 +98,18 @@ export class TransformControllerBaseComponent extends ComponentBase {
     public onEnable(view?: View3D) {
         // console.warn('onEnable');
         this.object3D.addChild(this.mContainer);
-        // Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this, null, 99999);
-        // Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this, null, 99999);
-        // Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this, null, 99999);
+        // activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this, null, 99999);
+        // activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this, null, 99999);
+        // activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this, null, 99999);
         this.reset();
     }
 
     public onDisable(view?: View3D) {
         // console.warn('onDisable');
         this.object3D.removeChild(this.mContainer);
-        // Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
-        // Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this);
-        // Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this);
+        // activeEngine?.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
+        // activeEngine?.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this);
+        // activeEngine?.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this);
     }
 
     public reset() {
@@ -162,7 +162,7 @@ export class TransformControllerBaseComponent extends ComponentBase {
     protected pickAxis(): { intersectPoint?: Vector3; distance: number; obj: Object3D; axis: TransformAxisEnum } {
         const scene3D = this.object3D.transform.scene3D;
         const camera = scene3D.view.camera;
-        let ray = camera.screenPointToRay(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY);
+        let ray = camera.screenPointToRay(activeEngine?.inputSystem.mouseX, activeEngine?.inputSystem.mouseY);
 
         let intersect: HitInfo;
         let lastResult: { intersectPoint?: Vector3; distance: number; obj: Object3D; axis: TransformAxisEnum };
@@ -209,10 +209,10 @@ export class TransformControllerBaseComponent extends ComponentBase {
         const scene3D = this.object3D.transform.scene3D;
         const camera = scene3D.view.camera;
         let screenPoint = camera.worldToScreenPoint(this.mX.transform.worldPosition);
-        let pos = camera.screenPointToWorld(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY, screenPoint.z);
+        let pos = camera.screenPointToWorld(activeEngine?.inputSystem.mouseX, activeEngine?.inputSystem.mouseY, screenPoint.z);
         this.beginPoint.copyFrom(pos);
-        this.beginMousePos.x = Engine3D.inputSystem.mouseX;
-        this.beginMousePos.y = Engine3D.inputSystem.mouseY;
+        this.beginMousePos.x = activeEngine?.inputSystem.mouseX;
+        this.beginMousePos.y = activeEngine?.inputSystem.mouseY;
     }
 
     protected lastMoveObj: Object3D;
@@ -247,12 +247,12 @@ export class TransformControllerBaseComponent extends ComponentBase {
             const scene3D = this.object3D.transform.scene3D;
             const camera = scene3D.view.camera;
             let screenPoint = camera.worldToScreenPoint(this.mX.transform.worldPosition);
-            let pos = camera.screenPointToWorld(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY, screenPoint.z);
+            let pos = camera.screenPointToWorld(activeEngine?.inputSystem.mouseX, activeEngine?.inputSystem.mouseY, screenPoint.z);
 
             this.currentPoint.copyFrom(pos);
             let offset = pos.subtract(this.beginPoint);
 
-            Vector3.HELP_0.set(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY, 0);
+            Vector3.HELP_0.set(activeEngine?.inputSystem.mouseX, activeEngine?.inputSystem.mouseY, 0);
             let distance = Vector3.distance(Vector3.HELP_0, this.beginMousePos);
             this.beginMousePos.copyFrom(Vector3.HELP_0);
 

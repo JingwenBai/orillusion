@@ -1,4 +1,4 @@
-import { Engine3D } from '../../Engine3D';
+import { activeEngine } from '../../Engine3D';
 import { MeshRenderer } from '../../components/renderer/MeshRenderer';
 import { Object3D } from '../../core/entities/Object3D';
 import { GeometryBase } from '../../core/geometry/GeometryBase';
@@ -164,7 +164,7 @@ export class OBJParser extends ParserBase {
       if (mat.textures && mat.textures.length > 0) {
         for (let i = 0; i < mat.textures.length; i++) {
           const texUrl = StringUtil.normalizePath(this.baseUrl + mat.textures[i]);
-          await Engine3D.res.loadTexture(texUrl);
+          await activeEngine?.res.loadTexture(texUrl);
         }
       }
     }
@@ -353,7 +353,7 @@ export class OBJParser extends ParserBase {
 
       let mat = new LitMaterial();
       let matData = this.matLibs[geoData.source_mat];
-      mat.baseMap = Engine3D.res.getTexture(StringUtil.normalizePath(this.baseUrl + matData.map_Kd));
+      mat.baseMap = activeEngine?.res.getTexture(StringUtil.normalizePath(this.baseUrl + matData.map_Kd));
 
       let obj = new Object3D();
       let mr = obj.addComponent(MeshRenderer);

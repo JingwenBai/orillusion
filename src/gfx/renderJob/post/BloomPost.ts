@@ -6,7 +6,7 @@ import { webGPUContext } from '../../graphics/webGpu/Context3D';
 import { GPUContext } from '../GPUContext';
 import { RendererPassState } from '../passRenderer/state/RendererPassState';
 import { PostBase } from './PostBase';
-import { Engine3D } from '../../../Engine3D';
+import { activeEngine } from '../../../Engine3D';
 import { View3D } from '../../../core/View3D';
 import { RTDescriptor } from '../../graphics/webGpu/descriptor/RTDescriptor';
 import { RTFrame } from '../frame/RTFrame';
@@ -17,7 +17,7 @@ import { VirtualTexture } from '../../../textures/VirtualTexture';
  * Bloom Effects
  * ```
  * bloom setting
- * let cfg = {@link Engine3D.setting.render.postProcessing.bloom};
+ * let cfg = {@link activeEngine?.setting.render.postProcessing.bloom};
  *```
  * @group Post Effects
  */
@@ -56,14 +56,14 @@ export class BloomPost extends PostBase {
      * @internal
      */
     onAttach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.bloom.enable = true;
+        activeEngine?.setting.render.postProcessing.bloom.enable = true;
         this.createGUI();
     }
     /**
      * @internal
      */Render
     onDetach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.bloom.enable = false;
+        activeEngine?.setting.render.postProcessing.bloom.enable = false;
         this.removeGUI();
     }
 
@@ -74,58 +74,58 @@ export class BloomPost extends PostBase {
     }
 
     public get downSampleBlurSize(): number {
-        return Engine3D.setting.render.postProcessing.bloom.downSampleBlurSize;
+        return activeEngine?.setting.render.postProcessing.bloom.downSampleBlurSize;
     }
     public set downSampleBlurSize(value: number) {
-        Engine3D.setting.render.postProcessing.bloom.downSampleBlurSize = value;
+        activeEngine?.setting.render.postProcessing.bloom.downSampleBlurSize = value;
     }
 
     public get downSampleBlurSigma(): number {
-        return Engine3D.setting.render.postProcessing.bloom.downSampleBlurSigma;
+        return activeEngine?.setting.render.postProcessing.bloom.downSampleBlurSigma;
     }
 
     public set downSampleBlurSigma(value: number) {
-        Engine3D.setting.render.postProcessing.bloom.downSampleBlurSigma = value;
+        activeEngine?.setting.render.postProcessing.bloom.downSampleBlurSigma = value;
     }
 
     public get upSampleBlurSize(): number {
-        return Engine3D.setting.render.postProcessing.bloom.upSampleBlurSize;
+        return activeEngine?.setting.render.postProcessing.bloom.upSampleBlurSize;
     }
 
     public set upSampleBlurSize(value: number) {
-        Engine3D.setting.render.postProcessing.bloom.upSampleBlurSize = value;
+        activeEngine?.setting.render.postProcessing.bloom.upSampleBlurSize = value;
     }
 
     public get upSampleBlurSigma(): number {
-        return Engine3D.setting.render.postProcessing.bloom.upSampleBlurSigma;
+        return activeEngine?.setting.render.postProcessing.bloom.upSampleBlurSigma;
     }
 
     public set upSampleBlurSigma(value: number) {
-        Engine3D.setting.render.postProcessing.bloom.upSampleBlurSigma = value;
+        activeEngine?.setting.render.postProcessing.bloom.upSampleBlurSigma = value;
     }
 
     public get luminanceThreshole(): number {
-        return Engine3D.setting.render.postProcessing.bloom.luminanceThreshole;
+        return activeEngine?.setting.render.postProcessing.bloom.luminanceThreshole;
     }
 
     public set luminanceThreshole(value: number) {
-        Engine3D.setting.render.postProcessing.bloom.luminanceThreshole = value;
+        activeEngine?.setting.render.postProcessing.bloom.luminanceThreshole = value;
     }
 
     public get bloomIntensity(): number {
-        return Engine3D.setting.render.postProcessing.bloom.bloomIntensity;
+        return activeEngine?.setting.render.postProcessing.bloom.bloomIntensity;
     }
 
     public set bloomIntensity(value: number) {
-        Engine3D.setting.render.postProcessing.bloom.bloomIntensity = value;
+        activeEngine?.setting.render.postProcessing.bloom.bloomIntensity = value;
     }
 
     public get hdr(): number {
-        return Engine3D.setting.render.postProcessing.bloom.hdr;
+        return activeEngine?.setting.render.postProcessing.bloom.hdr;
     }
 
     public set hdr(value: number) {
-        Engine3D.setting.render.postProcessing.bloom.hdr = value;
+        activeEngine?.setting.render.postProcessing.bloom.hdr = value;
     }
 
     private createThreshouldCompute() {
@@ -140,7 +140,7 @@ export class BloomPost extends PostBase {
     }
 
     private createDownSampleComputes() {
-        let setting = Engine3D.setting.render.postProcessing.bloom;
+        let setting = activeEngine?.setting.render.postProcessing.bloom;
         const N = setting.downSampleStep;
         this.downSampleComputes = [];
 
@@ -160,7 +160,7 @@ export class BloomPost extends PostBase {
     }
 
     private createUpSampleComputes() {
-        let setting = Engine3D.setting.render.postProcessing.bloom;
+        let setting = activeEngine?.setting.render.postProcessing.bloom;
         const N = setting.downSampleStep;
         this.upSampleComputes = [];
         {
@@ -194,7 +194,7 @@ export class BloomPost extends PostBase {
     }
 
     private createPostCompute() {
-        let setting = Engine3D.setting.render.postProcessing.bloom;
+        let setting = activeEngine?.setting.render.postProcessing.bloom;
         const N = setting.downSampleStep;
 
         this.postCompute = new ComputeShader(post);
@@ -210,7 +210,7 @@ export class BloomPost extends PostBase {
     }
 
     private createResource() {
-        let setting = Engine3D.setting.render.postProcessing.bloom;
+        let setting = activeEngine?.setting.render.postProcessing.bloom;
         this.bloomSetting = new UniformGPUBuffer(4 * 2); //vector4 * 2
 
         let [screenWidth, screenHeight] = webGPUContext.presentationSize;
@@ -260,7 +260,7 @@ export class BloomPost extends PostBase {
             this.rendererPassState = WebGPUDescriptorCreator.createRendererPassState(this.rtFrame, null);
             this.rendererPassState.label = "Bloom";
         }
-        let cfg = Engine3D.setting.render.postProcessing.bloom;
+        let cfg = activeEngine?.setting.render.postProcessing.bloom;
 
         this.bloomSetting.setFloat('downSampleStep', cfg.downSampleStep);
         this.bloomSetting.setFloat('downSampleBlurSize', cfg.downSampleBlurSize);
@@ -278,7 +278,7 @@ export class BloomPost extends PostBase {
     }
 
     public onResize() {
-        let cfg = Engine3D.setting.render.postProcessing.bloom;
+        let cfg = activeEngine?.setting.render.postProcessing.bloom;
 
         let [screenWidth, screenHeight] = webGPUContext.presentationSize;
         this.RT_threshold.resize(screenWidth, screenHeight);

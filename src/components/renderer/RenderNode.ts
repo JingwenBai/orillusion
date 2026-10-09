@@ -1,5 +1,5 @@
 import { EditorInspector } from "../../util/SerializeDecoration";
-import { Engine3D } from "../../Engine3D";
+import { activeEngine } from "../../Engine3D";
 import { View3D } from "../../core/View3D";
 import { GeometryBase } from "../../core/geometry/GeometryBase";
 import { PassGenerate } from "../../gfx/generate/PassGenerate";
@@ -328,7 +328,7 @@ export class RenderNode extends ComponentBase {
 
         // add if alpha == 1
         let ignoreDepthPass = RendererMaskUtil.hasMask(this.rendererMask, RendererMask.IgnoreDepthPass);
-        if (!ignoreDepthPass && Engine3D.setting.render.zPrePass) {
+        if (!ignoreDepthPass && activeEngine?.setting.render.zPrePass) {
             for (let i = 0; i < this.materials.length; i++) {
                 const mat = this.materials[i];
                 PassGenerate.createDepthPass(this, mat.shader);
@@ -561,16 +561,16 @@ export class RenderNode extends ComponentBase {
                         continue;
                     }
 
-                    let bdrflutTex = Engine3D.res.getTexture(`BRDFLUT`);
+                    let bdrflutTex = activeEngine?.res.getTexture(`BRDFLUT`);
                     renderShader.setTexture(`brdflutMap`, bdrflutTex);
 
-                    let shadowRenderer = Engine3D.getRenderJob(view).shadowMapPassRenderer;
+                    let shadowRenderer = activeEngine?.getRenderJob(view).shadowMapPassRenderer;
                     if (shadowRenderer && shadowRenderer.depth2DArrayTexture) {
-                        renderShader.setTexture(`shadowMap`, Engine3D.getRenderJob(view).shadowMapPassRenderer.depth2DArrayTexture);
+                        renderShader.setTexture(`shadowMap`, activeEngine?.getRenderJob(view).shadowMapPassRenderer.depth2DArrayTexture);
                     }
                     // let shadowLight = ShadowLights.list;
                     // if (shadowLight.length) {
-                    let pointShadowRenderer = Engine3D.getRenderJob(view).pointLightShadowRenderer;
+                    let pointShadowRenderer = activeEngine?.getRenderJob(view).pointLightShadowRenderer;
                     if (pointShadowRenderer && pointShadowRenderer.cubeArrayTexture) {
                         renderShader.setTexture(`pointShadowMap`, pointShadowRenderer.cubeArrayTexture);
                     }

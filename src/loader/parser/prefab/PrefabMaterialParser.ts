@@ -1,4 +1,4 @@
-import { BitmapTexture2D, BlendMode, Engine3D } from "../../..";
+import { BitmapTexture2D, BlendMode, activeEngine } from "../../..";
 import { LitMaterial } from "../../../materials/LitMaterial";
 import { Material } from "../../../materials/Material";
 import { Color } from "../../../math/Color";
@@ -41,7 +41,7 @@ export class PrefabMaterialParser extends ParserBase {
                 let textureData = new PrefabTextureData();
                 textureData.property = texBytes.readUTF();
                 textureData.name = texBytes.readUTF();
-                textureData.texture = Engine3D.res.getTexture(textureData.name) as BitmapTexture2D;
+                textureData.texture = activeEngine?.res.getTexture(textureData.name) as BitmapTexture2D;
                 textureData.texelSize = texBytes.readVector2();
                 textureData.wrapModeU = texBytes.readUnit32();
                 textureData.wrapModeV = texBytes.readUnit32();
@@ -80,7 +80,7 @@ export class PrefabMaterialParser extends ParserBase {
             //     // }
             // }
 
-            Engine3D.res.addMat(id, mat);
+            activeEngine?.res.addMat(id, mat);
         }
     }
 

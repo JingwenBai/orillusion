@@ -1,4 +1,4 @@
-import { Engine3D, ShaderLib, Texture, GPUCompareFunction, BlendMode, Color, Vector4, RenderShaderPass, Material, PassType, Shader } from "@orillusion/core";
+import { activeEngine, ShaderLib, Texture, GPUCompareFunction, BlendMode, Color, Vector4, RenderShaderPass, Material, PassType, Shader } from "@orillusion/core";
 import { ParticleRenderShader } from "../shader/ParticleRenderShader";
 
 /**
@@ -34,7 +34,7 @@ export class ParticleMaterial extends Material {
         this.shader = newShader;
 
         // default value
-        this.baseMap = Engine3D.res.whiteTexture;
+        this.baseMap = activeEngine?.res.whiteTexture;
         this.blendMode = BlendMode.ADD;
     }
 

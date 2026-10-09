@@ -3,7 +3,7 @@ import { Color } from '../../../math/Color';
 import { GUIQuad } from '../core/GUIQuad';
 import { GUISprite } from '../core/GUISprite';
 import { ImageType } from '../GUIConfig';
-import { Engine3D } from '../../../Engine3D';
+import { activeEngine } from '../../../Engine3D';
 import { UIRenderAble } from './UIRenderAble';
 
 /**
@@ -15,7 +15,7 @@ export class UIImage extends UIRenderAble {
     init(param?: any): void {
         super.init?.(param);
         this.attachQuad(GUIQuad.spawnQuad());
-        this.sprite = Engine3D.res.defaultGUISprite;
+        this.sprite = activeEngine?.res.defaultGUISprite;
     }
 
     public cloneTo(obj: Object3D) {
@@ -32,7 +32,7 @@ export class UIImage extends UIRenderAble {
     }
 
     public set sprite(value: GUISprite) {
-        value ||= Engine3D.res.defaultGUISprite;
+        value ||= activeEngine?.res.defaultGUISprite;
         for (let quad of this._mainQuads) {
             quad.sprite = value;
             quad.setSize(this._uiTransform.width, this._uiTransform.height);

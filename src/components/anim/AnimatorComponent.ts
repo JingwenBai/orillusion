@@ -1,5 +1,5 @@
 import { FloatArray } from "@orillusion/wasm-matrix/WasmMatrix";
-import { Engine3D, Matrix4, MeshRenderer, Object3D, PrefabAvatarData, Quaternion, RenderNode, RendererMask, RendererMaskUtil, SkinnedMeshRenderer2, StorageGPUBuffer, Time, Vector3, Vector4, View3D } from "../..";
+import { activeEngine, Matrix4, MeshRenderer, Object3D, PrefabAvatarData, Quaternion, RenderNode, RendererMask, RendererMaskUtil, SkinnedMeshRenderer2, StorageGPUBuffer, Time, Vector3, Vector4, View3D } from "../..";
 import { PropertyAnimationClip } from "../../math/AnimationCurveClip";
 import { RegisterComponent } from "../../util/SerializeDecoration";
 import { ComponentBase } from "../ComponentBase";
@@ -127,7 +127,7 @@ export class AnimatorComponent extends ComponentBase {
         this._avatarName = name;
         this.inverseBindMatrices = [];
 
-        this._avatar = Engine3D.res.getObj(name) as PrefabAvatarData;
+        this._avatar = activeEngine?.res.getObj(name) as PrefabAvatarData;
 
         let jointMapping = this.buildSkeletonPose();
         const jointMatrixIndexTable = new Float32Array(jointMapping);

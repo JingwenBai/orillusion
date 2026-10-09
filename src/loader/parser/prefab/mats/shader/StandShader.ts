@@ -1,4 +1,4 @@
-import { Engine3D, PassType } from "../../../../..";
+import { activeEngine, PassType } from "../../../../..";
 import { Texture } from "../../../../../gfx/graphics/webGpu/core/texture/Texture";
 import { RenderShaderPass } from "../../../../../gfx/graphics/webGpu/shader/RenderShaderPass";
 import { Color } from "../../../../../math/Color";
@@ -63,9 +63,9 @@ export class StandShader extends Shader {
         this.setUniformVector4(`metallicMapOffsetSize`, new Vector4(0, 0, 1, 1));
         this.setUniformVector4(`aoMapOffsetSize`, new Vector4(0, 0, 1, 1));
 
-        this.baseMap = Engine3D.res.whiteTexture;
-        this.normalMap = Engine3D.res.normalTexture;
-        this.maskMap = Engine3D.res.maskTexture;
+        this.baseMap = activeEngine?.res.whiteTexture;
+        this.normalMap = activeEngine?.res.normalTexture;
+        this.maskMap = activeEngine?.res.maskTexture;
     }
 
     public get baseMap(): Texture {
@@ -334,7 +334,7 @@ export class StandShader extends Shader {
     public set aoMap(value: Texture) {
         if (!value) return;
         this.getDefaultColorShader().setTexture(`aoMap`, value);
-        if (value != Engine3D.res.whiteTexture) {
+        if (value != activeEngine?.res.whiteTexture) {
             this.getDefaultColorShader().setDefine(`USE_AOTEX`, true);
         }
     }

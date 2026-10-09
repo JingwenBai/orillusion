@@ -1,7 +1,7 @@
 import { RenderNode } from '../../../components/renderer/RenderNode';
 import { Camera3D } from '../../../core/Camera3D';
 import { Scene3D } from '../../../core/Scene3D';
-import { Engine3D } from '../../../Engine3D';
+import { activeEngine } from '../../../Engine3D';
 import { CollectInfo } from '../collect/CollectInfo';
 /**
  * @internal
@@ -24,7 +24,7 @@ export class OcclusionSystem {
      * @returns
      */
     public occlusionRenderNodeTest(index: number): number {
-        if (!Engine3D.setting.occlusionQuery.enable) return 1;
+        if (!activeEngine?.setting.occlusionQuery.enable) return 1;
         if (this.frustumCullingList) {
             return this.frustumCullingList[index];
         } else {
@@ -60,7 +60,7 @@ export class OcclusionSystem {
         // EntityCollect.instance.autoSortRenderNodes(scene);
 
         // let collectInfo = EntityCollect.instance.getRenderNodes(scene);
-        // if (Engine3D.setting.occlusionQuery.octree) {
+        // if (activeEngine?.setting.occlusionQuery.octree) {
         //     let rendererList: OctreeEntity[] = [];
         //     // let now = performance.now();
         //     // collectInfo.rendererOctree.boxCasts(camera.frustum.boundingBox, rendererList);

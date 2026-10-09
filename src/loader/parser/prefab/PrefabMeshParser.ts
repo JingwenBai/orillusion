@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../Engine3D";
+import { activeEngine } from "../../../Engine3D";
 import { GeometryBase, LODDescriptor } from "../../../core/geometry/GeometryBase";
 import { GeometryVertexType } from "../../../core/geometry/GeometryVertexType";
 import { VertexAttributeName } from "../../../core/geometry/VertexAttributeName";
@@ -142,7 +142,7 @@ export class PrefabMeshParser extends ParserBase {
             }
 
             geometry.name = prefabMesh.meshName;
-            Engine3D.res.addGeometry(prefabMesh.meshID, geometry);
+            activeEngine?.res.addGeometry(prefabMesh.meshID, geometry);
         }
     }
 

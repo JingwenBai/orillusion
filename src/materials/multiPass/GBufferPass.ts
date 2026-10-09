@@ -1,6 +1,6 @@
 import { Color } from '../../math/Color';
 import { BlendMode } from '../BlendMode';
-import { Engine3D } from '../../Engine3D';
+import { activeEngine } from '../../Engine3D';
 import { RenderShaderPass } from '../../gfx/graphics/webGpu/shader/RenderShaderPass';
 import { PassType } from '../../gfx/renderJob/passRenderer/state/PassType';
 
@@ -23,6 +23,6 @@ export class GBufferPass extends RenderShaderPass {
         this.setUniformFloat(`normalScale`, 1);
         this.setUniformFloat(`alphaCutoff`, 1);
         this.blendMode = BlendMode.NONE;
-        this.setTexture(`normalMap`, Engine3D.res.normalTexture);
+        this.setTexture(`normalMap`, activeEngine?.res.normalTexture);
     }
 }

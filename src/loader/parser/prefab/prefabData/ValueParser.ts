@@ -1,5 +1,5 @@
 import { GeometryBase, Material, PropertyAnimationClip, Texture } from "../../../..";
-import { Engine3D } from "../../../../Engine3D";
+import { activeEngine } from "../../../../Engine3D";
 import { Joint } from "../../../../components/anim/skeletonAnim/Joint";
 import { Skeleton } from "../../../../components/anim/skeletonAnim/Skeleton";
 import { Color } from "../../../../math/Color";
@@ -65,19 +65,19 @@ export class ValueParser {
             case ValueEnumType.mesh:
                 {
                     let id = bytes.readUTF();
-                    let mesh = Engine3D.res.getGeometry(id);
+                    let mesh = activeEngine?.res.getGeometry(id);
                     return { t: ValueEnumType.mesh, v: mesh };
                 }
             case ValueEnumType.texture:
                 {
                     let id = bytes.readUTF();
-                    let texture = Engine3D.res.getTexture(id);
+                    let texture = activeEngine?.res.getTexture(id);
                     return { t: ValueEnumType.texture, v: texture };
                 }
             case ValueEnumType.material:
                 {
                     let id = bytes.readUTF();
-                    let mat = Engine3D.res.getMat(id);
+                    let mat = activeEngine?.res.getMat(id);
                     return { t: ValueEnumType.material, v: mat };
                 }
             case ValueEnumType.materials:
@@ -86,7 +86,7 @@ export class ValueParser {
                     let mats = [];
                     for (let i = 0; i < str.length; i++) {
                         const element = str[i];
-                        let mat = Engine3D.res.getMat(element);
+                        let mat = activeEngine?.res.getMat(element);
                         mats.push(mat);
                     }
                     return { t: ValueEnumType.materials, v: mats };

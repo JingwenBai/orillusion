@@ -1,5 +1,5 @@
 import { Material, RenderShaderPass, PassType, Shader } from '..';
-import { Engine3D } from '../Engine3D';
+import { activeEngine } from '../Engine3D';
 import { ShaderLib } from '../assets/shader/ShaderLib';
 import { ColorLitShader } from '../assets/shader/materials/ColorLitShader';
 import { Color } from '../math/Color';
@@ -40,8 +40,8 @@ export class ColorLitMaterial extends Material {
         shaderState.acceptGI = true;
         shaderState.useLight = true;
 
-        renderShader.setTexture("normalMap", Engine3D.res.normalTexture);
-        renderShader.setTexture("emissiveMap", Engine3D.res.blackTexture);
+        renderShader.setTexture("normalMap", activeEngine?.res.normalTexture);
+        renderShader.setTexture("emissiveMap", activeEngine?.res.blackTexture);
     }
 
     clone(): this {

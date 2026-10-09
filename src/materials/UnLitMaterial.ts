@@ -1,4 +1,4 @@
-import { Engine3D } from '../Engine3D';
+import { activeEngine } from '../Engine3D';
 import { Texture } from '../gfx/graphics/webGpu/core/texture/Texture';
 import { Color } from '../math/Color';
 import { Material } from './Material';
@@ -17,7 +17,7 @@ export class UnLitMaterial extends Material {
         super();
         this.shader = new UnLitShader();
         // default value
-        this.baseMap = Engine3D.res.whiteTexture;
+        this.baseMap = activeEngine?.res.whiteTexture;
     }
 
     public set baseMap(texture: Texture) {

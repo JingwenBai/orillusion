@@ -1,4 +1,4 @@
-﻿import { Engine3D } from '../../Engine3D';
+﻿import { activeEngine } from '../../Engine3D';
 import { PickGUIEvent3D, PointerEvent3D } from '../../event/eventConst/PointerEvent3D';
 import { MouseCode } from '../../event/MouseCode';
 import { webGPUContext } from '../../gfx/graphics/webGpu/Context3D';
@@ -42,10 +42,10 @@ export class GUIPick {
         this._upEvent = new PickGUIEvent3D(PickGUIEvent3D.PICK_UP_GUI);
         this._downEvent = new PickGUIEvent3D(PickGUIEvent3D.PICK_DOWN_GUI);
 
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onTouchDown, this, null, 1);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onTouchUp, this, null, 1);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onTouchMove, this, null, 1);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_CLICK, this.onTouchClick, this, null, 1);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onTouchDown, this, null, 1);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onTouchUp, this, null, 1);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onTouchMove, this, null, 1);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_CLICK, this.onTouchClick, this, null, 1);
     }
 
     private _lastDownTarget: IUIInteractive;
@@ -193,8 +193,8 @@ export class GUIPick {
     }
 
     private pick(colliders: IUIInteractive[]): GUIHitInfo {
-        this._ray = this._view.camera.screenPointToRay(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY);
-        let screenPos = new Vector2(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY);
+        this._ray = this._view.camera.screenPointToRay(activeEngine?.inputSystem.mouseX, activeEngine?.inputSystem.mouseY);
+        let screenPos = new Vector2(activeEngine?.inputSystem.mouseX, activeEngine?.inputSystem.mouseY);
         let screenSize = new Vector2(webGPUContext.canvas.clientWidth, webGPUContext.canvas.clientHeight);
 
         let hitInfo: GUIHitInfo;

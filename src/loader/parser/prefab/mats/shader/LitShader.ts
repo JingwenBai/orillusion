@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../../..";
+import { activeEngine } from "../../../../..";
 import { GPUCullMode } from "../../../../../gfx/graphics/webGpu/WebGPUConst";
 import { Texture } from "../../../../../gfx/graphics/webGpu/core/texture/Texture";
 import { RenderShaderPass } from "../../../../../gfx/graphics/webGpu/shader/RenderShaderPass";
@@ -59,9 +59,9 @@ export class LitShader extends Shader {
         this.setUniformColor(`clearcoatColor`, new Color(1, 1, 1));
         this.setUniformFloat(`clearcoatWeight`, 0.0);
 
-        this._MainTex = Engine3D.res.grayTexture;
-        this._BumpMap = Engine3D.res.normalTexture;
-        this._MaskTex = Engine3D.res.maskTexture;
+        this._MainTex = activeEngine?.res.grayTexture;
+        this._BumpMap = activeEngine?.res.normalTexture;
+        this._MaskTex = activeEngine?.res.maskTexture;
     }
 
     public set _MainTex(value: Texture) {

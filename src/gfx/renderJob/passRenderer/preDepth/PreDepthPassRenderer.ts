@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../../Engine3D";
+import { activeEngine } from "../../../../Engine3D";
 import { RenderNode } from "../../../../components/renderer/RenderNode";
 import { View3D } from "../../../../core/View3D";
 import { VirtualTexture } from "../../../../textures/VirtualTexture";
@@ -102,7 +102,7 @@ export class PreDepthPassRenderer extends RendererBase {
 
     protected drawRenderNodes(view: View3D, encoder: GPURenderPassEncoder, command: GPUCommandEncoder, nodes: RenderNode[], occlusionSystem: OcclusionSystem, clusterLightingBuffer?: ClusterLightingBuffer) {
         GPUContext.bindCamera(encoder, view.camera);
-        for (let i = Engine3D.setting.render.drawOpMin; i < Math.min(nodes.length, Engine3D.setting.render.drawOpMax); ++i) {
+        for (let i = activeEngine?.setting.render.drawOpMin; i < Math.min(nodes.length, activeEngine?.setting.render.drawOpMax); ++i) {
             let renderNode = nodes[i];
             // if (!occlusionSystem.renderCommitTesting(view.camera, renderNode))
             //     continue;

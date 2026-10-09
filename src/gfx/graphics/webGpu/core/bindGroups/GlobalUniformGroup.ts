@@ -1,5 +1,5 @@
 import { EntityCollect, Vector3, Vector4 } from "../../../../..";
-import { Engine3D } from "../../../../../Engine3D";
+import { activeEngine } from "../../../../../Engine3D";
 import { Camera3D } from "../../../../../core/Camera3D";
 import { CSM } from "../../../../../core/csm/CSM";
 import { Matrix4 } from "../../../../../math/Matrix4";
@@ -104,7 +104,7 @@ export class GlobalUniformGroup {
         }
         this.uniformGPUBuffer.setFloat32Array(`shadowMatrix`, this.shadowMatrixRaw);
 
-        let shadowMapSize = Engine3D.setting.shadow.shadowSize;
+        let shadowMapSize = activeEngine?.setting.shadow.shadowSize;
         if (CSM.Cascades > 1 && camera.enableCSM && shadowLightList[0]) {
             for (let i = 0; i < CSM.Cascades; i++) {
                 let shadowCamera: Camera3D = camera.csm.children[i].shadowCamera;
@@ -117,7 +117,7 @@ export class GlobalUniformGroup {
         this.uniformGPUBuffer.setFloat32Array(`csmMatrix`, this.csmMatrixRaw);
         this.uniformGPUBuffer.setFloat32Array(`shadowLights`, this.shadowLights);
 
-        let reflectionSetting = Engine3D.setting.reflectionSetting;
+        let reflectionSetting = activeEngine?.setting.reflectionSetting;
         let reflectionCount = EntityCollect.instance.getReflections(camera.transform.scene3D).length;
         this.uniformGPUBuffer.setFloat(`reflectionProbeSize`, reflectionSetting.reflectionProbeSize);
         this.uniformGPUBuffer.setFloat(`reflectionProbeMaxCount`, reflectionSetting.reflectionProbeMaxCount);
@@ -134,26 +134,26 @@ export class GlobalUniformGroup {
         this.uniformGPUBuffer.setFloat(`time`, Time.time);
         this.uniformGPUBuffer.setFloat(`delta`, Time.delta);
         this.uniformGPUBuffer.setFloat(`shadowBias`, camera.getShadowBias(shadowMapSize));
-        this.uniformGPUBuffer.setFloat(`skyExposure`, Engine3D.setting.sky.skyExposure);
-        this.uniformGPUBuffer.setFloat(`renderPassState`, Engine3D.setting.render.renderPassState);
-        this.uniformGPUBuffer.setFloat(`quadScale`, Engine3D.setting.render.quadScale);
-        this.uniformGPUBuffer.setFloat(`hdrExposure`, Engine3D.setting.render.hdrExposure);
-        this.uniformGPUBuffer.setInt32(`renderState_left`, Engine3D.setting.render.renderState_left);
-        this.uniformGPUBuffer.setInt32(`renderState_right`, Engine3D.setting.render.renderState_right);
-        this.uniformGPUBuffer.setFloat(`renderState_split`, Engine3D.setting.render.renderState_split);
-        let mouseX = Engine3D.inputSystem.mouseX * webGPUContext.pixelRatio;
-        let mouseY = Engine3D.inputSystem.mouseY * webGPUContext.pixelRatio;
+        this.uniformGPUBuffer.setFloat(`skyExposure`, activeEngine?.setting.sky.skyExposure);
+        this.uniformGPUBuffer.setFloat(`renderPassState`, activeEngine?.setting.render.renderPassState);
+        this.uniformGPUBuffer.setFloat(`quadScale`, activeEngine?.setting.render.quadScale);
+        this.uniformGPUBuffer.setFloat(`hdrExposure`, activeEngine?.setting.render.hdrExposure);
+        this.uniformGPUBuffer.setInt32(`renderState_left`, activeEngine?.setting.render.renderState_left);
+        this.uniformGPUBuffer.setInt32(`renderState_right`, activeEngine?.setting.render.renderState_right);
+        this.uniformGPUBuffer.setFloat(`renderState_split`, activeEngine?.setting.render.renderState_split);
+        let mouseX = activeEngine?.inputSystem.mouseX * webGPUContext.pixelRatio;
+        let mouseY = activeEngine?.inputSystem.mouseY * webGPUContext.pixelRatio;
         this.uniformGPUBuffer.setFloat(`mouseX`, mouseX);
         this.uniformGPUBuffer.setFloat(`mouseY`, mouseY);
         this.uniformGPUBuffer.setFloat(`windowWidth`, webGPUContext.windowWidth);
         this.uniformGPUBuffer.setFloat(`windowHeight`, webGPUContext.windowHeight);
         this.uniformGPUBuffer.setFloat(`near`, camera.near);
         this.uniformGPUBuffer.setFloat(`far`, camera.far);
-        this.uniformGPUBuffer.setFloat(`pointShadowBias`, Engine3D.setting.shadow.pointShadowBias);
+        this.uniformGPUBuffer.setFloat(`pointShadowBias`, activeEngine?.setting.shadow.pointShadowBias);
         this.uniformGPUBuffer.setFloat(`shadowMapSize`, shadowMapSize);
-        this.uniformGPUBuffer.setFloat(`shadowSoft`, Engine3D.setting.shadow.shadowSoft);
+        this.uniformGPUBuffer.setFloat(`shadowSoft`, activeEngine?.setting.shadow.shadowSoft);
         this.uniformGPUBuffer.setFloat(`enableCSM`, camera.enableCSM ? 1 : 0);
-        this.uniformGPUBuffer.setFloat(`csmMargin`, Engine3D.setting.shadow.csmMargin);
+        this.uniformGPUBuffer.setFloat(`csmMargin`, activeEngine?.setting.shadow.csmMargin);
         this.uniformGPUBuffer.setInt32(`nDirShadowStart`, this.dirShadowStart);
         this.uniformGPUBuffer.setInt32(`nDirShadowEnd`, this.dirShadowEnd);
         this.uniformGPUBuffer.setInt32(`nPointShadowStart`, this.pointShadowStart);
@@ -198,18 +198,18 @@ export class GlobalUniformGroup {
         this.uniformGPUBuffer.setFloat32Array(`SH`, camera.sh);
         this.uniformGPUBuffer.setFloat(`time`, Time.time);
         this.uniformGPUBuffer.setFloat(`delta`, Time.delta);
-        this.uniformGPUBuffer.setFloat(`shadowBias`, Engine3D.setting.shadow.shadowBias);
-        this.uniformGPUBuffer.setFloat(`skyExposure`, Engine3D.setting.sky.skyExposure);
-        this.uniformGPUBuffer.setFloat(`renderPassState`, Engine3D.setting.render.renderPassState);
-        this.uniformGPUBuffer.setFloat(`quadScale`, Engine3D.setting.render.quadScale);
-        this.uniformGPUBuffer.setFloat(`hdrExposure`, Engine3D.setting.render.hdrExposure);
+        this.uniformGPUBuffer.setFloat(`shadowBias`, activeEngine?.setting.shadow.shadowBias);
+        this.uniformGPUBuffer.setFloat(`skyExposure`, activeEngine?.setting.sky.skyExposure);
+        this.uniformGPUBuffer.setFloat(`renderPassState`, activeEngine?.setting.render.renderPassState);
+        this.uniformGPUBuffer.setFloat(`quadScale`, activeEngine?.setting.render.quadScale);
+        this.uniformGPUBuffer.setFloat(`hdrExposure`, activeEngine?.setting.render.hdrExposure);
 
-        this.uniformGPUBuffer.setInt32(`renderState_left`, Engine3D.setting.render.renderState_left);
-        this.uniformGPUBuffer.setInt32(`renderState_right`, Engine3D.setting.render.renderState_right);
-        this.uniformGPUBuffer.setFloat(`renderState_split`, Engine3D.setting.render.renderState_split);
+        this.uniformGPUBuffer.setInt32(`renderState_left`, activeEngine?.setting.render.renderState_left);
+        this.uniformGPUBuffer.setInt32(`renderState_right`, activeEngine?.setting.render.renderState_right);
+        this.uniformGPUBuffer.setFloat(`renderState_split`, activeEngine?.setting.render.renderState_split);
 
-        let mouseX = Engine3D.inputSystem.mouseX * webGPUContext.pixelRatio;
-        let mouseY = Engine3D.inputSystem.mouseY * webGPUContext.pixelRatio;
+        let mouseX = activeEngine?.inputSystem.mouseX * webGPUContext.pixelRatio;
+        let mouseY = activeEngine?.inputSystem.mouseY * webGPUContext.pixelRatio;
         this.uniformGPUBuffer.setFloat(`mouseX`, mouseX);
         this.uniformGPUBuffer.setFloat(`mouseY`, mouseY);
         this.uniformGPUBuffer.setFloat(`windowWidth`, webGPUContext.windowWidth);
@@ -217,12 +217,12 @@ export class GlobalUniformGroup {
         this.uniformGPUBuffer.setFloat(`near`, camera.near);
         this.uniformGPUBuffer.setFloat(`far`, camera.far);
 
-        this.uniformGPUBuffer.setFloat(`pointShadowBias`, Engine3D.setting.shadow.pointShadowBias);
-        this.uniformGPUBuffer.setFloat(`shadowMapSize`, Engine3D.setting.shadow.shadowSize);
-        this.uniformGPUBuffer.setFloat(`shadowSoft`, Engine3D.setting.shadow.shadowSoft);
+        this.uniformGPUBuffer.setFloat(`pointShadowBias`, activeEngine?.setting.shadow.pointShadowBias);
+        this.uniformGPUBuffer.setFloat(`shadowMapSize`, activeEngine?.setting.shadow.shadowSize);
+        this.uniformGPUBuffer.setFloat(`shadowSoft`, activeEngine?.setting.shadow.shadowSoft);
         this.uniformGPUBuffer.setFloat(`enableCSM`, 0);
 
-        this.uniformGPUBuffer.setFloat(`csmMargin`, Engine3D.setting.shadow.csmMargin);
+        this.uniformGPUBuffer.setFloat(`csmMargin`, activeEngine?.setting.shadow.csmMargin);
         this.uniformGPUBuffer.setInt32(`nDirShadowStart`, this.dirShadowStart);
         this.uniformGPUBuffer.setInt32(`nDirShadowEnd`, this.dirShadowEnd);
         this.uniformGPUBuffer.setInt32(`nPointShadowStart`, this.pointShadowStart);

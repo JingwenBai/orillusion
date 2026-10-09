@@ -1,4 +1,4 @@
-import { Engine3D } from "../../Engine3D";
+import { activeEngine } from "../../Engine3D";
 import { fonts } from "../../assets/Fonts";
 import { GUISprite } from "../../components/gui/core/GUISprite";
 import { GUITexture } from "../../components/gui/core/GUITexture";
@@ -127,8 +127,8 @@ export class FontParser extends ParserBase {
         let fontData: FontInfo = this.data;
         for (const fontPage of fontData.fontPage) {
             let texturePath = this.baseUrl + fontPage.file;
-            await Engine3D.res.loadTexture(texturePath, null, true);
-            let texture = Engine3D.res.getTexture(texturePath);
+            await activeEngine?.res.loadTexture(texturePath, null, true);
+            let texture = activeEngine?.res.getTexture(texturePath);
             let source: GUITexture = new GUITexture(texture);
             images.push(source);
         }

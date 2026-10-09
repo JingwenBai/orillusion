@@ -2,7 +2,7 @@
 
 //TODO dynamic lights need fixed
 
-import { Engine3D } from "../../../../../../Engine3D";
+import { activeEngine } from "../../../../../../Engine3D";
 import { LightData } from "../../../../../../components/lights/LightData";
 import { View3D } from "../../../../../../core/View3D";
 import { MemoryInfo } from "../../../../../../core/pool/memory/MemoryInfo";
@@ -21,14 +21,14 @@ export class LightEntries {
 
     constructor() {
         this.storageGPUBuffer = new StorageGPUBuffer(
-            LightData.lightSize * Engine3D.setting.light.maxLight,
+            LightData.lightSize * activeEngine?.setting.light.maxLight,
             GPUBufferUsage.COPY_SRC
         );
 
         this.irradianceVolume = new DDGIIrradianceVolume();
-        this.irradianceVolume.init(Engine3D.setting.gi);
+        this.irradianceVolume.init(activeEngine?.setting.gi);
 
-        for (let i = 0; i < Engine3D.setting.light.maxLight; i++) {
+        for (let i = 0; i < activeEngine?.setting.light.maxLight; i++) {
             let memory = this.storageGPUBuffer.memory.allocation_node(LightData.lightSize * 4);
             this._lightList.push(memory);
         }

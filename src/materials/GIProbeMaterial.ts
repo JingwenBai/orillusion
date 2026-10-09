@@ -1,7 +1,7 @@
 import { PassType, Shader } from '..';
 import { GIProbeShader } from '../assets/shader/materials/GIProbeShader';
 import { ShaderLib } from '../assets/shader/ShaderLib';
-import { Engine3D } from '../Engine3D';
+import { activeEngine } from '../Engine3D';
 import { RenderShaderPass } from '../gfx/graphics/webGpu/shader/RenderShaderPass';
 import { Vector4 } from '../math/Vector4';
 import { Material } from './Material';
@@ -40,9 +40,9 @@ export class GIProbeMaterial extends Material {
         shaderState.acceptGI = false;
         shaderState.useLight = false;
 
-        newShader.setTexture("baseMap", Engine3D.res.whiteTexture);
-        newShader.setTexture("normalMap", Engine3D.res.normalTexture);
-        newShader.setTexture("emissiveMap", Engine3D.res.blackTexture);
+        newShader.setTexture("baseMap", activeEngine?.res.whiteTexture);
+        newShader.setTexture("normalMap", activeEngine?.res.normalTexture);
+        newShader.setTexture("emissiveMap", activeEngine?.res.blackTexture);
 
         this.shader = newShader;
     }

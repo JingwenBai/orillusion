@@ -3,7 +3,7 @@
 //TODO dynamic lights need fixed
 
 import { GPUContext } from "../../../../../..";
-import { Engine3D } from "../../../../../../Engine3D";
+import { activeEngine } from "../../../../../../Engine3D";
 import { View3D } from "../../../../../../core/View3D";
 import { RenderTexture } from "../../../../../../textures/RenderTexture";
 import { EntityCollect } from "../../../../../renderJob/collect/EntityCollect";

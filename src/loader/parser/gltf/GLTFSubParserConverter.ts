@@ -1,5 +1,5 @@
 import { AnimatorComponent, BlendShapeData, BlendShapePropertyData, GLTFMaterial, LitMaterial, Material, Matrix4, PropertyAnimationClip, SkinnedMeshRenderer2 } from "../../..";
-import { Engine3D } from "../../../Engine3D";
+import { activeEngine } from "../../../Engine3D";
 import { DirectLight } from "../../../components/lights/DirectLight";
 import { PointLight } from "../../../components/lights/PointLight";
 import { SpotLight } from "../../../components/lights/SpotLight";
@@ -88,7 +88,7 @@ export class GLTFSubParserConverter {
 
     private convertSkeletonAnim(node: Object3D, skeletonInfo: any) {
         let avatarData = this.subParser.parseSkeleton(skeletonInfo.skeleton);
-        Engine3D.res.addObj(avatarData.name, avatarData);
+        activeEngine?.res.addObj(avatarData.name, avatarData);
 
         let clips: PropertyAnimationClip[] = [];
         for (let i = 0; i < this.gltf.animations.length; i++) {
@@ -266,7 +266,7 @@ export class GLTFSubParserConverter {
 
                     if (emissiveFactor && (emissiveFactor[0] > 0 || emissiveFactor[1] > 0 || emissiveFactor[2] > 0)) {
                         if (!physicMaterial.shader.getTexture("emissiveMap")) {
-                            physicMaterial.shader.setTexture("emissiveMap", Engine3D.res.whiteTexture);
+                            physicMaterial.shader.setTexture("emissiveMap", activeEngine?.res.whiteTexture);
                         }
                         physicMaterial.shader.setDefine('USE_EMISSIVEMAP', true);
                         physicMaterial.setUniformColor("emissiveColor", new Color(emissiveFactor[0], emissiveFactor[1], emissiveFactor[2], emissiveFactor[3]));

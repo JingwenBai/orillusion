@@ -1,5 +1,5 @@
 import { ShaderLib } from '../../../assets/shader/ShaderLib';
-import { Engine3D } from '../../../Engine3D';
+import { activeEngine } from '../../../Engine3D';
 import { Vector2 } from '../../../math/Vector2';
 import { GPUTextureFormat } from '../../graphics/webGpu/WebGPUConst';
 import { webGPUContext } from '../../graphics/webGpu/Context3D';
@@ -39,13 +39,13 @@ export class FXAAPost extends PostBase {
      * @internal
      */
     onAttach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.fxaa.enable = true;
+        activeEngine?.setting.render.postProcessing.fxaa.enable = true;
     }
 
     /**
      * @internal
      */
     onDetach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.fxaa.enable = false;
+        activeEngine?.setting.render.postProcessing.fxaa.enable = false;
     }
 }

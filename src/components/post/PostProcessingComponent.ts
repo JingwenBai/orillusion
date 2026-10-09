@@ -1,5 +1,5 @@
 import { FXAAPost, webGPUContext } from "../..";
-import { Engine3D } from "../../Engine3D";
+import { activeEngine } from "../../Engine3D";
 import { PostBase } from "../../gfx/renderJob/post/PostBase";
 import { Ctor } from "../../util/Global";
 import { ComponentBase } from "../ComponentBase";
@@ -30,7 +30,7 @@ export class PostProcessingComponent extends ComponentBase {
 
     private activePost() {
         let view = this.transform.view3D;
-        let job = Engine3D.getRenderJob(view);
+        let job = activeEngine?.getRenderJob(view);
         this._postList.forEach((v) => {
             job.addPost(v);
         });
@@ -38,7 +38,7 @@ export class PostProcessingComponent extends ComponentBase {
 
     private unActivePost() {
         let view = this.transform.view3D;
-        let job = Engine3D.getRenderJob(view);
+        let job = activeEngine?.getRenderJob(view);
         this._postList.forEach((v) => {
             job.removePost(v);
         });
@@ -59,7 +59,7 @@ export class PostProcessingComponent extends ComponentBase {
         this._postList.delete(c);
 
         let view = this.transform.view3D;
-        let job = Engine3D.getRenderJob(view);
+        let job = activeEngine?.getRenderJob(view);
         job.removePost(post);
     }
 

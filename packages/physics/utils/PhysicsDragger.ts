@@ -1,4 +1,4 @@
-import { Engine3D, View3D, PointerEvent3D, Vector3 } from "@orillusion/core";
+import { activeEngine, View3D, PointerEvent3D, Vector3 } from "@orillusion/core";
 import { Ammo, Physics } from "../Physics";
 import { TempPhyMath } from "./TempPhyMath";
 import { CollisionFlags } from "../rigidbody/RigidbodyEnum";
@@ -64,7 +64,7 @@ export class PhysicsDragger {
 
     private tryRegisterEvents() {
         const intervalId = setInterval(() => {
-            if (Engine3D.inputSystem) {
+            if (activeEngine?.inputSystem) {
                 this.registerEvents();
                 clearInterval(intervalId);
             }
@@ -72,18 +72,18 @@ export class PhysicsDragger {
     }
 
     private registerEvents() {
-        this._view = Engine3D.views[0];
-        Engine3D.inputSystem?.addEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
-        Engine3D.inputSystem?.addEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this, null, 20);
-        Engine3D.inputSystem?.addEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this, null, 20);
-        Engine3D.inputSystem?.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this, null, 20);
+        this._view = activeEngine?.views[0];
+        activeEngine?.inputSystem?.addEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
+        activeEngine?.inputSystem?.addEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this, null, 20);
+        activeEngine?.inputSystem?.addEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this, null, 20);
+        activeEngine?.inputSystem?.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this, null, 20);
     }
 
     private unregisterEvents() {
-        Engine3D.inputSystem?.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
-        Engine3D.inputSystem?.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this);
-        Engine3D.inputSystem?.removeEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this);
-        Engine3D.inputSystem?.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this);
+        activeEngine?.inputSystem?.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
+        activeEngine?.inputSystem?.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this);
+        activeEngine?.inputSystem?.removeEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this);
+        activeEngine?.inputSystem?.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this);
         
         this.resetState();
         this._view = null;
@@ -168,7 +168,7 @@ export class PhysicsDragger {
 
     // 更新刚体位置
     private updateRigidBody() {
-        let pos = this._view.camera.screenPointToWorld(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY, this._interactionDepth);
+        let pos = this._view.camera.screenPointToWorld(activeEngine?.inputSystem.mouseX, activeEngine?.inputSystem.mouseY, this._interactionDepth);
 
         // 结合偏移量的新位置
         let newPos = pos.add(this._offset, pos);

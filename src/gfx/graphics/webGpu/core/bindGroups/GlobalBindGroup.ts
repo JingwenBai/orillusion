@@ -14,13 +14,37 @@ export class GlobalBindGroup {
     private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
     private static _lightEntriesMap: Map<Scene3D, LightEntries>;
     private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
-    public static modelMatrixBindGroup: MatrixBindGroup;
 
-    public static init() {
-        this.modelMatrixBindGroup = new MatrixBindGroup();
-        this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
-        this._lightEntriesMap = new Map<Scene3D, LightEntries>();
-        this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+    /** The model-matrix bind group for the currently active engine. */
+    private static _activeModelMatrix: MatrixBindGroup;
+
+    /** @deprecated Use Engine3D.modelMatrixBindGroup; access via GlobalBindGroup.modelMatrixBindGroup for the active engine. */
+    public static get modelMatrixBindGroup(): MatrixBindGroup {
+        return GlobalBindGroup._activeModelMatrix;
+    }
+
+    /**
+     * Switch to the given engine's model-matrix bind group.
+     * Called by Engine3D.activateForRender().
+     */
+    public static activateModelMatrix(mbg: MatrixBindGroup): void {
+        GlobalBindGroup._activeModelMatrix = mbg;
+    }
+
+    /**
+     * Initialize shared per-scene/camera maps (guarded — safe to call multiple times)
+     * and create a fresh per-engine MatrixBindGroup.
+     * Returns the new MatrixBindGroup so Engine3D can store it.
+     */
+    public static init(): MatrixBindGroup {
+        if (!this._cameraBindGroups) {
+            this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
+            this._lightEntriesMap = new Map<Scene3D, LightEntries>();
+            this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
+        }
+        const mbg = new MatrixBindGroup();
+        GlobalBindGroup._activeModelMatrix = mbg;
+        return mbg;
     }
 
     public static getAllCameraGroup() {
@@ -79,7 +103,4 @@ export class GlobalBindGroup {
         }
         return this._reflectionEntriesMap.get(scene);
     }
-
-
-
 }

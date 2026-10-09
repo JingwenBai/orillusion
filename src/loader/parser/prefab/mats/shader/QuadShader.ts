@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../../../Engine3D";
+import { activeEngine } from "../../../../../Engine3D";
 import { GPUCompareFunction, GPUCullMode } from "../../../../../gfx/graphics/webGpu/WebGPUConst";
 import { Texture } from "../../../../../gfx/graphics/webGpu/core/texture/Texture";
 import { RenderShaderPass } from "../../../../../gfx/graphics/webGpu/shader/RenderShaderPass";
@@ -25,7 +25,7 @@ export class QuadShader extends Shader {
         shaderState.depthCompare = GPUCompareFunction.always;
         shaderState.multisample = 0;
 
-        this.setTexture("baseMap", Engine3D.res.blackTexture);
+        this.setTexture("baseMap", activeEngine?.res.blackTexture);
         this.setUniformFloat(`x`, 0);
         this.setUniformFloat(`y`, 0);
         this.setUniformFloat(`width`, 100);

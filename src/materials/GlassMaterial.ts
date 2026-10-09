@@ -1,5 +1,5 @@
 import { ShaderLib } from '../assets/shader/ShaderLib';
-import { Engine3D } from '../Engine3D';
+import { activeEngine } from '../Engine3D';
 import { GlassShader } from '../assets/shader/materials/GlassShader';
 import { Material } from './Material';
 import { Shader } from '../gfx/graphics/webGpu/shader/Shader';
@@ -34,9 +34,9 @@ export class GlassMaterial extends Material {
         shaderState.acceptGI = true;
         shaderState.useLight = true;
 
-        this.shader.setTexture("baseMap", Engine3D.res.whiteTexture);
-        this.shader.setTexture("normalMap", Engine3D.res.normalTexture);
-        this.shader.setTexture("emissiveMap", Engine3D.res.blackTexture);
+        this.shader.setTexture("baseMap", activeEngine?.res.whiteTexture);
+        this.shader.setTexture("normalMap", activeEngine?.res.normalTexture);
+        this.shader.setTexture("emissiveMap", activeEngine?.res.blackTexture);
     }
 
     // clone(): this {

@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../../Engine3D";
+import { activeEngine } from "../../../../Engine3D";
 import { Camera3D } from "../../../../core/Camera3D";
 
 import { RenderTexture } from "../../../../textures/RenderTexture";
@@ -33,9 +33,9 @@ export class RendererPassState {
 
     getLastRenderTexture() {
         if (this.renderTargets) {
-            return this.renderTargets.length > 0 ? this.renderTargets[0] : Engine3D.res.redTexture;
+            return this.renderTargets.length > 0 ? this.renderTargets[0] : activeEngine?.res.redTexture;
         } else {
-            return Engine3D.res.redTexture
+            return activeEngine?.res.redTexture
         }
     }
 }

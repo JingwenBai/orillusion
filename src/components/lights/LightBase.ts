@@ -9,7 +9,7 @@ import { LightData } from './LightData';
 import { ShadowLightsCollect } from '../../gfx/renderJob/collect/ShadowLightsCollect';
 import { IESProfiles } from './IESProfiles';
 import { ILight } from './ILight';
-import { Engine3D } from '../../Engine3D';
+import { activeEngine } from '../../Engine3D';
 
 /**
  * @internal
@@ -76,10 +76,10 @@ export class LightBase extends ComponentBase implements ILight {
             ShadowLightsCollect.removeShadowLight(this);
         }
 
-        if (this.transform.view3D && Engine3D.renderJobs) {
-            let renderer = Engine3D.renderJobs.get(this.transform.view3D).reflectionRenderer;
+        if (this.transform.view3D && activeEngine?.renderJobs) {
+            let renderer = activeEngine?.renderJobs.get(this.transform.view3D).reflectionRenderer;
             if (renderer)
-                Engine3D.renderJobs.get(this.transform.view3D).reflectionRenderer.forceUpdate();
+                activeEngine?.renderJobs.get(this.transform.view3D).reflectionRenderer.forceUpdate();
         }
     }
 

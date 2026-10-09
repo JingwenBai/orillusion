@@ -1,4 +1,4 @@
-import { Engine3D } from '../Engine3D';
+import { activeEngine } from '../Engine3D';
 import { BitmapTexture2D } from '../textures/BitmapTexture2D';
 import { StringUtil } from '../util/StringUtil';
 import { LoaderFunctions } from './LoaderFunctions';
@@ -56,7 +56,7 @@ export class LoaderBase {
         bitmapTexture.url = url;
         bitmapTexture.name = StringUtil.getURLName(url);
         await bitmapTexture.load(url, loaderFunctions);
-        Engine3D.res.addTexture(url, bitmapTexture);
+        activeEngine?.res.addTexture(url, bitmapTexture);
         return bitmapTexture;
     }
 

@@ -1,4 +1,4 @@
-import { Engine3D } from "../Engine3D";
+import { activeEngine } from "../Engine3D";
 import { Color } from "../math/Color";
 
 export class OutlinePostSlot {
@@ -17,7 +17,7 @@ export class OutlinePostData {
     private dataDirty: boolean = true;
 
     constructor() {
-        let groupCount = Engine3D.setting.render.postProcessing.outline.groupCount;
+        let groupCount = activeEngine?.setting.render.postProcessing.outline.groupCount;
         this.SlotCount = Math.max(1, Math.min(groupCount, this.SlotCount));
         for (let i = 0; i < this.SlotCount; i++) {
             let slot: OutlinePostSlot = (this.slots[i] = new OutlinePostSlot());

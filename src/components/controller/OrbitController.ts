@@ -1,4 +1,4 @@
-import { Engine3D } from '../../Engine3D';
+import { activeEngine } from '../../Engine3D';
 import { Camera3D } from '../../core/Camera3D';
 import { ComponentBase } from '../ComponentBase';
 import { Vector3 } from '../../math/Vector3';
@@ -281,19 +281,19 @@ export class OrbitController extends ComponentBase {
      * @internal
      */
     private addEventListener() {
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
     }
     /**
      * @internal
      */
     private removeEventListener() {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
+        activeEngine?.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
+        activeEngine?.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
+        activeEngine?.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
+        activeEngine?.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
     }
 }
 

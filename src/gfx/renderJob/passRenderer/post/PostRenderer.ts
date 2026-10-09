@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../../Engine3D";
+import { activeEngine } from "../../../../Engine3D";
 import { ShaderLib } from "../../../../assets/shader/ShaderLib";
 import { FullQuad_vert_wgsl } from "../../../../assets/shader/quad/Quad_shader";
 import { View3D } from "../../../../core/View3D";

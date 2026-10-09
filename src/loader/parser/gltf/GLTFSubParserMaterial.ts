@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../Engine3D";
+import { activeEngine } from "../../../Engine3D";
 import { Vector4 } from "../../../math/Vector4";
 import { GLTF_Info } from "./GLTFInfo";
 import { GLTFMaterial } from "./GLTFMaterial";
@@ -84,7 +84,7 @@ export class GLTFSubParserMaterial {
                 if (texture) {
                     dmaterial.baseColorTexture = texture;
                 } else {
-                    dmaterial.baseColorTexture = Engine3D.res.redTexture;
+                    dmaterial.baseColorTexture = activeEngine?.res.redTexture;
                 }
             }
 
@@ -107,7 +107,7 @@ export class GLTFSubParserMaterial {
                 if (texture) {
                     dmaterial.normalTexture = texture;
                 } else {
-                    dmaterial.normalTexture = Engine3D.res.normalTexture;
+                    dmaterial.normalTexture = activeEngine?.res.normalTexture;
                 }
             }
 
@@ -130,7 +130,7 @@ export class GLTFSubParserMaterial {
                 if (texture) {
                     dmaterial.metallicRoughnessTexture = texture;
                 } else {
-                    dmaterial.metallicRoughnessTexture = Engine3D.res.blackTexture;
+                    dmaterial.metallicRoughnessTexture = activeEngine?.res.blackTexture;
                 }
             }
         } else {
@@ -162,7 +162,7 @@ export class GLTFSubParserMaterial {
             if (texture) {
                 dmaterial.normalTexture = texture;
             } else {
-                dmaterial.normalTexture = Engine3D.res.normalTexture;
+                dmaterial.normalTexture = activeEngine?.res.normalTexture;
             }
         }
 
@@ -182,7 +182,7 @@ export class GLTFSubParserMaterial {
             if (texture) {
                 dmaterial.emissiveTexture = texture;
             } else {
-                dmaterial.emissiveTexture = Engine3D.res.blackTexture;
+                dmaterial.emissiveTexture = activeEngine?.res.blackTexture;
             }
         }
 

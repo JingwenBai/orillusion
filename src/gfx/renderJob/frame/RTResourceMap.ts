@@ -4,18 +4,47 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+
 /**
+ * Per-engine render-texture and view-quad storage.
+ * @internal
+ */
+export class RTResourceMapData {
+    rtTextureMap: Map<string, RenderTexture> = new Map();
+    rtViewQuad: Map<string, ViewQuad> = new Map();
+}
+
+/**
+ * Static facade over the active engine's RTResourceMapData.
+ * Call RTResourceMap.activate(data) to switch to a different engine's resources.
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    private static _activeData: RTResourceMapData = new RTResourceMapData();
 
+    /** Switch to the given engine's resource data. Called by Engine3D.activateForRender(). */
+    public static activate(data: RTResourceMapData): void {
+        RTResourceMap._activeData = data;
+    }
+
+    /** Create a fresh RTResourceMapData for a new engine instance. */
+    public static createData(): RTResourceMapData {
+        return new RTResourceMapData();
+    }
+
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return RTResourceMap._activeData.rtTextureMap;
+    }
+
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return RTResourceMap._activeData.rtViewQuad;
+    }
+
+    /** Re-initialize the active engine's resource maps (clears existing data). */
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        RTResourceMap._activeData = new RTResourceMapData();
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {

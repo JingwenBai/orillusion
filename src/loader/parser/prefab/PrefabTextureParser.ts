@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../Engine3D";
+import { activeEngine } from "../../../Engine3D";
 import { BitmapTexture2D } from "../../../textures/BitmapTexture2D";
 import { BytesArray } from "../../../util/BytesArray";
 import { LoaderFunctions } from "../../LoaderFunctions";
@@ -26,9 +26,9 @@ export class PrefabTextureParser extends ParserBase {
 
         }
 
-        let textureList = await Engine3D.res.loadBitmapTextures(textures, Engine3D.setting.loader.numConcurrent, loaderFunctions, true);
+        let textureList = await activeEngine?.res.loadBitmapTextures(textures, activeEngine?.setting.loader.numConcurrent, loaderFunctions, true);
         for (const tex of textureList) {
-            Engine3D.res.addTexture(tex.name, tex);
+            activeEngine?.res.addTexture(tex.name, tex);
         }
     }
 

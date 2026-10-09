@@ -7,12 +7,35 @@ import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
 
+/**
+ * Per-engine GBuffer frame storage.
+ * @internal
+ */
+export class GBufferFrameData {
+    gBufferMap: Map<string, GBufferFrame> = new Map();
+}
+
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    private static _activeData: GBufferFrameData = new GBufferFrameData();
+
+    /** Switch to the given engine's GBuffer data. Called by Engine3D.activateForRender(). */
+    public static activate(data: GBufferFrameData): void {
+        GBufferFrame._activeData = data;
+    }
+
+    /** Create a fresh GBufferFrameData for a new engine instance. */
+    public static createData(): GBufferFrameData {
+        return new GBufferFrameData();
+    }
+
+    /** The active engine's GBuffer map (replaces the old static gBufferMap). */
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        return GBufferFrame._activeData.gBufferMap;
+    }
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -72,7 +95,6 @@ export class GBufferFrame extends RTFrame {
         if (!GBufferFrame.gBufferMap.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,

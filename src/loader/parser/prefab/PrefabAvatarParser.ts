@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../Engine3D";
+import { activeEngine } from "../../../Engine3D";
 import { GeometryBase, LODDescriptor } from "../../../core/geometry/GeometryBase";
 import { GeometryVertexType } from "../../../core/geometry/GeometryVertexType";
 import { VertexAttributeName } from "../../../core/geometry/VertexAttributeName";
@@ -16,7 +16,7 @@ export class PrefabAvatarParser extends ParserBase {
         for (let j = 0; j < avatarCount; j++) {
             let prefabAvatarData = new PrefabAvatarData();
             prefabAvatarData.formBytes(bytesStream.readBytesArray());
-            Engine3D.res.addObj(prefabAvatarData.name, prefabAvatarData);
+            activeEngine?.res.addObj(prefabAvatarData.name, prefabAvatarData);
         }
     }
 

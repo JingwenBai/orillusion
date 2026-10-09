@@ -1,6 +1,6 @@
 import { GUIAtlasTexture } from "../../components/gui/core/GUIAtlasTexture";
 import { GUITexture } from "../../components/gui/core/GUITexture";
-import { Engine3D } from "../../Engine3D";
+import { activeEngine } from "../../Engine3D";
 import { Texture } from "../../gfx/graphics/webGpu/core/texture/Texture";
 import { ParserBase } from "../../loader/parser/ParserBase";
 import { ParserFormat } from "./ParserFormat";
@@ -14,7 +14,7 @@ export class AtlasParser extends ParserBase {
     public async parseString(data: string) {
         this._json = JSON.parse(data);
         let textureUrl = this.userData.replace('.json', '.png');
-        this._texture = await Engine3D.res.loadTexture(textureUrl, null, true);
+        this._texture = await activeEngine?.res.loadTexture(textureUrl, null, true);
 
         this.data = { json: this._json, texture: this._texture };
         this.parseAtlas();
@@ -40,7 +40,7 @@ export class AtlasParser extends ParserBase {
         for (const key in atlasInfo) {
             atlas.setTexture(texture, key, atlasInfo[key]);
         }
-        Engine3D.res.addAtlas(this.baseUrl, atlas);
+        activeEngine?.res.addAtlas(this.baseUrl, atlas);
         this.data = atlas;
     }
 }

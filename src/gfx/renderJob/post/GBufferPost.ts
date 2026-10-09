@@ -9,7 +9,7 @@ import { webGPUContext } from '../../graphics/webGpu/Context3D';
 import { GPUContext } from '../GPUContext';
 import { RendererPassState } from '../passRenderer/state/RendererPassState';
 import { PostBase } from './PostBase';
-import { Engine3D } from '../../../Engine3D';
+import { activeEngine } from '../../../Engine3D';
 import { Time } from '../../../util/Time';
 import { clamp } from '../../../math/MathUtil';
 import { View3D } from '../../../core/View3D';
@@ -29,7 +29,7 @@ import { Combine_cs, TestComputeLoadBuffer, Vector3, mergeFunctions } from '../.
  * Let the intersection of the object and the object imitate the effect of the light being cross-occluded
  * ```
  * gtao setting
- * let cfg = {@link Engine3D.setting.render.postProcessing.gtao};
+ * let cfg = {@link activeEngine?.setting.render.postProcessing.gtao};
  *```
  * @group Post Effects
  */
@@ -67,7 +67,7 @@ export class GBufferPost extends PostBase {
      * @internal
      */Render
     onDetach(view: View3D,) {
-        // Engine3D.setting.render.useCompressGBuffer = false;
+        // activeEngine?.setting.render.useCompressGBuffer = false;
     }
 
     /**
@@ -130,11 +130,11 @@ export class GBufferPost extends PostBase {
         let rtFrame = GBufferFrame.getGBufferFrame("ColorPassGBuffer");
         let gBufferTexture = rtFrame.getCompressGBufferTexture();
 
-        let reflectionSetting = Engine3D.setting.reflectionSetting;
+        let reflectionSetting = activeEngine?.setting.reflectionSetting;
         let reflectionsGBufferFrame = GBufferFrame.getGBufferFrame(GBufferFrame.reflections_GBuffer, reflectionSetting.width, reflectionSetting.height);
         let reflectionsGBufferTexture = reflectionsGBufferFrame.getCompressGBufferTexture();
 
-        let envMap = Engine3D.renderJobs.get(this.view).reflectionRenderer.outTexture;
+        let envMap = activeEngine?.renderJobs.get(this.view).reflectionRenderer.outTexture;
 
         this.testCompute = new ComputeShader(TestComputeLoadBuffer);
         this.testCompute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);

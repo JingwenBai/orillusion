@@ -9,7 +9,7 @@ import { webGPUContext } from '../../graphics/webGpu/Context3D';
 import { GPUContext } from '../GPUContext';
 import { RendererPassState } from '../passRenderer/state/RendererPassState';
 import { PostBase } from './PostBase';
-import { Engine3D } from '../../../Engine3D';
+import { activeEngine } from '../../../Engine3D';
 import { View3D } from '../../../core/View3D';
 import { RTDescriptor } from '../../graphics/webGpu/descriptor/RTDescriptor';
 import { GBufferFrame } from '../frame/GBufferFrame';
@@ -50,43 +50,43 @@ export class GodRayPost extends PostBase {
      * @internal
      */
     onAttach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.godRay.enable = true;
+        activeEngine?.setting.render.postProcessing.godRay.enable = true;
         this.createGUI();
     }
     /**
      * @internal
      */Render
     onDetach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.godRay.enable = false;
+        activeEngine?.setting.render.postProcessing.godRay.enable = false;
         this.removeGUI();
     }
 
     public get blendColor(): boolean {
-        return Engine3D.setting.render.postProcessing.godRay.blendColor;
+        return activeEngine?.setting.render.postProcessing.godRay.blendColor;
     }
     public set blendColor(value: boolean) {
-        Engine3D.setting.render.postProcessing.godRay.blendColor = value;
+        activeEngine?.setting.render.postProcessing.godRay.blendColor = value;
     }
     public get rayMarchCount(): number {
-        return Engine3D.setting.render.postProcessing.godRay.rayMarchCount;
+        return activeEngine?.setting.render.postProcessing.godRay.rayMarchCount;
     }
     public set rayMarchCount(value: number) {
         value = clamp(value, 8, 20);
-        Engine3D.setting.render.postProcessing.godRay.rayMarchCount = value;
+        activeEngine?.setting.render.postProcessing.godRay.rayMarchCount = value;
     }
     public get scatteringExponent(): number {
-        return Engine3D.setting.render.postProcessing.godRay.scatteringExponent;
+        return activeEngine?.setting.render.postProcessing.godRay.scatteringExponent;
     }
     public set scatteringExponent(value: number) {
         value = clamp(value, 1, 40);
-        Engine3D.setting.render.postProcessing.godRay.scatteringExponent = value;
+        activeEngine?.setting.render.postProcessing.godRay.scatteringExponent = value;
     }
     public get intensity(): number {
-        return Engine3D.setting.render.postProcessing.godRay.intensity;
+        return activeEngine?.setting.render.postProcessing.godRay.intensity;
     }
     public set intensity(value: number) {
         value = clamp(value, 0.01, 5);
-        Engine3D.setting.render.postProcessing.godRay.intensity = value;
+        activeEngine?.setting.render.postProcessing.godRay.intensity = value;
     }
 
     private createGUI() {
@@ -111,7 +111,7 @@ export class GodRayPost extends PostBase {
         this.autoSetColorTexture('inTex', this.godRayCompute);
         this.godRayCompute.setStorageTexture(`outTex`, this.godRayTexture);
 
-        let shadowRenderer = Engine3D.getRenderJob(view).shadowMapPassRenderer;
+        let shadowRenderer = activeEngine?.getRenderJob(view).shadowMapPassRenderer;
         this.godRayCompute.setSamplerTexture(`shadowMap`, shadowRenderer.depth2DArrayTexture);
 
         this.godRaySetting = godRaySetting;
@@ -160,7 +160,7 @@ export class GodRayPost extends PostBase {
             this.godRayCompute.setUniformBuffer('globalUniform', globalUniform.uniformGPUBuffer);
         }
 
-        let setting = Engine3D.setting.render.postProcessing.godRay;
+        let setting = activeEngine?.setting.render.postProcessing.godRay;
 
         this.godRaySetting.setFloat('intensity', setting.intensity);
         this.godRaySetting.setFloat('rayMarchCount', setting.rayMarchCount);

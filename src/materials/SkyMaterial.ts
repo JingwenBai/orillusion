@@ -1,4 +1,4 @@
-import { Engine3D } from "../Engine3D";
+import { activeEngine } from "../Engine3D";
 import { Texture } from "../gfx/graphics/webGpu/core/texture/Texture";
 import { PassType } from "../gfx/renderJob/passRenderer/state/PassType";
 import { SkyShader } from "../loader/parser/prefab/mats/shader/SkyShader";
@@ -49,10 +49,10 @@ export class SkyMaterial extends Material {
     }
 
     public get exposure() {
-        return Engine3D.setting.sky.skyExposure;
+        return activeEngine?.setting.sky.skyExposure;
     }
     public set exposure(value: number) {
-        Engine3D.setting.sky.skyExposure = value;
+        activeEngine?.setting.sky.skyExposure = value;
     }
 
     public get roughness() {

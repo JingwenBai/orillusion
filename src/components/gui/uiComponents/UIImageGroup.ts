@@ -3,7 +3,7 @@ import { Color } from '../../../math/Color';
 import { GUIQuad } from '../core/GUIQuad';
 import { GUISprite } from '../core/GUISprite';
 import { ImageType } from '../GUIConfig';
-import { Engine3D } from '../../../Engine3D';
+import { activeEngine } from '../../../Engine3D';
 import { UIRenderAble } from './UIRenderAble';
 import { Vector2 } from '../../../math/Vector2';
 
@@ -46,7 +46,7 @@ export class UIImageGroup extends UIRenderAble {
     }
 
     public setSprite(index: number, value: GUISprite) {
-        this._mainQuads[index].sprite = value || Engine3D.res.defaultGUISprite;
+        this._mainQuads[index].sprite = value || activeEngine?.res.defaultGUISprite;
         this.setShadowDirty();
     }
 

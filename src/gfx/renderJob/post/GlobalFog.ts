@@ -1,6 +1,6 @@
 import { GlobalFog_shader } from '../../../assets/shader/post/GlobalFog_shader';
 import { ShaderLib } from '../../../assets/shader/ShaderLib';
-import { Engine3D } from '../../../Engine3D';
+import { activeEngine } from '../../../Engine3D';
 import { Color } from '../../../math/Color';
 import { VirtualTexture } from '../../../textures/VirtualTexture';
 import { GPUTextureFormat } from '../../graphics/webGpu/WebGPUConst';
@@ -36,7 +36,7 @@ export class GlobalFog extends PostBase {
 
     constructor() {
         super();
-        this.fogSetting = Engine3D.setting.render.postProcessing.globalFog;
+        this.fogSetting = activeEngine?.setting.render.postProcessing.globalFog;
     }
 
     private createCompute(view: View3D) {
@@ -103,13 +103,13 @@ export class GlobalFog extends PostBase {
      * @internal
      */
     public onAttach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.globalFog.enable = true;
+        activeEngine?.setting.render.postProcessing.globalFog.enable = true;
     }
     /**
      * @internal
      */
     public onDetach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.globalFog.enable = false;
+        activeEngine?.setting.render.postProcessing.globalFog.enable = false;
     }
 
     public set fogType(v: number) {
@@ -217,7 +217,7 @@ export class GlobalFog extends PostBase {
 
     private _lastSkyTexture: Texture;
     private getSkyTexture(): Texture {
-        let texture = Engine3D.res.defaultSky as Texture;
+        let texture = activeEngine?.res.defaultSky as Texture;
         if (EntityCollect.instance.sky instanceof SkyRenderer) {
             texture = EntityCollect.instance.sky.map;
         }

@@ -8,7 +8,7 @@ import { webGPUContext } from '../../graphics/webGpu/Context3D';
 import { GPUContext } from '../GPUContext';
 import { RendererPassState } from '../passRenderer/state/RendererPassState';
 import { PostBase } from './PostBase';
-import { Engine3D } from '../../../Engine3D';
+import { activeEngine } from '../../../Engine3D';
 import { clamp } from '../../../math/MathUtil';
 import { Vector2 } from '../../../math/Vector2';
 import { RTDescriptor } from '../../graphics/webGpu/descriptor/RTDescriptor';
@@ -27,7 +27,7 @@ import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBin
  * OutlinePostManager,
  * ```
  *  setting
- *  let cfg = {@link Engine3D.setting.render.postProcessing.outline};
+ *  let cfg = {@link activeEngine?.setting.render.postProcessing.outline};
  *  let view = new View3D();
  *  view.scene = this.scene;
  *  view.camera = mainCamera;
@@ -107,30 +107,30 @@ export class OutlinePost extends PostBase {
      */
     onAttach(view: View3D,) {
         this.view = view;
-        Engine3D.setting.render.postProcessing.outline.enable = true;
+        activeEngine?.setting.render.postProcessing.outline.enable = true;
     }
 
     /**
      * @internal
      */
     onDetach(view: View3D,) {
-        Engine3D.setting.render.postProcessing.outline.enable = false;
+        activeEngine?.setting.render.postProcessing.outline.enable = false;
     }
 
     public set outlinePixel(value: number) {
         value = clamp(value, 0, 8);
-        let cfg = Engine3D.setting.render.postProcessing.outline;
+        let cfg = activeEngine?.setting.render.postProcessing.outline;
         if (cfg.outlinePixel != value) {
             cfg.outlinePixel = value;
         }
     }
 
     public get outlinePixel() {
-        return Engine3D.setting.render.postProcessing.outline.outlinePixel;
+        return activeEngine?.setting.render.postProcessing.outline.outlinePixel;
     }
 
     public set fadeOutlinePixel(value: number) {
-        let cfg = Engine3D.setting.render.postProcessing.outline;
+        let cfg = activeEngine?.setting.render.postProcessing.outline;
         value = clamp(value, 0, 8);
         if (cfg.fadeOutlinePixel != value) {
             cfg.fadeOutlinePixel = value;
@@ -138,27 +138,27 @@ export class OutlinePost extends PostBase {
     }
 
     public get fadeOutlinePixel() {
-        return Engine3D.setting.render.postProcessing.outline.fadeOutlinePixel;
+        return activeEngine?.setting.render.postProcessing.outline.fadeOutlinePixel;
     }
 
     public set strength(value: number) {
         value = clamp(value, 0, 1);
-        let cfg = Engine3D.setting.render.postProcessing.outline;
+        let cfg = activeEngine?.setting.render.postProcessing.outline;
         if (cfg.strength != value) {
             cfg.strength = value;
         }
     }
 
     public get strength() {
-        return Engine3D.setting.render.postProcessing.outline.strength;
+        return activeEngine?.setting.render.postProcessing.outline.strength;
     }
 
     public set useAddMode(value: boolean) {
-        Engine3D.setting.render.postProcessing.outline.useAddMode = value;
+        activeEngine?.setting.render.postProcessing.outline.useAddMode = value;
     }
 
     public get useAddMode() {
-        return Engine3D.setting.render.postProcessing.outline.useAddMode;
+        return activeEngine?.setting.render.postProcessing.outline.useAddMode;
     }
 
     private createGUI() {
@@ -210,7 +210,7 @@ export class OutlinePost extends PostBase {
         let presentationSize = webGPUContext.presentationSize;
         let w = presentationSize[0];
         let h = presentationSize[1];
-        let textureScale = Engine3D.setting.render.postProcessing.outline.textureScale;
+        let textureScale = activeEngine?.setting.render.postProcessing.outline.textureScale;
         this.lowTexSize = new Vector2(Math.ceil(w * textureScale), Math.ceil(h * textureScale));
 
         this.lowTex = new VirtualTexture(this.lowTexSize.x, this.lowTexSize.y, GPUTextureFormat.rgba16float, false, GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.COPY_DST | GPUTextureUsage.COPY_SRC | GPUTextureUsage.TEXTURE_BINDING);
@@ -282,7 +282,7 @@ export class OutlinePost extends PostBase {
             this.rendererPassState = WebGPUDescriptorCreator.createRendererPassState(this.rtFrame, null);
         }
         this.computeList ||= [this.calcWeightCompute, this.outlineCompute, this.blendCompute];
-        let cfg = Engine3D.setting.render.postProcessing.outline;
+        let cfg = activeEngine?.setting.render.postProcessing.outline;
         this.outlineSetting.setFloat('strength', cfg.strength);
         this.outlineSetting.setFloat('useAddMode', cfg.useAddMode ? 1 : 0);
         this.outlineSetting.setFloat('outlinePixel', cfg.outlinePixel);
@@ -300,7 +300,7 @@ export class OutlinePost extends PostBase {
         let presentationSize = webGPUContext.presentationSize;
         let w = presentationSize[0];
         let h = presentationSize[1];
-        let textureScale = Engine3D.setting.render.postProcessing.outline.textureScale;
+        let textureScale = activeEngine?.setting.render.postProcessing.outline.textureScale;
         this.lowTexSize = new Vector2(Math.ceil(w * textureScale), Math.ceil(h * textureScale));
 
         this.lowTex.resize(this.lowTexSize.x, this.lowTexSize.y);

@@ -1,6 +1,6 @@
 import { MultiBouncePass_cs } from '../../../../assets/shader/compute/MultiBouncePass_cs';
 import { View3D } from '../../../../core/View3D';
-import { Engine3D } from '../../../../Engine3D';
+import { activeEngine } from '../../../../Engine3D';
 import { RenderTexture } from '../../../../textures/RenderTexture';
 import { ComputeShader } from '../../../graphics/webGpu/shader/ComputeShader';
 import { GPUTextureFormat } from '../../../graphics/webGpu/WebGPUConst';
@@ -23,7 +23,7 @@ export class DDGIMultiBouncePass {
     }
 
     private initPipeline() {
-        let giSetting = Engine3D.setting.gi;
+        let giSetting = activeEngine?.setting.gi;
         this.blendTexture = new RenderTexture(giSetting.probeSourceTextureSize, giSetting.probeSourceTextureSize, GPUTextureFormat.rgba16float, false, GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.STORAGE_BINDING);
 
         this.computerShader = new ComputeShader(MultiBouncePass_cs);

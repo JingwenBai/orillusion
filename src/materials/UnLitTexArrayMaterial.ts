@@ -1,4 +1,4 @@
-import { Engine3D } from '../Engine3D';
+import { activeEngine } from '../Engine3D';
 import { Texture } from '../gfx/graphics/webGpu/core/texture/Texture';
 import { RenderShaderPass } from '../gfx/graphics/webGpu/shader/RenderShaderPass';
 import { UnLitTexArrayShader } from '../loader/parser/prefab/mats/shader/UnLitTexArrayShader';
@@ -19,7 +19,7 @@ export class UnLitTexArrayMaterial extends Material {
         super();
         this.shader = new UnLitTexArrayShader();
         // default value
-        this.baseMap = Engine3D.res.whiteTexture;
+        this.baseMap = activeEngine?.res.whiteTexture;
     }
 
     public set baseMap(texture: Texture) {

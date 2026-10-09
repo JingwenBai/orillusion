@@ -1,4 +1,4 @@
-import { Engine3D } from "../../../Engine3D";
+import { activeEngine } from "../../../Engine3D";
 import { Texture } from "../../../gfx/graphics/webGpu/core/texture/Texture";
 
 /**
@@ -21,7 +21,7 @@ export class GUITexture {
     }
 
     constructor(texture: Texture) {
-        texture ||= Engine3D.res.whiteTexture;
+        texture ||= activeEngine?.res.whiteTexture;
         texture.addressModeU = 'clamp-to-edge';
         texture.addressModeV = 'clamp-to-edge';
         this.texture = texture;

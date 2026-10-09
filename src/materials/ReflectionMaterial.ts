@@ -1,4 +1,4 @@
-import { Engine3D } from '../Engine3D';
+import { activeEngine } from '../Engine3D';
 import { Texture } from '../gfx/graphics/webGpu/core/texture/Texture';
 import { RenderShaderPass } from '../gfx/graphics/webGpu/shader/RenderShaderPass';
 import { Color } from '../math/Color';
@@ -21,7 +21,7 @@ export class ReflectionMaterial extends Material {
         super();
         this.shader = new ReflectionShader();
         // default value
-        this.baseMap = Engine3D.res.whiteTexture;
+        this.baseMap = activeEngine?.res.whiteTexture;
         this.setDefine("USE_CUSTOMUNIFORM", true);
         this.reflectionIndex = 0;
     }

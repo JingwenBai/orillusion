@@ -1,4 +1,4 @@
-import { Engine3D } from "../../Engine3D";
+import { activeEngine } from "../../Engine3D";
 import { Camera3D } from "../../core/Camera3D";
 import { Object3D } from "../../core/entities/Object3D";
 import { PointerEvent3D } from "../../event/eventConst/PointerEvent3D";
@@ -32,17 +32,17 @@ export class ThirdPersonCameraController extends ComponentBase {
             console.error('ThirdPersonCameraController need target');
             return;
         }
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
     }
 
     private mouseDown(e: PointerEvent3D) {
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.mouseMove, this);
+        activeEngine?.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.mouseMove, this);
     }
 
     private mouseUp(e: PointerEvent3D) {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.mouseMove, this);
+        activeEngine?.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.mouseMove, this);
     }
 
     private mouseMove(e: PointerEvent3D) {
@@ -51,7 +51,7 @@ export class ThirdPersonCameraController extends ComponentBase {
     }
 
     private mouseWheel(e: PointerEvent3D) {
-        this.distance += Engine3D.inputSystem.wheelDelta * 0.1;
+        this.distance += activeEngine?.inputSystem.wheelDelta * 0.1;
     }
 
     public onUpdate() {
@@ -62,9 +62,9 @@ export class ThirdPersonCameraController extends ComponentBase {
     }
 
     public destroy(force?: boolean): void {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
+        activeEngine?.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
+        activeEngine?.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
+        activeEngine?.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
         super.destroy(force);
     }
 }

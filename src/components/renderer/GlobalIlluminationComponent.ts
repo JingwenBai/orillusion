@@ -1,4 +1,4 @@
-import { Engine3D } from "../../Engine3D";
+import { activeEngine } from "../../Engine3D";
 import { Scene3D } from "../../core/Scene3D";
 import { GlobalBindGroup } from "../../gfx/graphics/webGpu/core/bindGroups/GlobalBindGroup";
 import { EntityCollect } from "../../gfx/renderJob/collect/EntityCollect";
@@ -28,8 +28,8 @@ export class GlobalIlluminationComponent extends ComponentBase {
     private _debugMr: MeshRenderer[] = [];
 
     public init(scene: Scene3D): void {
-        scene ||= Engine3D.views[0]?.scene;
-        Engine3D.setting.gi.enable = true;
+        scene ||= activeEngine?.views[0]?.scene;
+        activeEngine?.setting.gi.enable = true;
         this._volume = GlobalBindGroup.getLightEntries(scene).irradianceVolume;
         this.initProbe(scene);
     }
@@ -92,7 +92,7 @@ export class GlobalIlluminationComponent extends ComponentBase {
     }
 
     private debugProbeRay(probeIndex: number, array: Float32Array) {
-        const rayNumber = Engine3D.setting.gi.rayNumber;
+        const rayNumber = activeEngine?.setting.gi.rayNumber;
         let quat = new Quaternion(0.0, -0.7071067811865475, 0.7071067811865475, 0.0);
         for (let i = 0; i < rayNumber; i++) {
             let ii = probeIndex * rayNumber + i;
@@ -143,7 +143,7 @@ export class GlobalIlluminationComponent extends ComponentBase {
     }
 
     public onUpdate(): void {
-        Engine3D.setting.gi.maxDistance = Engine3D.setting.gi.probeSpace * 1.5;
+        activeEngine?.setting.gi.maxDistance = activeEngine?.setting.gi.probeSpace * 1.5;
 
         let camera = this.transform.scene3D.view.camera;
         let scale = Vector3.distance(camera.transform.worldPosition, camera.transform.targetPos) / 300;

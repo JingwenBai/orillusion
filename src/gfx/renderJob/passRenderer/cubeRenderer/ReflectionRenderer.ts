@@ -1,6 +1,6 @@
 import { Camera3D } from '../../../../core/Camera3D';
 import { CubeCamera } from '../../../../core/CubeCamera';
-import { Engine3D } from '../../../../Engine3D';
+import { activeEngine } from '../../../../Engine3D';
 import { EntityCollect } from '../../collect/EntityCollect';
 import { GPUContext } from '../../GPUContext';
 import { OcclusionSystem } from '../../occlusion/OcclusionSystem';
@@ -52,10 +52,10 @@ export class ReflectionRenderer extends RendererBase {
         this.cubeCamera = new CubeCamera(0.01, 5000);
         let mipmap = 1;// TextureMipmapGenerator.getMipmapCount(this.sizeW, this.sizeH);
 
-        this.probeSize = Engine3D.setting.reflectionSetting.reflectionProbeSize;
-        this.probeCount = Engine3D.setting.reflectionSetting.reflectionProbeMaxCount;
-        this.sizeW = Engine3D.setting.reflectionSetting.width;
-        this.sizeH = Engine3D.setting.reflectionSetting.height;
+        this.probeSize = activeEngine?.setting.reflectionSetting.reflectionProbeSize;
+        this.probeCount = activeEngine?.setting.reflectionSetting.reflectionProbeMaxCount;
+        this.sizeW = activeEngine?.setting.reflectionSetting.width;
+        this.sizeH = activeEngine?.setting.reflectionSetting.height;
 
         this.gBuffer = GBufferFrame.getGBufferFrame(GBufferFrame.reflections_GBuffer, this.sizeW, this.sizeH, false);
         this.setRenderStates(this.gBuffer);
@@ -195,7 +195,7 @@ export class ReflectionRenderer extends RendererBase {
                 }
             }
 
-            // for (let i = Engine3D.setting.render.drawOpMin; i < Math.min(nodes.length, Engine3D.setting.render.drawOpMax); ++i) {
+            // for (let i = activeEngine?.setting.render.drawOpMin; i < Math.min(nodes.length, activeEngine?.setting.render.drawOpMax); ++i) {
             for (let i = 0; i < nodes.length; i++) {
                 let renderNode = nodes[i];
                 // if (!occlusionSystem.renderCommitTesting(view.camera, renderNode))

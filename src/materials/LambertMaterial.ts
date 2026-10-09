@@ -1,7 +1,7 @@
 
 import { Lambert_shader, Material, PassType, RenderShaderPass, Shader } from '..';
 import { ShaderLib } from '../assets/shader/ShaderLib';
-import { Engine3D } from '../Engine3D';
+import { activeEngine } from '../Engine3D';
 import { Texture } from '../gfx/graphics/webGpu/core/texture/Texture';
 import { Color } from '../math/Color';
 import { Vector4 } from '../math/Vector4';
@@ -36,7 +36,7 @@ export class LambertMaterial extends Material {
         let newShader = new Shader();
         newShader.addRenderPass(colorPass);
         this.shader = newShader;
-        this.baseMap = Engine3D.res.grayTexture;
+        this.baseMap = activeEngine?.res.grayTexture;
     }
 
     /**
