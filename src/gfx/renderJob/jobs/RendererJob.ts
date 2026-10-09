@@ -1,6 +1,5 @@
 import { Scene3D } from '../../../core/Scene3D';
 import { View3D } from '../../../core/View3D';
-import { activeEngine } from '../../../Engine3D';
 import { PickFire } from '../../../io/PickFire';
 import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { ShadowLightsCollect } from '../collect/ShadowLightsCollect';
