@@ -351,6 +351,7 @@ export class Engine3D {
     private _frameRateValue: number = 0;
     private _frameRate: number = 360;
     private _time: number = 0;
+    private _engineFrame: number = 0;
     private _beforeRender: Function;
     private _renderLoop: Function;
     private _lateRender: Function;
@@ -597,7 +598,8 @@ export class Engine3D {
 
         Time.delta = time - Time.time;
         Time.time = time;
-        Time.frame += 1;
+        this._engineFrame += 1;
+        Time.frame = this._engineFrame;
         Interpolator.tick(Time.delta);
 
         let views = this.views;

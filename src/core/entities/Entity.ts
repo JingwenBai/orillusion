@@ -313,7 +313,9 @@ export class Entity extends CEventDispatcher {
             });
             this.components.clear();
         } else {
+            const myScene = this.transform.scene3D;
             ComponentCollect.waitStartComponent.forEach((v, k) => {
+                if (myScene && k.transform.scene3D !== myScene) return;
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();
