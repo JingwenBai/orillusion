@@ -24,7 +24,11 @@ export class ShaderUtil {
     public static renderShader: Map<string, RenderShaderPass>;
 
     public static init() {
-        this.renderShaderModulePool = new Map<string, GPUShaderModule>();
-        this.renderShader = new Map<string, RenderShaderPass>();
+        // Idempotent: shader module and render-shader caches are tied to the GPU
+        // device and can safely be shared between all Engine3D instances.
+        if (!this.renderShaderModulePool) {
+            this.renderShaderModulePool = new Map<string, GPUShaderModule>();
+            this.renderShader = new Map<string, RenderShaderPass>();
+        }
     }
 }

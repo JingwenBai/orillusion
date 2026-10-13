@@ -9,6 +9,9 @@ import { Camera3D } from "./Camera3D";
 import { Scene3D } from "./Scene3D";
 
 export class View3D extends CEventListener {
+    /** Back-reference to the Engine3D instance that owns this view. Set by Engine3D.startRenderView(). */
+    public engine: any = null;
+
     private _camera: Camera3D;
     private _scene: Scene3D;
     private _viewPort: Vector4;
