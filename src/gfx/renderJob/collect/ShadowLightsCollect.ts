@@ -5,170 +5,196 @@ import { View3D } from '../../../core/View3D';
 import { CameraUtil } from '../../../util/CameraUtil';
 import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { GlobalUniformGroup } from '../../graphics/webGpu/core/bindGroups/GlobalUniformGroup';
+
 /**
  * @internal
  * @group Lights
  */
 export class ShadowLightsCollect {
 
+    // ---- Active instance registry (multi-instance support) ----
+    private static _active: ShadowLightsCollect;
+
+    public static setActive(instance: ShadowLightsCollect): void {
+        ShadowLightsCollect._active = instance;
+    }
+
+    public static createInstance(): ShadowLightsCollect {
+        const instance = new ShadowLightsCollect();
+        instance._doInit();
+        return instance;
+    }
+
+    // ---- Static facade (zero changes required at call sites) ----
+
     public static maxNumDirectionShadow = 8;
     public static maxNumPointShadow = 8;
 
-    public static directionLightList: Map<Scene3D, ILight[]>;
-    public static pointLightList: Map<Scene3D, ILight[]>;
-    public static shadowLights: Map<Scene3D, Float32Array>;
-
-    public static init() {
-        this.directionLightList = new Map<Scene3D, ILight[]>();
-        this.pointLightList = new Map<Scene3D, ILight[]>();
-        this.shadowLights = new Map<Scene3D, Float32Array>();
+    public static get directionLightList(): Map<Scene3D, ILight[]> {
+        return ShadowLightsCollect._active._directionLightList;
     }
 
-    public static createBuffer(view: View3D) {
-        if (!this.shadowLights.has(view.scene)) {
-            let list = new Float32Array(16);
-            this.shadowLights.set(view.scene, list);
+    public static get pointLightList(): Map<Scene3D, ILight[]> {
+        return ShadowLightsCollect._active._pointLightList;
+    }
+
+    public static get shadowLights(): Map<Scene3D, Float32Array> {
+        return ShadowLightsCollect._active._shadowLights;
+    }
+
+    public static init(): void {
+        ShadowLightsCollect._active._doInit();
+    }
+
+    public static createBuffer(view: View3D): void {
+        ShadowLightsCollect._active._createBuffer(view);
+    }
+
+    public static getShadowLightList(light: ILight): ILight[] | null {
+        return ShadowLightsCollect._active._getShadowLightList(light);
+    }
+
+    public static getShadowLightWhichScene(scene: Scene3D, type: LightType): ILight[] {
+        return ShadowLightsCollect._active._getShadowLightWhichScene(scene, type);
+    }
+
+    public static getDirectShadowLightWhichScene(scene: Scene3D): ILight[] {
+        return ShadowLightsCollect._active._getDirectShadowLightWhichScene(scene);
+    }
+
+    public static getPointShadowLightWhichScene(scene: Scene3D): ILight[] {
+        return ShadowLightsCollect._active._getPointShadowLightWhichScene(scene);
+    }
+
+    public static addShadowLight(light: ILight): ILight[] | null {
+        return ShadowLightsCollect._active._addShadowLight(light);
+    }
+
+    public static removeShadowLight(light: ILight): ILight[] {
+        return ShadowLightsCollect._active._removeShadowLight(light);
+    }
+
+    public static update(view: View3D): void {
+        ShadowLightsCollect._active._update(view);
+    }
+
+    // ---- Instance state ----
+    private _directionLightList: Map<Scene3D, ILight[]>;
+    private _pointLightList: Map<Scene3D, ILight[]>;
+    private _shadowLights: Map<Scene3D, Float32Array>;
+
+    private _doInit(): void {
+        this._directionLightList = new Map<Scene3D, ILight[]>();
+        this._pointLightList = new Map<Scene3D, ILight[]>();
+        this._shadowLights = new Map<Scene3D, Float32Array>();
+    }
+
+    // ---- Instance implementations ----
+    private _createBuffer(view: View3D): void {
+        if (!this._shadowLights.has(view.scene)) {
+            this._shadowLights.set(view.scene, new Float32Array(16));
         }
     }
 
-    static getShadowLightList(light: ILight) {
+    private _getShadowLightList(light: ILight): ILight[] | null {
         if (!light.transform.view3D) return null;
+        const scene = light.transform.view3D.scene;
         if (light.lightData.lightType == LightType.DirectionLight) {
-            let list = this.directionLightList.get(light.transform.view3D.scene);
-            if (!list) {
-                list = [];
-                this.directionLightList.set(light.transform.view3D.scene, list);
-            }
+            let list = this._directionLightList.get(scene);
+            if (!list) { list = []; this._directionLightList.set(scene, list); }
             return list;
-        } else if (light.lightData.lightType == LightType.PointLight) {
-            let list = this.pointLightList.get(light.transform.view3D.scene);
-            if (!list) {
-                list = [];
-                this.pointLightList.set(light.transform.view3D.scene, list);
-            }
-            return list;
-        } else if (light.lightData.lightType == LightType.SpotLight) {
-            let list = this.pointLightList.get(light.transform.view3D.scene);
-            if (!list) {
-                list = [];
-                this.pointLightList.set(light.transform.view3D.scene, list);
-            }
+        } else if (light.lightData.lightType == LightType.PointLight || light.lightData.lightType == LightType.SpotLight) {
+            let list = this._pointLightList.get(scene);
+            if (!list) { list = []; this._pointLightList.set(scene, list); }
             return list;
         }
+        return null;
     }
 
-    static getShadowLightWhichScene(scene: Scene3D, type: LightType) {
+    private _getShadowLightWhichScene(scene: Scene3D, type: LightType): ILight[] {
         if (type == LightType.DirectionLight) {
-            let list = this.directionLightList.get(scene);
-            if (!list) {
-                list = [];
-                this.directionLightList.set(scene, list);
-            }
+            let list = this._directionLightList.get(scene);
+            if (!list) { list = []; this._directionLightList.set(scene, list); }
             return list;
         } else if (type == LightType.PointLight) {
-            let list = this.pointLightList.get(scene);
-            if (!list) {
-                list = [];
-                this.pointLightList.set(scene, list);
-            }
+            let list = this._pointLightList.get(scene);
+            if (!list) { list = []; this._pointLightList.set(scene, list); }
             return list;
         }
+        return [];
     }
 
-    static getDirectShadowLightWhichScene(scene: Scene3D) {
-        let list = this.directionLightList.get(scene);
-        if (!list) {
-            list = [];
-            this.directionLightList.set(scene, list);
-        }
+    private _getDirectShadowLightWhichScene(scene: Scene3D): ILight[] {
+        let list = this._directionLightList.get(scene);
+        if (!list) { list = []; this._directionLightList.set(scene, list); }
         return list;
     }
 
-    static getPointShadowLightWhichScene(scene: Scene3D) {
-        let list = this.pointLightList.get(scene);
-        if (!list) {
-            list = [];
-            this.pointLightList.set(scene, list);
-        }
+    private _getPointShadowLightWhichScene(scene: Scene3D): ILight[] {
+        let list = this._pointLightList.get(scene);
+        if (!list) { list = []; this._pointLightList.set(scene, list); }
         return list;
     }
 
-    static addShadowLight(light: ILight) {
+    private _addShadowLight(light: ILight): ILight[] | null {
         if (!light.transform.view3D) return null;
-        let scene = light.transform.view3D.scene;
+        const scene = light.transform.view3D.scene;
 
         if (light.lightData.lightType == LightType.DirectionLight) {
-            let list = this.directionLightList.get(scene);
-            if (!list) {
-                list = [];
-                this.directionLightList.set(scene, list);
-            }
+            let list = this._directionLightList.get(scene);
+            if (!list) { list = []; this._directionLightList.set(scene, list); }
             if (!light.shadowCamera) {
                 light.shadowCamera = CameraUtil.createCamera3DObject(null, 'shadowCamera');
                 light.shadowCamera.isShadowCamera = true;
                 let shadowBound = -1000;
                 light.shadowCamera.orthoOffCenter(shadowBound, -shadowBound, shadowBound, -shadowBound, 1, 10000);
             }
-            if (list.indexOf(light) == -1) {
-                list.push(light);
-            }
+            if (list.indexOf(light) == -1) list.push(light);
             return list;
         } else if (light.lightData.lightType == LightType.PointLight || light.lightData.lightType == LightType.SpotLight) {
-            let list = this.pointLightList.get(scene);
-            if (list && list.length >= 8) {
-                return list;
-            }
-            if (!list) {
-                list = [];
-                this.pointLightList.set(scene, list);
-            }
-            if (list.indexOf(light) == -1) {
-                list.push(light);
-            }
-
-
+            let list = this._pointLightList.get(scene);
+            if (list && list.length >= 8) return list;
+            if (!list) { list = []; this._pointLightList.set(scene, list); }
+            if (list.indexOf(light) == -1) list.push(light);
             return list;
         }
+        return null;
     }
 
-    public static removeShadowLight(light: ILight) {
+    private _removeShadowLight(light: ILight): ILight[] {
         light.lightData.castShadowIndex = -1;
         if (!light.transform.view3D) return null;
         if (light.lightData.lightType == LightType.DirectionLight) {
-            let list = this.directionLightList.get(light.transform.view3D.scene);
+            let list = this._directionLightList.get(light.transform.view3D.scene);
             if (list) {
                 let index = list.indexOf(light);
-                if (index != -1) {
-                    list.splice(index, 1);
-                }
+                if (index != -1) list.splice(index, 1);
             }
             light.lightData.castShadowIndex = -1;
             return list;
         } else if (light.lightData.lightType == LightType.PointLight || light.lightData.lightType == LightType.SpotLight) {
-            let list = this.pointLightList.get(light.transform.view3D.scene);
+            let list = this._pointLightList.get(light.transform.view3D.scene);
             if (list) {
                 let index = list.indexOf(light);
-                if (index != -1) {
-                    list.splice(index, 1);
-                }
+                if (index != -1) list.splice(index, 1);
             }
             light.lightData.castShadowIndex = -1;
             return list;
         }
+        return null;
     }
 
-
-    public static update(view: View3D) {
-
-        let shadowLights = this.shadowLights.get(view.scene);
-        let directionLightList = ShadowLightsCollect.directionLightList.get(view.scene);
-        let pointLightList = ShadowLightsCollect.pointLightList.get(view.scene);
+    private _update(view: View3D): void {
+        let shadowLights = this._shadowLights.get(view.scene);
+        let directionLightList = this._directionLightList.get(view.scene);
+        let pointLightList = this._pointLightList.get(view.scene);
 
         let nDirShadowStart: number = 0;
         let nDirShadowEnd: number = 0;
         let nPointShadowStart: number = 0;
         let nPointShadowEnd: number = 0;
         shadowLights.fill(0);
+
         if (directionLightList) {
             let j = 0;
             for (let i = 0; i < directionLightList.length; i++) {
