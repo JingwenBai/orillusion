@@ -4,18 +4,41 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+
+/**
+ * Holds the render-texture and view-quad resources for one engine instance.
+ * @internal
+ */
+export interface RTMaps {
+    rtTextureMap: Map<string, RenderTexture>;
+    rtViewQuad: Map<string, ViewQuad>;
+}
+
 /**
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    /** Active per-engine maps.  Engine3D swaps this before every frame. */
+    public static _active: RTMaps | null = null;
 
-    public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return RTResourceMap._active?.rtTextureMap;
+    }
+
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return RTResourceMap._active?.rtViewQuad;
+    }
+
+    /** Create a fresh set of maps and make it active. Returns the maps so Engine3D can store them. */
+    public static init(): RTMaps {
+        const maps: RTMaps = {
+            rtTextureMap: new Map<string, RenderTexture>(),
+            rtViewQuad: new Map<string, ViewQuad>(),
+        };
+        RTResourceMap._active = maps;
+        return maps;
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
