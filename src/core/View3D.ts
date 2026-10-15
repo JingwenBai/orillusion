@@ -20,9 +20,10 @@ export class View3D extends CEventListener {
 
     /**
      * The Engine3D instance that owns this view.
-     * Set automatically by Engine3D.startRenderView / startRenderViews.
+     * Set by Engine3D.startRenderView / startRenderViews.
+     * @internal
      */
-    public engine: import('../Engine3D').Engine3D;
+    public engine: any = null;
 
     constructor(x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
         super();

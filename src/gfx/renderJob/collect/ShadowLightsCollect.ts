@@ -18,10 +18,9 @@ export class ShadowLightsCollect {
     public static pointLightList: Map<Scene3D, ILight[]>;
     public static shadowLights: Map<Scene3D, Float32Array>;
 
+    /** Idempotent — maps are keyed by Scene3D and shared across all Engine3D instances. */
     public static init() {
-        // Guard: maps are keyed by Scene3D instance so they are naturally
-        // per-engine; initialise only once to avoid clearing sibling engines.
-        if (this.shadowLights) return;
+        if (this.directionLightList) return;
         this.directionLightList = new Map<Scene3D, ILight[]>();
         this.pointLightList = new Map<Scene3D, ILight[]>();
         this.shadowLights = new Map<Scene3D, Float32Array>();

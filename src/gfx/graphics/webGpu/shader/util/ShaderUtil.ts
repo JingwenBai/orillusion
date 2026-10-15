@@ -23,6 +23,7 @@ export class ShaderUtil {
     public static renderShaderModulePool: Map<string, GPUShaderModule>;
     public static renderShader: Map<string, RenderShaderPass>;
 
+    /** Idempotent — shader cache is shared across all Engine3D instances. */
     public static init() {
         if (this.renderShaderModulePool) return;
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
