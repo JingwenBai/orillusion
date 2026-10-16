@@ -23,7 +23,12 @@ export class ShaderUtil {
     public static renderShaderModulePool: Map<string, GPUShaderModule>;
     public static renderShader: Map<string, RenderShaderPass>;
 
+    private static _initialized = false;
+
+    /** Initialize shader caches. Safe to call multiple times; only initializes once. */
     public static init() {
+        if (this._initialized) return;
+        this._initialized = true;
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
         this.renderShader = new Map<string, RenderShaderPass>();
     }

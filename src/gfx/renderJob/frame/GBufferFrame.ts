@@ -1,6 +1,7 @@
 
 import { RenderTexture } from "../../../textures/RenderTexture";
 import { webGPUContext } from "../../graphics/webGpu/Context3D";
+import { EngineContext } from "../../../core/EngineContext";
 import { GPUTextureFormat } from "../../graphics/webGpu/WebGPUConst";
 import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
@@ -11,7 +12,16 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /**
+     * Returns the per-engine gBuffer map from the active EngineContext.
+     * Falls back to a module-level map when no engine context is active.
+     */
+    private static _fallbackGBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        return (EngineContext.current?.gBufferMap as Map<string, GBufferFrame>) ?? GBufferFrame._fallbackGBufferMap;
+    }
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
