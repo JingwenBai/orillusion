@@ -192,7 +192,9 @@ export class ShadowLightsCollect {
             nPointShadowEnd = nPointShadowStart + pointLightList.length;
         }
 
-        let cameraGroup = GlobalBindGroup.getAllCameraGroup();
+        // Only update cameras belonging to this view's scene to avoid corrupting
+        // shadow uniforms of cameras in other Engine3D instances.
+        let cameraGroup = GlobalBindGroup.getCameraGroupsForScene(view.scene);
         cameraGroup.forEach((group: GlobalUniformGroup) => {
             group.dirShadowStart = nDirShadowStart;
             group.dirShadowEnd = nDirShadowEnd;

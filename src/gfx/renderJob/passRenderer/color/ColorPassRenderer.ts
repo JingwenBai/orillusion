@@ -31,7 +31,7 @@ export class ColorPassRenderer extends RendererBase {
         let scene = view.scene;
         let camera = view.camera;
 
-        GlobalBindGroup.updateCameraGroup(camera);
+        GlobalBindGroup.updateCameraGroup(camera, scene);
 
         this.rendererPassState.camera3D = camera;
 

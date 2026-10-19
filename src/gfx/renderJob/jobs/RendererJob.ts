@@ -137,6 +137,11 @@ export class RendererJob {
         this._view = view;
     }
 
+    /** Returns the per-engine setting for this renderer, falling back to the static accessor. */
+    protected get engineSetting() {
+        return (this._view?.engine as any)?.setting ?? Engine3D.setting;
+    }
+
     /**
      * start render task
      */
@@ -226,7 +231,7 @@ export class RendererJob {
             this.depthPassRenderer.render(view, this.occlusionSystem);
         }
 
-        if (Engine3D.setting.gi.enable && this.ddgiProbeRenderer) {
+        if (this.engineSetting.gi.enable && this.ddgiProbeRenderer) {
             this.ddgiProbeRenderer.compute(view, this.occlusionSystem);
             this.ddgiProbeRenderer.render(view, this.occlusionSystem);
         }

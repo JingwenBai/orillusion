@@ -16,11 +16,15 @@ export class GlobalBindGroup {
     private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
     public static modelMatrixBindGroup: MatrixBindGroup;
 
+    /** Maps each camera to its owning scene so shadow-uniform updates can be scoped per-scene. */
+    private static _cameraSceneMap: Map<Camera3D, Scene3D>;
+
     /** Idempotent — shared GPU resources are only created once. */
     public static init() {
         if (this.modelMatrixBindGroup) return;
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
+        this._cameraSceneMap = new Map<Camera3D, Scene3D>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();
         this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
     }
@@ -29,11 +33,29 @@ export class GlobalBindGroup {
         return this._cameraBindGroups;
     }
 
-    public static getCameraGroup(camera: Camera3D) {
+    /**
+     * Returns the subset of camera bind-groups whose cameras are associated with
+     * the given scene.  Used by ShadowLightsCollect to avoid broadcasting shadow
+     * uniforms to cameras from other Engine3D instances.
+     */
+    public static getCameraGroupsForScene(scene: Scene3D): Map<Camera3D, GlobalUniformGroup> {
+        const result = new Map<Camera3D, GlobalUniformGroup>();
+        this._cameraBindGroups.forEach((group, camera) => {
+            if (this._cameraSceneMap.get(camera) === scene) {
+                result.set(camera, group);
+            }
+        });
+        return result;
+    }
+
+    public static getCameraGroup(camera: Camera3D, scene?: Scene3D) {
         let cameraBindGroup = this._cameraBindGroups.get(camera);
         if (!cameraBindGroup) {
             cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
             this._cameraBindGroups.set(camera, cameraBindGroup);
+        }
+        if (scene) {
+            this._cameraSceneMap.set(camera, scene);
         }
         if (camera.isShadowCamera) {
             cameraBindGroup.setShadowCamera(camera);
@@ -43,11 +65,14 @@ export class GlobalBindGroup {
         return cameraBindGroup;
     }
 
-    public static updateCameraGroup(camera: Camera3D) {
+    public static updateCameraGroup(camera: Camera3D, scene?: Scene3D) {
         let cameraBindGroup = this._cameraBindGroups.get(camera);
         if (!cameraBindGroup) {
             cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
             this._cameraBindGroups.set(camera, cameraBindGroup);
+        }
+        if (scene) {
+            this._cameraSceneMap.set(camera, scene);
         }
         if (camera.isShadowCamera) {
             cameraBindGroup.setShadowCamera(camera);

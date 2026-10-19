@@ -206,7 +206,7 @@ export class PointLightShadowRenderer extends RendererBase {
     }
 
     protected drawShadowRenderNodes(view: View3D, shadowCamera: Camera3D, renderContext: RenderContext, nodes: RenderNode[], occlusionSystem: OcclusionSystem) {
-        GlobalBindGroup.updateCameraGroup(shadowCamera);
+        GlobalBindGroup.updateCameraGroup(shadowCamera, view.scene);
         GPUContext.bindCamera(renderContext.encoder, shadowCamera);
 
         let scene = view.scene;

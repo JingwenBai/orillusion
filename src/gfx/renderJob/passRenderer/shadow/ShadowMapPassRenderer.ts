@@ -170,7 +170,7 @@ export class ShadowMapPassRenderer extends RendererBase {
             occlusionSystem.update(shadowCamera, view.scene);
             occlusionSystem.collect(collectInfo, shadowCamera);
         }
-        GlobalBindGroup.updateCameraGroup(shadowCamera);
+        GlobalBindGroup.updateCameraGroup(shadowCamera, view.scene);
         GPUContext.bindCamera(encoder, shadowCamera);
         let op_bundleList = this.renderShadowBundleOp(view, shadowCamera, state);
         let tr_bundleList = this.renderShadowBundleTr(view, shadowCamera, state);
@@ -230,7 +230,7 @@ export class ShadowMapPassRenderer extends RendererBase {
 
 
     protected recordShadowRenderBundleNode(view: View3D, shadowCamera: Camera3D, encoder, nodes: RenderNode[], clusterLightingBuffer?: ClusterLightingBuffer) {
-        GlobalBindGroup.updateCameraGroup(shadowCamera);
+        GlobalBindGroup.updateCameraGroup(shadowCamera, view.scene);
         GPUContext.bindCamera(encoder, shadowCamera);
         if (nodes) {
             GPUContext.bindGeometryBuffer(encoder, nodes[0].geometry);
@@ -244,7 +244,7 @@ export class ShadowMapPassRenderer extends RendererBase {
     }
 
     protected drawShadowRenderNodes(view: View3D, shadowCamera: Camera3D, encoder: GPURenderPassEncoder, nodes: RenderNode[], clusterLightingBuffer?: ClusterLightingBuffer) {
-        GlobalBindGroup.updateCameraGroup(shadowCamera);
+        GlobalBindGroup.updateCameraGroup(shadowCamera, view.scene);
         GPUContext.bindCamera(encoder, shadowCamera);
         if (nodes) {
             for (let i = Engine3D.setting.render.drawOpMin; i < Math.min(nodes.length, Engine3D.setting.render.drawOpMax); ++i) {

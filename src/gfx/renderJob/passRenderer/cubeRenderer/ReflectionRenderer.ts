@@ -157,7 +157,7 @@ export class ReflectionRenderer extends RendererBase {
         let collectInfo = EntityCollect.instance.getRenderNodes(scene, camera);
         {
             let renderPassEncoder = encoder;
-            GlobalBindGroup.updateCameraGroup(camera);
+            GlobalBindGroup.updateCameraGroup(camera, scene);
 
             const _sky = EntityCollect.instance.getSky(scene);
             if (!maskTr && _sky) {

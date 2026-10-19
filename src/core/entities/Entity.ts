@@ -313,7 +313,12 @@ export class Entity extends CEventDispatcher {
             });
             this.components.clear();
         } else {
+            // Only start components whose scene matches this entity (the scene root).
+            // This prevents one Engine3D instance from starting components that belong
+            // to another instance's scene when both are running concurrently.
+            const thisScene = this.transform?.scene3D ?? (this as any);
             ComponentCollect.waitStartComponent.forEach((v, k) => {
+                if (v.length > 0 && v[0].transform?.scene3D !== thisScene) return;
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();

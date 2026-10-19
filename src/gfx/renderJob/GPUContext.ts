@@ -56,7 +56,10 @@ export class GPUContext {
      * @param camera use camera {@link Camera3D}
      */
     public static bindCamera(encoder: GPURenderPassEncoder | GPURenderBundleEncoder, camera: Camera3D) {
-        let cameraBindGroup = GlobalBindGroup.getCameraGroup(camera);
+        // Register the camera with its scene so that shadow-uniform updates
+        // can be scoped per-scene in multi-instance scenarios.
+        const scene = camera.transform?.view3D?.scene ?? null;
+        let cameraBindGroup = GlobalBindGroup.getCameraGroup(camera, scene);
         encoder.setBindGroup(0, cameraBindGroup.globalBindGroup);
     }
 
