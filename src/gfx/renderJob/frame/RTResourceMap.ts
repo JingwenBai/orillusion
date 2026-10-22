@@ -4,18 +4,43 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+
+/**
+ * @internal
+ * Per-engine instance data for RTResourceMap
+ */
+export class RTResourceMapContext {
+    rtTextureMap: Map<string, RenderTexture> = new Map();
+    rtViewQuad: Map<string, ViewQuad> = new Map();
+}
+
 /**
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    private static _ctx: RTResourceMapContext = new RTResourceMapContext();
+
+    /**
+     * @internal
+     * Switch to a different engine instance's context
+     */
+    public static setContext(ctx: RTResourceMapContext) {
+        RTResourceMap._ctx = ctx;
+    }
+
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return RTResourceMap._ctx.rtTextureMap;
+    }
+
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return RTResourceMap._ctx.rtViewQuad;
+    }
 
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        this._ctx.rtTextureMap = new Map<string, RenderTexture>();
+        this._ctx.rtViewQuad = new Map<string, ViewQuad>();
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {

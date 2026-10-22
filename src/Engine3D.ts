@@ -6,67 +6,95 @@ import { InputSystem } from './io/InputSystem';
 import { View3D } from './core/View3D';
 import { version } from '../package.json';
 
-import { webGPUContext } from './gfx/graphics/webGpu/Context3D';
-import { RTResourceMap } from './gfx/renderJob/frame/RTResourceMap';
+import { Context3D, setWebGPUContext, webGPUContext } from './gfx/graphics/webGpu/Context3D';
+import { RTResourceMap, RTResourceMapContext } from './gfx/renderJob/frame/RTResourceMap';
 
 import { ForwardRenderJob } from './gfx/renderJob/jobs/ForwardRenderJob';
-import { GlobalBindGroup } from './gfx/graphics/webGpu/core/bindGroups/GlobalBindGroup';
+import { GlobalBindGroup, GlobalBindGroupContext } from './gfx/graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { Interpolator } from './math/TimeInterpolator';
 import { RendererJob } from './gfx/renderJob/jobs/RendererJob';
 import { Res } from './assets/Res';
 import { ShaderLib } from './assets/shader/ShaderLib';
 import { ShaderUtil } from './gfx/graphics/webGpu/shader/util/ShaderUtil';
-import { ComponentCollect } from './gfx/renderJob/collect/ComponentCollect';
-import { ShadowLightsCollect } from './gfx/renderJob/collect/ShadowLightsCollect';
+import { ComponentCollect, ComponentCollectContext } from './gfx/renderJob/collect/ComponentCollect';
+import { ShadowLightsCollect, ShadowLightsCollectContext } from './gfx/renderJob/collect/ShadowLightsCollect';
 import { WasmMatrix } from '@orillusion/wasm-matrix/WasmMatrix';
 import { Matrix4 } from './math/Matrix4';
 import { FXAAPost } from './gfx/renderJob/post/FXAAPost';
 import { PostProcessingComponent } from './components/post/PostProcessingComponent';
 import { GBufferFrame } from './gfx/renderJob/frame/GBufferFrame';
+import { GPUContext, GPUContextData } from './gfx/renderJob/GPUContext';
 
-/** 
+/**
  * Orillusion 3D Engine
- * 
- * -- Engine3D.setting.*
- * 
- * -- await Engine3D.init();
+ *
+ * Supports multiple instances. Each instance manages its own GPU canvas
+ * context, component lists, bind groups and render resources. Static
+ * convenience methods delegate to the default (first-created) instance so
+ * existing single-instance code requires no changes.
+ *
+ * Multi-instance usage:
+ * ```ts
+ * const engine1 = new Engine3D();
+ * await engine1.init({ canvasConfig: { canvas: canvas1 } });
+ * engine1.startRenderView(view1);
+ *
+ * const engine2 = new Engine3D();
+ * await engine2.init({ canvasConfig: { canvas: canvas2 } });
+ * engine2.startRenderView(view2);
+ * ```
+ *
  * @group engine3D
  */
 export class Engine3D {
 
-    /**
-     * resource manager in engine3d
-     */
-    public static res: Res;
+    // ─── Instance state ─────────────────────────────────────────────────────
 
-    /**
-     * input system in engine3d
-     */
-    public static inputSystem: InputSystem;
+    /** GPU canvas context for this engine instance */
+    public gpuContext: Context3D;
 
-    /**
-     * more view in engine3d
-     */
-    public static views: View3D[];
-    private static _frameRateValue: number = 0;
-    private static _frameRate: number = 360;
-    private static _time: number = 0;
-    private static _beforeRender: Function;
-    private static _renderLoop: Function;
-    private static _lateRender: Function;
-    private static _requestAnimationFrameID: number = 0;
+    /** resource manager */
+    public res: Res;
 
-    /**
-     * set engine render frameRate 24/30/60/114/120/144/240/360 fps or other
-     */
-    public static get frameRate(): number {
+    /** input system */
+    public inputSystem: InputSystem;
+
+    /** active views */
+    public views: View3D[];
+
+    /** engine settings */
+    public setting: EngineSetting;
+
+    /** @internal */
+    public renderJobs: Map<View3D, RendererJob>;
+
+    // per-instance singleton data bags
+    private _componentCollectCtx: ComponentCollectContext;
+    private _globalBindGroupCtx: GlobalBindGroupContext;
+    private _rtResourceMapCtx: RTResourceMapContext;
+    private _shadowLightsCtx: ShadowLightsCollectContext;
+    private _gpuContextData: GPUContextData;
+
+    private _frameRateValue: number = 0;
+    private _frameRate: number = 360;
+    private _time: number = 0;
+    private _beforeRender: Function;
+    private _renderLoop: Function;
+    private _lateRender: Function;
+    private _requestAnimationFrameID: number = 0;
+
+    constructor() {
+        this.setting = Engine3D._buildDefaultSetting();
+    }
+
+    // ─── Instance getters / setters ─────────────────────────────────────────
+
+    /** set render frame rate (24/30/60/114/120/144/240/360 fps or other) */
+    public get frameRate(): number {
         return this._frameRate;
     }
 
-    /**
-     * get engine render frameRate 
-     */
-    public static set frameRate(value: number) {
+    public set frameRate(value: number) {
         this._frameRate = value;
         this._frameRateValue = 1000 / value;
         if (value >= 360) {
@@ -74,261 +102,75 @@ export class Engine3D {
         }
     }
 
+    public get size(): number[] {
+        return this.gpuContext.presentationSize;
+    }
+
+    public get aspect(): number {
+        return this.gpuContext.aspect;
+    }
+
+    public get width(): number {
+        return this.gpuContext.windowWidth;
+    }
+
+    public get height(): number {
+        return this.gpuContext.windowHeight;
+    }
+
+    // ─── Instance methods ────────────────────────────────────────────────────
+
     /**
-     * get render window size width and height
+     * Activate this engine instance as the currently-rendering one.
+     * Swaps all shared static singletons to this instance's data.
+     * Called automatically before each render frame.
      */
-    public static get size(): number[] {
-        return webGPUContext.presentationSize;
+    public activate() {
+        setWebGPUContext(this.gpuContext);
+        ComponentCollect.setContext(this._componentCollectCtx);
+        GlobalBindGroup.setContext(this._globalBindGroupCtx);
+        RTResourceMap.setContext(this._rtResourceMapCtx);
+        ShadowLightsCollect.setContext(this._shadowLightsCtx);
+        GPUContext.setData(this._gpuContextData);
     }
 
     /**
-     * get render window aspect
+     * Create the WebGPU context and initialise engine subsystems for this instance.
      */
-    public static get aspect(): number {
-        return webGPUContext.aspect;
-    }
-
-    /**
-     * get render window size width 
-     */
-    public static get width(): number {
-        return webGPUContext.windowWidth;
-    }
-
-    /**
-     * get render window size height 
-     */
-    public static get height(): number {
-        return webGPUContext.windowHeight;
-    }
-
-    /**
-     * engine setting
-     */
-    public static setting: EngineSetting = {
-        doublePrecision: false,
-        
-        occlusionQuery: {
-            enable: true,
-            debug: false,
-        },
-        pick: {
-            enable: true,
-            mode: `bound`,
-            detail: `mesh`,
-        },
-        render: {
-            debug: false,
-            renderPassState: 4,
-            renderState_left: 5,
-            renderState_right: 5,
-            renderState_split: 0.5,
-            quadScale: 1,
-            hdrExposure: 1.5,
-            debugQuad: -1,
-            maxPointLight: 1000,
-            maxDirectLight: 4,
-            maxSportLight: 1000,
-            drawOpMin: 0,
-            drawOpMax: Number.MAX_SAFE_INTEGER,
-            drawTrMin: 0,
-            drawTrMax: Number.MAX_SAFE_INTEGER,
-            zPrePass: false,
-            useLogDepth: false,
-            useCompressGBuffer: false,
-            gi: false,
-            postProcessing: {
-                bloom: {
-                    downSampleStep: 3,
-                    downSampleBlurSize: 9,
-                    downSampleBlurSigma: 1.0,
-                    upSampleBlurSize: 9,
-                    upSampleBlurSigma: 1.0,
-                    luminanceThreshole: 1.0,
-                    bloomIntensity: 1.0,
-                    hdr: 1.0
-                },
-                globalFog: {
-                    debug: false,
-                    enable: false,
-                    fogType: 0.0,
-                    fogHeightScale: 0.1,
-                    start: 400,
-                    end: 10,
-                    density: 0.02,
-                    ins: 0.5,
-                    skyFactor: 0.5,
-                    skyRoughness: 0.4,
-                    overrideSkyFactor: 0.8,
-                    fogColor: new Color(96 / 255, 117 / 255, 133 / 255, 1),
-                    falloff: 0.7,
-                    rayLength: 200.0,
-                    scatteringExponent: 2.7,
-                    dirHeightLine: 10.0,
-                },
-                godRay: {
-                    blendColor: true,
-                    rayMarchCount: 16,
-                    scatteringExponent: 5,
-                    intensity: 0.5
-                },
-                ssao: {
-                    enable: false,
-                    radius: 0.15,
-                    bias: -0.1,
-                    aoPower: 2.0,
-                    debug: true,
-                },
-                outline: {
-                    enable: false,
-                    strength: 1,
-                    groupCount: 4,
-                    outlinePixel: 2,
-                    fadeOutlinePixel: 4,
-                    textureScale: 1,
-                    useAddMode: false,
-                    debug: true,
-                },
-                taa: {
-                    enable: false,
-                    jitterSeedCount: 8,
-                    blendFactor: 0.1,
-                    sharpFactor: 0.6,
-                    sharpPreBlurFactor: 0.5,
-                    temporalJitterScale: 0.13,
-                    debug: true,
-                },
-                gtao: {
-                    enable: false,
-                    darkFactor: 1.0,
-                    maxDistance: 5.0,
-                    maxPixel: 50.0,
-                    rayMarchSegment: 6,
-                    multiBounce: false,
-                    usePosFloat32: true,
-                    blendColor: true,
-                    debug: true,
-                },
-                ssr: {
-                    enable: false,
-                    pixelRatio: 1,
-                    fadeEdgeRatio: 0.2,
-                    rayMarchRatio: 0.5,
-                    fadeDistanceMin: 600,
-                    fadeDistanceMax: 2000,
-                    roughnessThreshold: 0.5,
-                    powDotRN: 0.2,
-                    mixThreshold: 0.1,
-                    debug: true,
-                },
-                fxaa: {
-                    enable: false,
-                },
-                depthOfView: {
-                    enable: false,
-                    iterationCount: 3,
-                    pixelOffset: 1.0,
-                    near: 150,
-                    far: 300,
-                },
-            },
-        },
-        shadow: {
-            enable: true,
-            type: 'HARD',
-            pointShadowBias: 0.0005,
-            shadowSize: 2048,
-            pointShadowSize: 1024,
-            shadowSoft: 0.005,
-            shadowBound: 100,
-            shadowBias: 0.05,
-            needUpdate: true,
-            autoUpdate: true,
-            updateFrameRate: 2,
-            csmMargin: 0.1,
-            csmScatteringExp: 0.7,
-            csmAreaScale: 0.4,
-            debug: false,
-        },
-        gi: {
-            enable: false,
-            offsetX: 0,
-            offsetY: 0,
-            offsetZ: 0,
-            probeSpace: 64,
-            probeXCount: 4,
-            probeYCount: 2,
-            probeZCount: 4,
-            probeSize: 32,
-            probeSourceTextureSize: 2048,
-            octRTMaxSize: 2048,
-            octRTSideSize: 16,
-            maxDistance: 64 * 1.73,
-            normalBias: 0.25,
-            depthSharpness: 1,
-            hysteresis: 0.98,
-            lerpHysteresis: 0.01,//The smaller the value, the slower the reaction, which can counteract flickering
-            irradianceChebyshevBias: 0.01,
-            rayNumber: 144,
-            irradianceDistanceBias: 32,
-            indirectIntensity: 1.0,
-            ddgiGamma: 2.2,
-            bounceIntensity: 0.025,
-            probeRoughness: 1,
-            realTimeGI: false,
-            debug: false,
-            autoRenderProbe: false,
-        },
-        sky: {
-            type: 'HDRSKY',
-            sky: null,
-            skyExposure: 1.0,
-            defaultFar: 65536,//can't be too big
-            defaultNear: 1,
-        },
-        light: {
-            maxLight: 4096,
-        },
-        material: {
-            materialChannelDebug: false,
-            materialDebug: false
-        },
-        loader: {
-            numConcurrent: 20,
-        },
-        reflectionSetting: {
-            reflectionProbeMaxCount: 8,
-            reflectionProbeSize: 256,
-            width: 256 * 6,
-            height: 8 * 256,
-            enable: true
-        }
-    };
-
-
-    /**
-     * @internal
-     */
-    public static renderJobs: Map<View3D, RendererJob>;
-
-    /**
-     * create webgpu 3d engine
-     * @param descriptor  {@link CanvasConfig}
-     * @returns
-     */
-    public static async init(descriptor: { canvasConfig?: CanvasConfig; beforeRender?: Function; renderLoop?: Function; lateRender?: Function, engineSetting?: EngineSetting } = {}) {
-        console.log('Engine Version', version);
-        if (!window.isSecureContext){
-            console.warn('WebGPU is only supported in secure contexts (HTTPS or localhost)')
+    public async init(descriptor: {
+        canvasConfig?: CanvasConfig;
+        beforeRender?: Function;
+        renderLoop?: Function;
+        lateRender?: Function;
+        engineSetting?: EngineSetting;
+    } = {}) {
+        if (!Engine3D._wasmInited) {
+            console.log('Engine Version', version);
+            if (!window.isSecureContext) {
+                console.warn('WebGPU is only supported in secure contexts (HTTPS or localhost)');
+            }
+            this.setting = { ...this.setting, ...descriptor.engineSetting };
+            await WasmMatrix.init(Matrix4.allocCount, this.setting.doublePrecision);
+            Engine3D._wasmInited = true;
+        } else {
+            this.setting = { ...this.setting, ...descriptor.engineSetting };
         }
 
-        this.setting = { ...this.setting, ...descriptor.engineSetting }
+        // Create a fresh GPU context for this instance
+        this.gpuContext = new Context3D();
+        await this.gpuContext.init(descriptor.canvasConfig);
 
-        await WasmMatrix.init(Matrix4.allocCount, this.setting.doublePrecision);
+        // Create per-instance data bags
+        this._componentCollectCtx = new ComponentCollectContext();
+        this._globalBindGroupCtx = new GlobalBindGroupContext();
+        this._rtResourceMapCtx = new RTResourceMapContext();
+        this._shadowLightsCtx = new ShadowLightsCollectContext();
+        this._gpuContextData = new GPUContextData();
 
-        await webGPUContext.init(descriptor.canvasConfig);
+        // Activate this instance so the init helpers below use our context
+        this.activate();
 
-        //****pre compute setting****/
+        //*** pre-compute settings ***
         this.setting.reflectionSetting.width = this.setting.reflectionSetting.reflectionProbeSize * 6;
         this.setting.reflectionSetting.height = this.setting.reflectionSetting.reflectionProbeSize * this.setting.reflectionSetting.reflectionProbeMaxCount;
         GBufferFrame.getGBufferFrame(
@@ -337,31 +179,34 @@ export class Engine3D {
             this.setting.reflectionSetting.height,
             false
         );
-        //****pre compute setting****/
+        //*** pre-compute settings ***
 
-        ShaderLib.init();
-
-        ShaderUtil.init();
+        if (!Engine3D._shaderInited) {
+            ShaderLib.init();
+            ShaderUtil.init();
+            Engine3D._shaderInited = true;
+        }
 
         GlobalBindGroup.init();
-
         RTResourceMap.init();
-
         ShadowLightsCollect.init();
 
         this.res = new Res();
-
         this.res.initDefault();
 
         this._beforeRender = descriptor.beforeRender;
         this._renderLoop = descriptor.renderLoop;
         this._lateRender = descriptor.lateRender;
         this.inputSystem = new InputSystem();
-        this.inputSystem.initCanvas(webGPUContext.canvas);
-        return;
+        this.inputSystem.initCanvas(this.gpuContext.canvas);
+
+        // Register as the default static instance if none exists yet
+        if (!Engine3D._defaultInstance) {
+            Engine3D._defaultInstance = this;
+        }
     }
 
-    private static startRenderJob(view: View3D){
+    private startRenderJob(view: View3D) {
         let renderJob = new ForwardRenderJob(view);
         this.renderJobs.set(view, renderJob);
 
@@ -377,11 +222,9 @@ export class Engine3D {
     }
 
     /**
-     * set render view and start renderer
-     * @param view 
-     * @returns 
+     * Set the render view and start the renderer for this instance.
      */
-    public static startRenderView(view: View3D) {
+    public startRenderView(view: View3D) {
         this.renderJobs ||= new Map<View3D, RendererJob>();
         this.views = [view];
         let renderJob = this.startRenderJob(view);
@@ -389,34 +232,29 @@ export class Engine3D {
         return renderJob;
     }
 
-
     /**
-     * set render views and start renderer
-     * @param view 
-     * @returns 
+     * Set multiple render views and start the renderer for this instance.
      */
-    public static startRenderViews(views: View3D[]) {
+    public startRenderViews(views: View3D[]) {
         this.renderJobs ||= new Map<View3D, RendererJob>();
         this.views = views;
         for (let i = 0; i < views.length; i++) {
-            this.startRenderJob(views[i])
+            this.startRenderJob(views[i]);
         }
         this.resume();
     }
 
     /**
-     * get view render job instance
-     * @param view 
-     * @returns 
+     * Get the render job for a specific view.
      */
-    public static getRenderJob(view: View3D): RendererJob {
+    public getRenderJob(view: View3D): RendererJob {
         return this.renderJobs.get(view);
     }
 
     /**
-     * Pause the engine render
+     * Pause rendering for this instance.
      */
-    public static pause() {
+    public pause() {
         if (this._requestAnimationFrameID !== 0) {
             cancelAnimationFrame(this._requestAnimationFrameID);
             this._requestAnimationFrameID = 0;
@@ -424,59 +262,53 @@ export class Engine3D {
     }
 
     /**
-     * Resume the engine render
+     * Resume rendering for this instance.
      */
-    public static resume() {
-        if(this._requestAnimationFrameID === 0)
-            this._requestAnimationFrameID = requestAnimationFrame((t) => this.render(t));
+    public resume() {
+        if (this._requestAnimationFrameID === 0)
+            this._requestAnimationFrameID = requestAnimationFrame((t) => this._render(t));
     }
 
-    /**
-     * start engine render
-     * @internal
-     */
-    private static async render(time: number) {
+    private async _render(time: number) {
         if (this._frameRateValue > 0) {
             let delta = time - this._time;
-            if(delta < this._frameRateValue){
-                let t = performance.now()
-                await new Promise(res=>{
-                    setTimeout(()=>{
-                        time += (performance.now() - t)
-                        res(true)
-                    }, this._frameRateValue - delta)  
-                })
+            if (delta < this._frameRateValue) {
+                let t = performance.now();
+                await new Promise(res => {
+                    setTimeout(() => {
+                        time += (performance.now() - t);
+                        res(true);
+                    }, this._frameRateValue - delta);
+                });
             }
             this._time = time;
         }
-        await this.updateFrame(time);
+        await this._updateFrame(time);
         this._requestAnimationFrameID = 0;
-        this.resume()
+        this.resume();
     }
 
-    private static async updateFrame(time: number) {
+    private async _updateFrame(time: number) {
+        // Activate this instance before processing its frame
+        this.activate();
+
         Time.delta = time - Time.time;
         Time.time = time;
         Time.frame += 1;
         Interpolator.tick(Time.delta);
 
-        /* update all transform */
         let views = this.views;
         let i = 0;
         for (i = 0; i < views.length; i++) {
             const view = views[i];
             view.scene.waitUpdate();
-            let [w, h] = webGPUContext.presentationSize;
+            let [w, h] = this.gpuContext.presentationSize;
             view.camera.viewPort.setTo(0, 0, w, h);
         }
 
-        if (this._beforeRender) 
+        if (this._beforeRender)
             await this._beforeRender();
 
-        /****** auto start with component list *****/
-        // ComponentCollect.startComponents();
-
-        /****** auto before update with component list *****/
         for (const iterator of ComponentCollect.componentsBeforeUpdateList) {
             let k = iterator[0];
             let v = iterator[1];
@@ -485,11 +317,11 @@ export class Engine3D {
                 let c = iterator2[1];
                 if (f.enable) {
                     c(k);
-                };
+                }
             }
         }
 
-        let command = webGPUContext.device.createCommandEncoder();;
+        let command = this.gpuContext.device.createCommandEncoder();
         for (const iterator of ComponentCollect.componentsComputeList) {
             let k = iterator[0];
             let v = iterator[1];
@@ -498,13 +330,12 @@ export class Engine3D {
                 let c = iterator2[1];
                 if (f.enable) {
                     c(k, command);
-                };
+                }
             }
         }
 
-        webGPUContext.device.queue.submit([command.finish()]);
+        this.gpuContext.device.queue.submit([command.finish()]);
 
-        /****** auto update with component list *****/
         for (const iterator of ComponentCollect.componentsUpdateList) {
             let k = iterator[0];
             let v = iterator[1];
@@ -513,7 +344,7 @@ export class Engine3D {
                 let c = iterator2[1];
                 if (f.enable) {
                     c(k);
-                };
+                }
             }
         }
 
@@ -525,7 +356,7 @@ export class Engine3D {
                 let c = iterator2[1];
                 if (k && f.enable) {
                     c(k);
-                };
+                }
             }
         }
 
@@ -534,7 +365,6 @@ export class Engine3D {
         }
 
         WasmMatrix.updateAllContinueTransform(0, Matrix4.useCount, 16);
-        /****** auto update global matrix share buffer write to gpu *****/
         let globalMatrixBindGroup = GlobalBindGroup.modelMatrixBindGroup;
         globalMatrixBindGroup.writeBuffer(Matrix4.useCount * 16);
 
@@ -545,7 +375,6 @@ export class Engine3D {
             v.renderFrame();
         });
 
-        /****** auto late update with component list *****/
         for (const iterator of ComponentCollect.componentsLateUpdateList) {
             let k = iterator[0];
             let v = iterator[1];
@@ -554,11 +383,280 @@ export class Engine3D {
                 let c = iterator2[1];
                 if (f.enable) {
                     c(k);
-                };
+                }
             }
         }
 
-        if (this._lateRender) 
+        if (this._lateRender)
             await this._lateRender();
+    }
+
+    // ─── Static backward-compat API (delegates to default instance) ──────────
+
+    private static _defaultInstance: Engine3D;
+    private static _wasmInited: boolean = false;
+    private static _shaderInited: boolean = false;
+
+    private static get _default(): Engine3D {
+        if (!Engine3D._defaultInstance) {
+            Engine3D._defaultInstance = new Engine3D();
+        }
+        return Engine3D._defaultInstance;
+    }
+
+    /** @deprecated Use `new Engine3D()` for multi-instance support */
+    public static get res(): Res { return Engine3D._default.res; }
+    /** @deprecated Use `new Engine3D()` for multi-instance support */
+    public static get inputSystem(): InputSystem { return Engine3D._default.inputSystem; }
+    /** @deprecated Use `new Engine3D()` for multi-instance support */
+    public static get views(): View3D[] { return Engine3D._default.views; }
+    /** @deprecated Use `new Engine3D()` for multi-instance support */
+    public static set views(v: View3D[]) { Engine3D._default.views = v; }
+    /** @deprecated Use `new Engine3D()` for multi-instance support */
+    public static get renderJobs(): Map<View3D, RendererJob> { return Engine3D._default.renderJobs; }
+
+    public static get frameRate(): number { return Engine3D._default.frameRate; }
+    public static set frameRate(value: number) { Engine3D._default.frameRate = value; }
+
+    public static get size(): number[] { return Engine3D._default.size; }
+    public static get aspect(): number { return Engine3D._default.aspect; }
+    public static get width(): number { return Engine3D._default.width; }
+    public static get height(): number { return Engine3D._default.height; }
+
+    public static get setting(): EngineSetting { return Engine3D._default.setting; }
+    public static set setting(v: EngineSetting) { Engine3D._default.setting = v; }
+
+    public static async init(descriptor: {
+        canvasConfig?: CanvasConfig;
+        beforeRender?: Function;
+        renderLoop?: Function;
+        lateRender?: Function;
+        engineSetting?: EngineSetting;
+    } = {}) {
+        return Engine3D._default.init(descriptor);
+    }
+
+    public static startRenderView(view: View3D) {
+        return Engine3D._default.startRenderView(view);
+    }
+
+    public static startRenderViews(views: View3D[]) {
+        return Engine3D._default.startRenderViews(views);
+    }
+
+    public static getRenderJob(view: View3D): RendererJob {
+        return Engine3D._default.getRenderJob(view);
+    }
+
+    public static pause() {
+        Engine3D._default.pause();
+    }
+
+    public static resume() {
+        Engine3D._default.resume();
+    }
+
+    // ─── Shared default settings builder ─────────────────────────────────────
+
+    private static _buildDefaultSetting(): EngineSetting {
+        return {
+            doublePrecision: false,
+
+            occlusionQuery: {
+                enable: true,
+                debug: false,
+            },
+            pick: {
+                enable: true,
+                mode: `bound`,
+                detail: `mesh`,
+            },
+            render: {
+                debug: false,
+                renderPassState: 4,
+                renderState_left: 5,
+                renderState_right: 5,
+                renderState_split: 0.5,
+                quadScale: 1,
+                hdrExposure: 1.5,
+                debugQuad: -1,
+                maxPointLight: 1000,
+                maxDirectLight: 4,
+                maxSportLight: 1000,
+                drawOpMin: 0,
+                drawOpMax: Number.MAX_SAFE_INTEGER,
+                drawTrMin: 0,
+                drawTrMax: Number.MAX_SAFE_INTEGER,
+                zPrePass: false,
+                useLogDepth: false,
+                useCompressGBuffer: false,
+                gi: false,
+                postProcessing: {
+                    bloom: {
+                        downSampleStep: 3,
+                        downSampleBlurSize: 9,
+                        downSampleBlurSigma: 1.0,
+                        upSampleBlurSize: 9,
+                        upSampleBlurSigma: 1.0,
+                        luminanceThreshole: 1.0,
+                        bloomIntensity: 1.0,
+                        hdr: 1.0
+                    },
+                    globalFog: {
+                        debug: false,
+                        enable: false,
+                        fogType: 0.0,
+                        fogHeightScale: 0.1,
+                        start: 400,
+                        end: 10,
+                        density: 0.02,
+                        ins: 0.5,
+                        skyFactor: 0.5,
+                        skyRoughness: 0.4,
+                        overrideSkyFactor: 0.8,
+                        fogColor: new Color(96 / 255, 117 / 255, 133 / 255, 1),
+                        falloff: 0.7,
+                        rayLength: 200.0,
+                        scatteringExponent: 2.7,
+                        dirHeightLine: 10.0,
+                    },
+                    godRay: {
+                        blendColor: true,
+                        rayMarchCount: 16,
+                        scatteringExponent: 5,
+                        intensity: 0.5
+                    },
+                    ssao: {
+                        enable: false,
+                        radius: 0.15,
+                        bias: -0.1,
+                        aoPower: 2.0,
+                        debug: true,
+                    },
+                    outline: {
+                        enable: false,
+                        strength: 1,
+                        groupCount: 4,
+                        outlinePixel: 2,
+                        fadeOutlinePixel: 4,
+                        textureScale: 1,
+                        useAddMode: false,
+                        debug: true,
+                    },
+                    taa: {
+                        enable: false,
+                        jitterSeedCount: 8,
+                        blendFactor: 0.1,
+                        sharpFactor: 0.6,
+                        sharpPreBlurFactor: 0.5,
+                        temporalJitterScale: 0.13,
+                        debug: true,
+                    },
+                    gtao: {
+                        enable: false,
+                        darkFactor: 1.0,
+                        maxDistance: 5.0,
+                        maxPixel: 50.0,
+                        rayMarchSegment: 6,
+                        multiBounce: false,
+                        usePosFloat32: true,
+                        blendColor: true,
+                        debug: true,
+                    },
+                    ssr: {
+                        enable: false,
+                        pixelRatio: 1,
+                        fadeEdgeRatio: 0.2,
+                        rayMarchRatio: 0.5,
+                        fadeDistanceMin: 600,
+                        fadeDistanceMax: 2000,
+                        roughnessThreshold: 0.5,
+                        powDotRN: 0.2,
+                        mixThreshold: 0.1,
+                        debug: true,
+                    },
+                    fxaa: {
+                        enable: false,
+                    },
+                    depthOfView: {
+                        enable: false,
+                        iterationCount: 3,
+                        pixelOffset: 1.0,
+                        near: 150,
+                        far: 300,
+                    },
+                },
+            },
+            shadow: {
+                enable: true,
+                type: 'HARD',
+                pointShadowBias: 0.0005,
+                shadowSize: 2048,
+                pointShadowSize: 1024,
+                shadowSoft: 0.005,
+                shadowBound: 100,
+                shadowBias: 0.05,
+                needUpdate: true,
+                autoUpdate: true,
+                updateFrameRate: 2,
+                csmMargin: 0.1,
+                csmScatteringExp: 0.7,
+                csmAreaScale: 0.4,
+                debug: false,
+            },
+            gi: {
+                enable: false,
+                offsetX: 0,
+                offsetY: 0,
+                offsetZ: 0,
+                probeSpace: 64,
+                probeXCount: 4,
+                probeYCount: 2,
+                probeZCount: 4,
+                probeSize: 32,
+                probeSourceTextureSize: 2048,
+                octRTMaxSize: 2048,
+                octRTSideSize: 16,
+                maxDistance: 64 * 1.73,
+                normalBias: 0.25,
+                depthSharpness: 1,
+                hysteresis: 0.98,
+                lerpHysteresis: 0.01,
+                irradianceChebyshevBias: 0.01,
+                rayNumber: 144,
+                irradianceDistanceBias: 32,
+                indirectIntensity: 1.0,
+                ddgiGamma: 2.2,
+                bounceIntensity: 0.025,
+                probeRoughness: 1,
+                realTimeGI: false,
+                debug: false,
+                autoRenderProbe: false,
+            },
+            sky: {
+                type: 'HDRSKY',
+                sky: null,
+                skyExposure: 1.0,
+                defaultFar: 65536,
+                defaultNear: 1,
+            },
+            light: {
+                maxLight: 4096,
+            },
+            material: {
+                materialChannelDebug: false,
+                materialDebug: false
+            },
+            loader: {
+                numConcurrent: 20,
+            },
+            reflectionSetting: {
+                reflectionProbeMaxCount: 8,
+                reflectionProbeSize: 256,
+                width: 256 * 6,
+                height: 8 * 256,
+                enable: true
+            }
+        };
     }
 }
