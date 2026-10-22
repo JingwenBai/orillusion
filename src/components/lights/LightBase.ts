@@ -65,8 +65,8 @@ export class LightBase extends ComponentBase implements ILight {
     protected onChange() {
         if (this.bindOnChange) this.bindOnChange();
         this.transform.object3D.bound.setFromCenterAndSize(this.transform.worldPosition, new Vector3(this.size, this.size, this.size));
-        if (this._castGI) {
-            EntityCollect.instance.state.giLightingChange = true;
+        if (this._castGI && this.transform.scene3D) {
+            EntityCollect.instance.setGILightingChange(this.transform.scene3D, true);
         }
 
         if (this._castShadow) {

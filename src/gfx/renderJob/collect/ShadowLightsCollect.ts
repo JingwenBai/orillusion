@@ -5,17 +5,6 @@ import { View3D } from '../../../core/View3D';
 import { CameraUtil } from '../../../util/CameraUtil';
 import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { GlobalUniformGroup } from '../../graphics/webGpu/core/bindGroups/GlobalUniformGroup';
-
-/**
- * @internal
- * Per-engine instance data for ShadowLightsCollect
- */
-export class ShadowLightsCollectContext {
-    directionLightList: Map<Scene3D, ILight[]> = new Map();
-    pointLightList: Map<Scene3D, ILight[]> = new Map();
-    shadowLights: Map<Scene3D, Float32Array> = new Map();
-}
-
 /**
  * @internal
  * @group Lights
@@ -25,32 +14,16 @@ export class ShadowLightsCollect {
     public static maxNumDirectionShadow = 8;
     public static maxNumPointShadow = 8;
 
-    private static _ctx: ShadowLightsCollectContext = new ShadowLightsCollectContext();
+    public static directionLightList: Map<Scene3D, ILight[]>;
+    public static pointLightList: Map<Scene3D, ILight[]>;
+    public static shadowLights: Map<Scene3D, Float32Array>;
 
-    /**
-     * @internal
-     * Switch to a different engine instance's context
-     */
-    public static setContext(ctx: ShadowLightsCollectContext) {
-        ShadowLightsCollect._ctx = ctx;
-    }
-
-    public static get directionLightList(): Map<Scene3D, ILight[]> {
-        return ShadowLightsCollect._ctx.directionLightList;
-    }
-
-    public static get pointLightList(): Map<Scene3D, ILight[]> {
-        return ShadowLightsCollect._ctx.pointLightList;
-    }
-
-    public static get shadowLights(): Map<Scene3D, Float32Array> {
-        return ShadowLightsCollect._ctx.shadowLights;
-    }
-
+    /** Idempotent — maps are keyed by Scene3D and shared across all Engine3D instances. */
     public static init() {
-        this._ctx.directionLightList = new Map<Scene3D, ILight[]>();
-        this._ctx.pointLightList = new Map<Scene3D, ILight[]>();
-        this._ctx.shadowLights = new Map<Scene3D, Float32Array>();
+        if (this.directionLightList) return;
+        this.directionLightList = new Map<Scene3D, ILight[]>();
+        this.pointLightList = new Map<Scene3D, ILight[]>();
+        this.shadowLights = new Map<Scene3D, Float32Array>();
     }
 
     public static createBuffer(view: View3D) {
@@ -154,6 +127,7 @@ export class ShadowLightsCollect {
             if (list.indexOf(light) == -1) {
                 list.push(light);
             }
+
 
             return list;
         }
