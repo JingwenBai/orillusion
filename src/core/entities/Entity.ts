@@ -313,7 +313,13 @@ export class Entity extends CEventDispatcher {
             });
             this.components.clear();
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
+            const self = this as any;
             ComponentCollect.waitStartComponent.forEach((v, k) => {
+                // Only start components that belong to this scene, so that
+                // each Engine3D instance starts its own components in the
+                // correct engine context (multi-instance safety).
+                if (v.length > 0 && v[0].transform?.scene3D !== self) return;
                 while (v.length > 0) {
                     const element = v.shift();
                     element[`__start`]();

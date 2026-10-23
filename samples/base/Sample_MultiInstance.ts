@@ -24,7 +24,7 @@ document.body.appendChild(container);
 
 async function createEngine(canvas: HTMLCanvasElement, boxColor: Color, rotY: number): Promise<Engine3D> {
     const engine = new Engine3D();
-    await engine.init({ canvas });
+    await engine.init({ canvasConfig: { canvas } });
 
     const scene = new Scene3D();
 
