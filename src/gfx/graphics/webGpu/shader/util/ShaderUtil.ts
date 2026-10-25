@@ -19,12 +19,35 @@ export type FragmentPart = {
     fs_frameBuffers: string;
 }
 
-export class ShaderUtil {
-    public static renderShaderModulePool: Map<string, GPUShaderModule>;
-    public static renderShader: Map<string, RenderShaderPass>;
+let _activeInstance: ShaderUtil = null;
 
-    public static init() {
+export class ShaderUtil {
+    public renderShaderModulePool: Map<string, GPUShaderModule>;
+    public renderShader: Map<string, RenderShaderPass>;
+
+    public init() {
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
         this.renderShader = new Map<string, RenderShaderPass>();
     }
+
+    // ---- Static delegation to active instance ----
+
+    public static setActive(instance: ShaderUtil) {
+        _activeInstance = instance;
+    }
+
+    public static get active(): ShaderUtil {
+        return _activeInstance;
+    }
+
+    public static get renderShaderModulePool(): Map<string, GPUShaderModule> {
+        return _activeInstance?.renderShaderModulePool;
+    }
+
+    public static get renderShader(): Map<string, RenderShaderPass> {
+        return _activeInstance?.renderShader;
+    }
+
+    /** @deprecated use instance method via engine.shaderUtil */
+    public static init() { _activeInstance?.init(); }
 }
