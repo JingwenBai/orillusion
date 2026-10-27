@@ -339,4 +339,26 @@ export class EntityCollect {
         let viewList = this._renderShaderCollect.renderShaderUpdateList.get(view);
         return viewList;
     }
+
+    /**
+     * Remove all data associated with a Scene3D from this collect instance.
+     * Called by Engine3D.destroy() to prevent memory leaks in multi-instance setups.
+     * @internal
+     */
+    public clearScene(scene: Scene3D): void {
+        this._sceneLights.delete(scene);
+        this._sceneGIProbes.delete(scene);
+        this._op_RenderNodes.delete(scene);
+        this._tr_RenderNodes.delete(scene);
+        this._octreeRenderNodes.delete(scene);
+        this._reflections.delete(scene);
+        this._op_renderGroup.delete(scene);
+        this._tr_renderGroup.delete(scene);
+        this._skyMap.delete(scene);
+        this._giLightingChangeMap.delete(scene);
+        if (scene.view) {
+            this._renderShaderCollect.renderShaderUpdateList.delete(scene.view);
+            this._renderShaderCollect.renderNodeList.delete(scene.view);
+        }
+    }
 }

@@ -82,6 +82,20 @@ export class GlobalBindGroup {
         return this._reflectionEntriesMap.get(scene);
     }
 
+    /**
+     * Remove scene-keyed GPU bind group data for a destroyed scene.
+     * @internal
+     */
+    public static clearScene(scene: Scene3D): void {
+        this._lightEntriesMap?.delete(scene);
+        this._reflectionEntriesMap?.delete(scene);
+    }
 
-
+    /**
+     * Remove the camera bind group for a destroyed camera.
+     * @internal
+     */
+    public static clearCamera(camera: Camera3D): void {
+        this._cameraBindGroups?.delete(camera);
+    }
 }

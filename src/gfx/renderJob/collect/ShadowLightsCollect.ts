@@ -201,4 +201,14 @@ export class ShadowLightsCollect {
             group.shadowLights = shadowLights;
         });
     }
+
+    /**
+     * Remove all scene-keyed data for a destroyed scene.
+     * @internal
+     */
+    public static clearScene(scene: Scene3D): void {
+        this.directionLightList?.delete(scene);
+        this.pointLightList?.delete(scene);
+        this.shadowLights?.delete(scene);
+    }
 }

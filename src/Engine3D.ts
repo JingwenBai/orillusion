@@ -24,6 +24,8 @@ import { FXAAPost } from './gfx/renderJob/post/FXAAPost';
 import { PostProcessingComponent } from './components/post/PostProcessingComponent';
 import { GBufferFrame } from './gfx/renderJob/frame/GBufferFrame';
 import { EngineContext } from './gfx/renderJob/EngineContext';
+import { EntityCollect } from './gfx/renderJob/collect/EntityCollect';
+import { GILighting } from './components/lights/GILighting';
 
 function deepMergeSettings(base: any, override: any): any {
     const result = { ...base };
@@ -540,7 +542,9 @@ export class Engine3D {
 
         // Remove this engine's views from the shared ComponentCollect maps so
         // that other running engines don't iterate stale entries.
+        // Also clean up scene-keyed GPU data to prevent memory leaks.
         if (this.views) {
+            const cleanedScenes = new Set<any>();
             for (const view of this.views) {
                 ComponentCollect.componentsUpdateList?.delete(view);
                 ComponentCollect.componentsLateUpdateList?.delete(view);
@@ -548,6 +552,17 @@ export class Engine3D {
                 ComponentCollect.componentsComputeList?.delete(view);
                 ComponentCollect.componentsEnablePickerList?.delete(view);
                 ComponentCollect.graphicComponent?.delete(view);
+
+                if (view.scene && !cleanedScenes.has(view.scene)) {
+                    cleanedScenes.add(view.scene);
+                    EntityCollect.instance.clearScene(view.scene);
+                    GILighting.removeScene(view.scene);
+                    ShadowLightsCollect.clearScene(view.scene);
+                    GlobalBindGroup.clearScene(view.scene);
+                }
+                if (view.camera) {
+                    GlobalBindGroup.clearCamera(view.camera);
+                }
             }
         }
 
