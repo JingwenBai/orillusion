@@ -24,6 +24,7 @@ import { FXAAPost } from './gfx/renderJob/post/FXAAPost';
 import { PostProcessingComponent } from './components/post/PostProcessingComponent';
 import { GBufferFrame } from './gfx/renderJob/frame/GBufferFrame';
 import { EngineContext } from './gfx/renderJob/EngineContext';
+import { GPUContext, GPUContextData } from './gfx/renderJob/GPUContext';
 
 function deepMergeSettings(base: any, override: any): any {
     const result = { ...base };
@@ -355,6 +356,7 @@ export class Engine3D {
     private _renderLoop: Function;
     private _lateRender: Function;
     private _requestAnimationFrameID: number = 0;
+    private _gpuContextData: GPUContextData = new GPUContextData();
 
     constructor() {
         // Deep-merge the shared _defaultSetting (which captures any pre-init
@@ -409,10 +411,16 @@ export class Engine3D {
             await WasmMatrix.init(Matrix4.allocCount, this.setting.doublePrecision);
             Engine3D._wasmInitialized = true;
         }
+        // Re-assert after await: concurrent Promise.all init can clobber these
+        Engine3D.current = this;
+        EngineContext.id = this._id;
 
         // ---- Per-engine: canvas + WebGPU canvas context ----
         this._context = new Context3D();
         await this._context.init(descriptor.canvasConfig);
+        // Re-assert after await
+        Engine3D.current = this;
+        EngineContext.id = this._id;
 
         // Mirror per-canvas fields onto the shared webGPUContext singleton so that
         // existing code that reads webGPUContext.presentationSize / .context etc.
@@ -594,6 +602,7 @@ export class Engine3D {
         Engine3D.current = this;
         EngineContext.id = this._id;
         this._syncWebGPUContext();
+        GPUContext.setData(this._gpuContextData);
 
         Time.delta = time - Time.time;
         Time.time = time;
