@@ -4,18 +4,33 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+import { webGPUContext } from '../../graphics/webGpu/Context3D';
 /**
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    // Delegate storage to the active engine's Context3D for per-instance isolation
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return webGPUContext.rtTextureMap as Map<string, RenderTexture>;
+    }
+
+    public static set rtTextureMap(v: Map<string, RenderTexture>) {
+        webGPUContext.rtTextureMap = v;
+    }
+
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return webGPUContext.rtViewQuadMap as Map<string, ViewQuad>;
+    }
+
+    public static set rtViewQuad(v: Map<string, ViewQuad>) {
+        webGPUContext.rtViewQuadMap = v;
+    }
 
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        webGPUContext.rtTextureMap = new Map<string, RenderTexture>();
+        webGPUContext.rtViewQuadMap = new Map<string, ViewQuad>();
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
