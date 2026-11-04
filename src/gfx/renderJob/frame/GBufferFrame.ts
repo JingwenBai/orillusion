@@ -7,11 +7,26 @@ import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
 
+// Module-level map swapped per Engine3D instance before each render frame.
+// Prevents multiple Engine3D instances from sharing GBuffer resources under the same keys.
+let _gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
+
+    /** Active per-engine GBuffer map. Read-only from outside; use setActiveMap() to switch. */
+    public static get gBufferMap(): Map<string, GBufferFrame> { return _gBufferMap; }
+
+    /**
+     * Switch the active GBuffer map to the one owned by the current Engine3D instance.
+     * Called by Engine3D before each render frame.
+     */
+    public static setActiveMap(map: Map<string, GBufferFrame>): void {
+        _gBufferMap = map;
+    }
+
     // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;

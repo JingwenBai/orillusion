@@ -20,10 +20,13 @@ export type FragmentPart = {
 }
 
 export class ShaderUtil {
+    private static _initialized: boolean = false;
     public static renderShaderModulePool: Map<string, GPUShaderModule>;
     public static renderShader: Map<string, RenderShaderPass>;
 
     public static init() {
+        if (this._initialized) return;
+        this._initialized = true;
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
         this.renderShader = new Map<string, RenderShaderPass>();
     }

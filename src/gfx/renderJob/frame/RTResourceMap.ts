@@ -4,19 +4,32 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+// Module-level maps swapped per Engine3D instance before each render frame.
+// Engine3D.setActiveMaps() points these at the current engine's own maps so that
+// multiple Engine3D instances don't share render-texture/view-quad namespaces.
+let _rtTextureMap: Map<string, RenderTexture> = new Map<string, RenderTexture>();
+let _rtViewQuadMap: Map<string, ViewQuad> = new Map<string, ViewQuad>();
+
 /**
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    public static get rtTextureMap(): Map<string, RenderTexture> { return _rtTextureMap; }
+    public static get rtViewQuad(): Map<string, ViewQuad> { return _rtViewQuadMap; }
 
-    public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+    /**
+     * Switch the active render-resource maps to those owned by the current Engine3D instance.
+     * Called by Engine3D before each render frame.
+     */
+    public static setActiveMaps(texMap: Map<string, RenderTexture>, quadMap: Map<string, ViewQuad>): void {
+        _rtTextureMap = texMap;
+        _rtViewQuadMap = quadMap;
     }
+
+    /** @deprecated No-op: maps are now created per Engine3D instance. */
+    public static init() {}
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
         let rt: RenderTexture = this.rtTextureMap.get(name);
