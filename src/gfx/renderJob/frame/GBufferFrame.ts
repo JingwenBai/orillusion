@@ -99,6 +99,20 @@ export class GBufferFrame extends RTFrame {
         return rtFrame;
     }
 
+    /**
+     * Remove all GBuffer entries that were created for the given engine ID.
+     * Called by Engine3D.destroy() to avoid memory leaks.
+     * @internal
+     */
+    public static clearForEngine(engineId: string): void {
+        const prefix = `${engineId}_`;
+        for (const key of Array.from(GBufferFrame.gBufferMap.keys())) {
+            if (key.startsWith(prefix)) {
+                GBufferFrame.gBufferMap.delete(key);
+            }
+        }
+    }
+
     public clone() {
         let gBufferFrame = new GBufferFrame();
         this.clone2Frame(gBufferFrame);

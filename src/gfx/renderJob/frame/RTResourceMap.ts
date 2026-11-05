@@ -102,4 +102,24 @@ export class RTResourceMap {
         );
         GPUContext.endCommandEncoder(commandEncoder);
     }
+
+    /**
+     * Remove all entries (textures and view quads) that were created for the given engine ID.
+     * Called by Engine3D.destroy() to avoid memory leaks.
+     * @internal
+     */
+    public static clearForEngine(engineId: string): void {
+        if (!this.rtTextureMap) return;
+        const prefix = `${engineId}_`;
+        for (const key of Array.from(this.rtTextureMap.keys())) {
+            if (key.startsWith(prefix)) {
+                this.rtTextureMap.delete(key);
+            }
+        }
+        for (const key of Array.from(this.rtViewQuad.keys())) {
+            if (key.startsWith(prefix)) {
+                this.rtViewQuad.delete(key);
+            }
+        }
+    }
 }

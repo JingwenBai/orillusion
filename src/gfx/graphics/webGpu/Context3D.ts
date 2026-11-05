@@ -13,6 +13,8 @@ export class Context3D extends CEventDispatcher {
     private static _device: GPUDevice;
     private static _presentationFormat: GPUTextureFormat;
     private static _gpuInitialized: boolean = false;
+    // Promise guard so concurrent Engine3D.init() calls share one GPU init.
+    private static _gpuInitPromise: Promise<void> | null = null;
 
     // ---- Per-canvas/per-engine state ----
     public context: GPUCanvasContext;
@@ -37,10 +39,17 @@ export class Context3D extends CEventDispatcher {
 
     /**
      * Initialize the shared GPU adapter and device (called once across all instances).
+     * Uses a shared Promise so concurrent Engine3D.init() calls don't duplicate work.
      */
-    private static async initGPU(): Promise<void> {
-        if (this._gpuInitialized) return;
+    private static initGPU(): Promise<void> {
+        if (this._gpuInitialized) return Promise.resolve();
+        if (!this._gpuInitPromise) {
+            this._gpuInitPromise = this._doInitGPU();
+        }
+        return this._gpuInitPromise;
+    }
 
+    private static async _doInitGPU(): Promise<void> {
         if (navigator.gpu === undefined) {
             throw new Error('Your browser does not support WebGPU!');
         }

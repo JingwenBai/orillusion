@@ -320,6 +320,7 @@ export class Engine3D {
 
     // ---- Shared one-time initialisation guards ----
     private static _wasmInitialized: boolean = false;
+    private static _wasmInitPromise: Promise<void> | null = null;
     private static _sharedResourcesInitialized: boolean = false;
     private static _instanceCount: number = 0;
 
@@ -406,10 +407,13 @@ export class Engine3D {
             this.setting = deepMergeSettings(this.setting, descriptor.engineSetting);
         }
 
-        // ---- One-time: WASM matrix library ----
+        // ---- One-time: WASM matrix library (shared Promise prevents double-init) ----
         if (!Engine3D._wasmInitialized) {
-            await WasmMatrix.init(Matrix4.allocCount, this.setting.doublePrecision);
-            Engine3D._wasmInitialized = true;
+            if (!Engine3D._wasmInitPromise) {
+                Engine3D._wasmInitPromise = WasmMatrix.init(Matrix4.allocCount, this.setting.doublePrecision)
+                    .then(() => { Engine3D._wasmInitialized = true; });
+            }
+            await Engine3D._wasmInitPromise;
         }
         // Re-assert after await: concurrent Promise.all init can clobber these
         Engine3D.current = this;
@@ -557,6 +561,12 @@ export class Engine3D {
                 ComponentCollect.componentsEnablePickerList?.delete(view);
                 ComponentCollect.graphicComponent?.delete(view);
             }
+        }
+
+        // Release per-engine GPU resources from the shared caches.
+        if (this._id) {
+            GBufferFrame.clearForEngine(this._id);
+            RTResourceMap.clearForEngine(this._id);
         }
 
         if (this._context) {
