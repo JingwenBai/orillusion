@@ -24,6 +24,9 @@ export class ShaderUtil {
     public static renderShader: Map<string, RenderShaderPass>;
 
     public static init() {
+        // Shared singleton — only initialise once per page (GPUShaderModules are
+        // tied to the shared GPUDevice and can be reused by all Engine3D instances).
+        if (this.renderShaderModulePool) return;
         this.renderShaderModulePool = new Map<string, GPUShaderModule>();
         this.renderShader = new Map<string, RenderShaderPass>();
     }

@@ -4,22 +4,44 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+import { EngineRegistry } from '../../../core/EngineRegistry';
 /**
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
+    /** @internal Fallback global maps (used before any engine is active) */
     public static rtTextureMap: Map<string, RenderTexture>;
     public static rtViewQuad: Map<string, ViewQuad>;
 
+    /** @internal Returns the texture map for the currently-active engine. */
+    private static get _textureMap(): Map<string, RenderTexture> {
+        const engine = EngineRegistry.active;
+        if (engine?.rtTextureMap) return engine.rtTextureMap as Map<string, RenderTexture>;
+        return RTResourceMap.rtTextureMap;
+    }
+
+    /** @internal Returns the ViewQuad map for the currently-active engine. */
+    private static get _viewQuadMap(): Map<string, ViewQuad> {
+        const engine = EngineRegistry.active;
+        if (engine?.rtViewQuad) return engine.rtViewQuad as Map<string, ViewQuad>;
+        return RTResourceMap.rtViewQuad;
+    }
+
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        // Global fallback maps — only initialised once
+        if (!this.rtTextureMap) {
+            this.rtTextureMap = new Map<string, RenderTexture>();
+        }
+        if (!this.rtViewQuad) {
+            this.rtViewQuad = new Map<string, ViewQuad>();
+        }
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        const map = this._textureMap;
+        let rt: RenderTexture = map.get(name);
         if (!rt) {
             if (name == RTResourceConfig.colorBufferTex_NAME) {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, false);
@@ -27,35 +49,31 @@ export class RTResourceMap {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, true);
             }
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            map.set(name, rt);
         }
         return rt;
     }
 
     public static createRTTextureArray(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, length: number = 1, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        const map = this._textureMap;
+        let rt: RenderTexture = map.get(name);
         if (!rt) {
             rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, length, sampleCount);
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            map.set(name, rt);
         }
         return rt;
     }
 
     public static createViewQuad(name: string, shaderVS: string, shaderFS: string, outRtTexture: RenderTexture, multisample: number = 0) {
-        let rtFrame = new RTFrame([
-            outRtTexture
-        ],
-            [
-                new RTDescriptor()
-            ]);
+        let rtFrame = new RTFrame([outRtTexture], [new RTDescriptor()]);
         let viewQuad = new ViewQuad(shaderVS, shaderFS, rtFrame, multisample);
-        RTResourceMap.rtViewQuad.set(name, viewQuad);
+        this._viewQuadMap.set(name, viewQuad);
         return viewQuad;
     }
 
-    public static getTexture(name: string) {
-        return this.rtTextureMap.get(name);
+    public static getTexture(name: string): RenderTexture {
+        return this._textureMap.get(name);
     }
 
     public static CreateSplitTexture(id: string) {

@@ -1,5 +1,6 @@
 
 import { Engine3D } from '../../../Engine3D';
+import { EngineRegistry } from '../../../core/EngineRegistry';
 import { ILight } from '../../../components/lights/ILight';
 import { Reflection } from '../../../components/renderer/Reflection';
 import { RenderNode } from '../../../components/renderer/RenderNode';
@@ -56,7 +57,17 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
+    /**
+     * Returns the EntityCollect for the currently-active Engine3D instance.
+     * Falls back to a shared singleton for backward compatibility when no
+     * engine has been registered (e.g. in unit tests or legacy code paths).
+     */
+    public static get instance(): EntityCollect {
+        const engine = EngineRegistry.active;
+        if (engine?.entityCollect) {
+            return engine.entityCollect as EntityCollect;
+        }
+        // Fallback: legacy singleton path
         if (!this._instance) {
             this._instance = new EntityCollect();
         }
