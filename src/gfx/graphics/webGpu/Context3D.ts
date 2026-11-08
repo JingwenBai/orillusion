@@ -149,5 +149,19 @@ export class Context3D extends CEventDispatcher {
 
 /**
  * @internal
+ * Module-level reference to the currently-active Context3D.
+ * This is an ES-module live binding: reassigning it here is immediately
+ * visible to all importers, so multi-instance engines swap it before each
+ * render frame via setCurrentContext().
  */
 export let webGPUContext = new Context3D();
+
+/**
+ * @internal
+ * Point the module-level webGPUContext at a different Context3D instance.
+ * Called by Engine3D before each engine's render frame so that all
+ * subsystems that import webGPUContext automatically use the right context.
+ */
+export function setCurrentContext(ctx: Context3D): void {
+    webGPUContext = ctx;
+}
