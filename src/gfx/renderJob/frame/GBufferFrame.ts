@@ -11,8 +11,9 @@ export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
+
+    /** @internal current-instance gBuffer map (swapped by Engine3D) */
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -72,7 +73,6 @@ export class GBufferFrame extends RTFrame {
         if (!GBufferFrame.gBufferMap.has(key)) {
             gBuffer = new GBufferFrame();
             let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -87,7 +87,6 @@ export class GBufferFrame extends RTFrame {
         }
         return gBuffer;
     }
-
 
     public static getGUIBufferFrame() {
         let colorRTFrame = this.getGBufferFrame(this.colorPass_GBuffer);
