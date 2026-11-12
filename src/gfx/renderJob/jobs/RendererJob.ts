@@ -199,10 +199,14 @@ export class RendererJob {
     }
 
     /**
-     * To render a frame of the scene 
+     * To render a frame of the scene
      */
     public renderFrame() {
         let view = this._view;
+
+        // Scope GBufferFrame lookups to this view so that multiple engine
+        // instances maintain isolated frame buffers.
+        GBufferFrame.setScope(view);
 
         ProfilerUtil.startView(view);
 
@@ -249,6 +253,10 @@ export class RendererJob {
         //output
         let lastTexture = GBufferFrame.getGUIBufferFrame().getColorTexture();
         this.postRenderer.presentContent(view, lastTexture);
+
+        // Clear scope after the frame so accidental out-of-frame calls
+        // fall back to the legacy global map rather than a stale view.
+        GBufferFrame.setScope(null);
     }
 
     public debug() {
