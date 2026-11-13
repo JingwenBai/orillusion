@@ -1,4 +1,6 @@
 export * from "./Engine3D"
+export * from "./core/EngineContext"
+export * from "./gfx/graphics/webGpu/GPUDeviceContext"
 export * from "./assets/Fonts"
 export * from "./assets/Res"
 export * from "./assets/shader/ShaderLib"

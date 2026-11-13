@@ -7,6 +7,8 @@ import { PickFire } from "../io/PickFire";
 import { Vector4 } from "../math/Vector4";
 import { Camera3D } from "./Camera3D";
 import { Scene3D } from "./Scene3D";
+// Import type only to avoid circular dependency (Engine3D imports View3D)
+import type { Engine3D } from "../Engine3D";
 
 export class View3D extends CEventListener {
     private _camera: Camera3D;
@@ -14,6 +16,7 @@ export class View3D extends CEventListener {
     private _viewPort: Vector4;
     private _enablePick: boolean = false;
     private _enable: boolean = true;
+    private _engine: Engine3D | null = null;
     public pickFire: PickFire;
     public guiPick: GUIPick;
     public readonly canvasList: GUICanvas[];
@@ -22,6 +25,18 @@ export class View3D extends CEventListener {
         super();
         this.canvasList = [];
         this._viewPort = new Vector4(x, y, width, height);
+    }
+
+    /**
+     * The Engine3D instance that owns this view. Set automatically by
+     * Engine3D.startRenderView / startRenderViews.
+     */
+    public get engine(): Engine3D | null {
+        return this._engine;
+    }
+
+    public set engine(value: Engine3D | null) {
+        this._engine = value;
     }
 
     public get enable(): boolean {
