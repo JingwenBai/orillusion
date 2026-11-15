@@ -5,29 +5,68 @@ import { LightEntries } from "./groups/LightEntries";
 import { ReflectionEntries } from "./groups/ReflectionEntries";
 import { MatrixBindGroup } from "./MatrixBindGroup";
 
+// Module-level current instance — set by Engine3D on init so static shims route correctly.
+let _current: GlobalBindGroup | null = null;
+/** @internal */
+export function setCurrentGlobalBindGroup(gbg: GlobalBindGroup): void { _current = gbg; }
+
 /**
  * @internal
  * Use Global DO Matrix ArrayBuffer Descriptor
  * @group GFX
  */
 export class GlobalBindGroup {
-    private static _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
-    private static _lightEntriesMap: Map<Scene3D, LightEntries>;
-    private static _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
-    public static modelMatrixBindGroup: MatrixBindGroup;
 
-    public static init() {
+    // ---- Static shim methods (backward compat — route to _current) ----
+
+    /** @internal No-op; initialization now happens in the constructor. */
+    public static init() {}
+
+    public static getAllCameraGroup(): Map<Camera3D, GlobalUniformGroup> {
+        return _current?.getAllCameraGroup();
+    }
+
+    public static getCameraGroup(camera: Camera3D): GlobalUniformGroup {
+        return _current?.getCameraGroup(camera);
+    }
+
+    public static updateCameraGroup(camera: Camera3D): void {
+        _current?.updateCameraGroup(camera);
+    }
+
+    public static getLightEntries(scene: Scene3D): LightEntries {
+        return _current?.getLightEntries(scene);
+    }
+
+    public static getReflectionEntries(scene: Scene3D): ReflectionEntries {
+        return _current?.getReflectionEntries(scene);
+    }
+
+    public static get modelMatrixBindGroup(): MatrixBindGroup {
+        return _current?.modelMatrixBindGroup;
+    }
+
+    // ---- Instance fields ----
+
+    public modelMatrixBindGroup: MatrixBindGroup;
+    private _cameraBindGroups: Map<Camera3D, GlobalUniformGroup>;
+    private _lightEntriesMap: Map<Scene3D, LightEntries>;
+    private _reflectionEntriesMap: Map<Scene3D, ReflectionEntries>;
+
+    constructor() {
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();
         this._reflectionEntriesMap = new Map<Scene3D, ReflectionEntries>();
     }
 
-    public static getAllCameraGroup() {
+    // ---- Instance methods ----
+
+    public getAllCameraGroup(): Map<Camera3D, GlobalUniformGroup> {
         return this._cameraBindGroups;
     }
 
-    public static getCameraGroup(camera: Camera3D) {
+    public getCameraGroup(camera: Camera3D): GlobalUniformGroup {
         let cameraBindGroup = this._cameraBindGroups.get(camera);
         if (!cameraBindGroup) {
             cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
@@ -41,7 +80,7 @@ export class GlobalBindGroup {
         return cameraBindGroup;
     }
 
-    public static updateCameraGroup(camera: Camera3D) {
+    public updateCameraGroup(camera: Camera3D): void {
         let cameraBindGroup = this._cameraBindGroups.get(camera);
         if (!cameraBindGroup) {
             cameraBindGroup = new GlobalUniformGroup(this.modelMatrixBindGroup);
@@ -54,11 +93,10 @@ export class GlobalBindGroup {
         }
     }
 
-    public static getLightEntries(scene: Scene3D): LightEntries {
+    public getLightEntries(scene: Scene3D): LightEntries {
         if (!scene) {
             console.log(`getLightEntries scene is null`);
         }
-
         let lightEntries = this._lightEntriesMap.get(scene);
         if (!lightEntries) {
             lightEntries = new LightEntries();
@@ -67,11 +105,10 @@ export class GlobalBindGroup {
         return this._lightEntriesMap.get(scene);
     }
 
-    public static getReflectionEntries(scene: Scene3D): ReflectionEntries {
+    public getReflectionEntries(scene: Scene3D): ReflectionEntries {
         if (!scene) {
             console.log(`getLightEntries scene is null`);
         }
-
         let reflectionEntries = this._reflectionEntriesMap.get(scene);
         if (!reflectionEntries) {
             reflectionEntries = new ReflectionEntries();
@@ -79,7 +116,4 @@ export class GlobalBindGroup {
         }
         return this._reflectionEntriesMap.get(scene);
     }
-
-
-
 }

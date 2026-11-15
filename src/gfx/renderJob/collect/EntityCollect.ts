@@ -19,14 +19,25 @@ import { CollectInfo } from './CollectInfo';
 import { EntityBatchCollect } from './EntityBatchCollect';
 import { RenderShaderCollect } from './RenderShaderCollect';
 
+// Module-level current instance — set by Engine3D on init so static shims route correctly.
+let _current: EntityCollect | null = null;
+/** @internal */
+export function setCurrentEntityCollect(ec: EntityCollect): void { _current = ec; }
+
 /**
  * @internal
  * @group Post
  */
 export class EntityCollect {
-    private static _instance: EntityCollect;
 
-    // private static  _sceneRenderList: Map<Scene3D, RenderNode[]>;
+    // ---- Static shim (backward compat — returns _current instance) ----
+
+    public static get instance(): EntityCollect {
+        return _current;
+    }
+
+    // ---- Instance fields ----
+
     private _sceneLights: Map<Scene3D, ILight[]>;
     private _sceneGIProbes: Map<Scene3D, Probe[]>;
 
@@ -56,15 +67,8 @@ export class EntityCollect {
     private _collectInfo: CollectInfo;
 
     private rendererOctree: Octree;
-    public static get instance() {
-        if (!this._instance) {
-            this._instance = new EntityCollect();
-        }
-        return this._instance;
-    }
 
     constructor() {
-        // this._sceneRenderList = new Map<Scene3D, RenderNode[]>();
         this._sceneLights = new Map<Scene3D, ILight[]>();
         this._sceneGIProbes = new Map<Scene3D, Probe[]>();
 

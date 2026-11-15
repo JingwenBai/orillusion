@@ -1,18 +1,24 @@
 
 import { RenderTexture } from "../../../textures/RenderTexture";
-import { webGPUContext } from "../../graphics/webGpu/Context3D";
+import { Context3D, webGPUContext } from "../../graphics/webGpu/Context3D";
 import { GPUTextureFormat } from "../../graphics/webGpu/WebGPUConst";
 import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
 
+// Module-level current GBuffer map — set by Engine3D on init so each engine has its own registry.
+let _currentGBufferMap: Map<string, GBufferFrame> | null = null;
+/** @internal */
+export function setCurrentGBufferMap(map: Map<string, GBufferFrame>): void { _currentGBufferMap = map; }
+
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
+
+    /** @deprecated Use the per-engine GBuffer map (managed by Engine3D). Kept for backward compat. */
     public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;
@@ -68,11 +74,14 @@ export class GBufferFrame extends RTFrame {
      * @internal
      */
     public static getGBufferFrame(key: string, fixedWidth: number = 0, fixedHeight: number = 0, outColor: boolean = true, depthTexture?: RenderTexture): GBufferFrame {
+        // Use per-engine map when available, fall back to shared legacy map
+        const map = _currentGBufferMap ?? GBufferFrame.gBufferMap;
         let gBuffer: GBufferFrame;
-        if (!GBufferFrame.gBufferMap.has(key)) {
+        if (!map.has(key)) {
             gBuffer = new GBufferFrame();
-            let size = webGPUContext.presentationSize;
-            // gBuffer.createGBuffer(key, size[0], size[1]);
+            // Use the most recently initialized context for canvas dimensions
+            const ctx = Context3D.current ?? webGPUContext;
+            let size = ctx.presentationSize;
             gBuffer.createGBuffer(
                 key,
                 fixedWidth == 0 ? size[0] : fixedWidth,
@@ -81,9 +90,9 @@ export class GBufferFrame extends RTFrame {
                 outColor,
                 depthTexture
             );
-            GBufferFrame.gBufferMap.set(key, gBuffer);
+            map.set(key, gBuffer);
         } else {
-            gBuffer = GBufferFrame.gBufferMap.get(key);
+            gBuffer = map.get(key);
         }
         return gBuffer;
     }
