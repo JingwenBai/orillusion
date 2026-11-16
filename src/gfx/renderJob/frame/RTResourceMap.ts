@@ -10,16 +10,48 @@ import { RenderTexture } from '../../../textures/RenderTexture';
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    // Per-engine-instance maps keyed by engine instance ID
+    private static _rtTextureMaps: Map<string, Map<string, RenderTexture>> = new Map();
+    private static _rtViewQuadMaps: Map<string, Map<string, ViewQuad>> = new Map();
+
+    // Active engine ID, swapped by Engine3D before each render frame
+    public static activeEngineId: string = 'default';
+
+    // Backward-compat accessors for the active instance's maps
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return RTResourceMap._getTextureMap(RTResourceMap.activeEngineId);
+    }
+
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return RTResourceMap._getViewQuadMap(RTResourceMap.activeEngineId);
+    }
+
+    private static _getTextureMap(engineId: string): Map<string, RenderTexture> {
+        let m = this._rtTextureMaps.get(engineId);
+        if (!m) {
+            m = new Map<string, RenderTexture>();
+            this._rtTextureMaps.set(engineId, m);
+        }
+        return m;
+    }
+
+    private static _getViewQuadMap(engineId: string): Map<string, ViewQuad> {
+        let m = this._rtViewQuadMaps.get(engineId);
+        if (!m) {
+            m = new Map<string, ViewQuad>();
+            this._rtViewQuadMaps.set(engineId, m);
+        }
+        return m;
+    }
 
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        this._getTextureMap(this.activeEngineId).clear();
+        this._getViewQuadMap(this.activeEngineId).clear();
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        let texMap = this.rtTextureMap;
+        let rt: RenderTexture = texMap.get(name);
         if (!rt) {
             if (name == RTResourceConfig.colorBufferTex_NAME) {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, false);
@@ -27,17 +59,18 @@ export class RTResourceMap {
                 rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, 1, sampleCount, true);
             }
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            texMap.set(name, rt);
         }
         return rt;
     }
 
     public static createRTTextureArray(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, length: number = 1, useMipmap: boolean = false, sampleCount: number = 0) {
-        let rt: RenderTexture = this.rtTextureMap.get(name);
+        let texMap = this.rtTextureMap;
+        let rt: RenderTexture = texMap.get(name);
         if (!rt) {
             rt = new RenderTexture(rtWidth, rtHeight, format, useMipmap, undefined, length, sampleCount);
             rt.name = name;
-            RTResourceMap.rtTextureMap.set(name, rt);
+            texMap.set(name, rt);
         }
         return rt;
     }
@@ -50,7 +83,7 @@ export class RTResourceMap {
                 new RTDescriptor()
             ]);
         let viewQuad = new ViewQuad(shaderVS, shaderFS, rtFrame, multisample);
-        RTResourceMap.rtViewQuad.set(name, viewQuad);
+        this.rtViewQuad.set(name, viewQuad);
         return viewQuad;
     }
 
@@ -89,5 +122,14 @@ export class RTResourceMap {
             },
         );
         GPUContext.endCommandEncoder(commandEncoder);
+    }
+
+    /**
+     * Release all resources for a given engine instance.
+     * @internal
+     */
+    public static releaseByEngineId(engineId: string): void {
+        this._rtTextureMaps.delete(engineId);
+        this._rtViewQuadMaps.delete(engineId);
     }
 }
