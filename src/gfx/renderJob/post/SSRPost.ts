@@ -51,10 +51,6 @@ export class SSRPost extends PostBase {
     /**
      * @internal
      */
-    rendererPassState: RendererPassState;
-    /**
-     * @internal
-     */
     ssrUniformBuffer: UniformGPUBuffer;
     /**
      * @internal
@@ -167,8 +163,9 @@ export class SSRPost extends PostBase {
 
         this.SSR_RayTraceCompute.setSamplerTexture("gBufferTexture", gBufferTexture);
 
-        if (EntityCollect.instance.sky instanceof SkyRenderer)
-            this.SSR_RayTraceCompute.setSamplerTexture(`prefilterMap`, EntityCollect.instance.sky.map);
+        const _ssrSky = EntityCollect.instance.getSky(this.view.scene);
+        if (_ssrSky instanceof SkyRenderer)
+            this.SSR_RayTraceCompute.setSamplerTexture(`prefilterMap`, _ssrSky.map);
 
         this.SSR_RayTraceCompute.workerSizeX = Math.ceil(this.isRetTexture.width / 8);
         this.SSR_RayTraceCompute.workerSizeY = Math.ceil(this.isRetTexture.height / 8);
@@ -182,7 +179,7 @@ export class SSRPost extends PostBase {
         this.SSR_IS_Compute.setStorageBuffer(`rayTraceBuffer`, this.rayTraceData);
         this.SSR_IS_Compute.setStorageBuffer(`ssrColorData`, this.ssrColorData);
         this.SSR_IS_Compute.setStorageBuffer(`historyPosition`, this.historyPosition);
-        this.SSR_IS_Compute.setSamplerTexture(`colorMap`, this.getOutTexture());
+        this.SSR_IS_Compute.setSamplerTexture(`colorMap`, this.getLastRenderTexture());
 
         this.SSR_IS_Compute.setStorageTexture(`outTex`, this.isRetTexture);
 
@@ -202,7 +199,7 @@ export class SSRPost extends PostBase {
         let gBufferTexture = rtFrame.getCompressGBufferTexture();
 
         this.SSR_Blend_Compute.setSamplerTexture("gBufferTexture", gBufferTexture);
-        this.SSR_Blend_Compute.setSamplerTexture("colorMap", this.getOutTexture());
+        this.SSR_Blend_Compute.setSamplerTexture("colorMap", this.getLastRenderTexture());
         this.SSR_Blend_Compute.setSamplerTexture(`ssrMap`, input);
         this.SSR_Blend_Compute.setStorageTexture(`outTex`, this.finalTexture);
 

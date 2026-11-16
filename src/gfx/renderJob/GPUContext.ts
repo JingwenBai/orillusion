@@ -9,19 +9,56 @@ import { RenderShaderPass } from "../graphics/webGpu/shader/RenderShaderPass";
 import { RendererPassState } from "./passRenderer/state/RendererPassState";
 
 /**
+ * @internal
+ * Per-engine instance data for GPUContext
+ */
+export class GPUContextData {
+    lastGeometry: GeometryBase = null;
+    lastPipeline: GPURenderPipeline = null;
+    lastShader: RenderShaderPass = null;
+    drawCount: number = 0;
+    renderPassCount: number = 0;
+    geometryCount: number = 0;
+    pipelineCount: number = 0;
+    matrixCount: number = 0;
+    lastRenderPassState: RendererPassState = null;
+    LastCommand: GPUCommandEncoder = null;
+}
+
+/**
  * WebGPU api use context
  */
 export class GPUContext {
-    public static lastGeometry: GeometryBase;
-    public static lastPipeline: GPURenderPipeline;
-    public static lastShader: RenderShaderPass;
-    public static drawCount: number = 0;
-    public static renderPassCount: number = 0;
-    public static geometryCount: number = 0;
-    public static pipelineCount: number = 0;
-    public static matrixCount: number = 0;
-    public static lastRenderPassState: RendererPassState;
-    public static LastCommand: GPUCommandEncoder;
+    private static _data: GPUContextData = new GPUContextData();
+
+    /**
+     * @internal
+     * Switch to a different engine instance's data
+     */
+    public static setData(data: GPUContextData) {
+        GPUContext._data = data;
+    }
+
+    public static get lastGeometry(): GeometryBase { return GPUContext._data.lastGeometry; }
+    public static set lastGeometry(v: GeometryBase) { GPUContext._data.lastGeometry = v; }
+    public static get lastPipeline(): GPURenderPipeline { return GPUContext._data.lastPipeline; }
+    public static set lastPipeline(v: GPURenderPipeline) { GPUContext._data.lastPipeline = v; }
+    public static get lastShader(): RenderShaderPass { return GPUContext._data.lastShader; }
+    public static set lastShader(v: RenderShaderPass) { GPUContext._data.lastShader = v; }
+    public static get drawCount(): number { return GPUContext._data.drawCount; }
+    public static set drawCount(v: number) { GPUContext._data.drawCount = v; }
+    public static get renderPassCount(): number { return GPUContext._data.renderPassCount; }
+    public static set renderPassCount(v: number) { GPUContext._data.renderPassCount = v; }
+    public static get geometryCount(): number { return GPUContext._data.geometryCount; }
+    public static set geometryCount(v: number) { GPUContext._data.geometryCount = v; }
+    public static get pipelineCount(): number { return GPUContext._data.pipelineCount; }
+    public static set pipelineCount(v: number) { GPUContext._data.pipelineCount = v; }
+    public static get matrixCount(): number { return GPUContext._data.matrixCount; }
+    public static set matrixCount(v: number) { GPUContext._data.matrixCount = v; }
+    public static get lastRenderPassState(): RendererPassState { return GPUContext._data.lastRenderPassState; }
+    public static set lastRenderPassState(v: RendererPassState) { GPUContext._data.lastRenderPassState = v; }
+    public static get LastCommand(): GPUCommandEncoder { return GPUContext._data.LastCommand; }
+    public static set LastCommand(v: GPUCommandEncoder) { GPUContext._data.LastCommand = v; }
 
     /**
      * renderPipeline before render need bind pipeline

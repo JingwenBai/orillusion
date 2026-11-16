@@ -25,6 +25,7 @@ export class GUIPick {
     private _upEvent: PickGUIEvent3D;
     private _downEvent: PickGUIEvent3D;
     private _view: View3D;
+    private _inputSystem: any;
 
     // private mouseMove: PickGUIEvent3D;
 
@@ -42,10 +43,12 @@ export class GUIPick {
         this._upEvent = new PickGUIEvent3D(PickGUIEvent3D.PICK_UP_GUI);
         this._downEvent = new PickGUIEvent3D(PickGUIEvent3D.PICK_DOWN_GUI);
 
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onTouchDown, this, null, 1);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onTouchUp, this, null, 1);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onTouchMove, this, null, 1);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_CLICK, this.onTouchClick, this, null, 1);
+        // Capture the inputSystem for this view's engine; fall back to Engine3D.current
+        this._inputSystem = view.engine?.inputSystem ?? Engine3D.inputSystem;
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onTouchDown, this, null, 1);
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onTouchUp, this, null, 1);
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onTouchMove, this, null, 1);
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_CLICK, this.onTouchClick, this, null, 1);
     }
 
     private _lastDownTarget: IUIInteractive;
@@ -193,8 +196,9 @@ export class GUIPick {
     }
 
     private pick(colliders: IUIInteractive[]): GUIHitInfo {
-        this._ray = this._view.camera.screenPointToRay(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY);
-        let screenPos = new Vector2(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY);
+        const inputSys = this._inputSystem ?? Engine3D.inputSystem;
+        this._ray = this._view.camera.screenPointToRay(inputSys.mouseX, inputSys.mouseY);
+        let screenPos = new Vector2(inputSys.mouseX, inputSys.mouseY);
         let screenSize = new Vector2(webGPUContext.canvas.clientWidth, webGPUContext.canvas.clientHeight);
 
         let hitInfo: GUIHitInfo;

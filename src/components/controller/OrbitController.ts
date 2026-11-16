@@ -5,6 +5,7 @@ import { Vector3 } from '../../math/Vector3';
 import { Vector3Ex } from '../../util/Vector3Ex';
 import { clamp } from '../../math/MathUtil';
 import { PointerEvent3D } from '../../event/eventConst/PointerEvent3D';
+import { CameraType } from '../../core/CameraType';
 
 /**
  * Orbit Camera Controller
@@ -49,7 +50,8 @@ export class OrbitController extends ComponentBase {
     private _isMouseDown: boolean = false;
     private _lastMouseX: number = -1;
     private _lastMouseY: number = -1;
-    private _isPanning: boolean = false
+    private _isPanning: boolean = false;
+    private _inputSystem: any = null;
 
     /**
      * @constructor
@@ -190,6 +192,7 @@ export class OrbitController extends ComponentBase {
         }
         if (changed) {
             this._spherical.setCoords(this._position.x - this._target.x, this._position.y - this._target.y, this._position.z - this._target.z)
+            this.updateCamera();
         } else if (!this._isMouseDown && this.autoRotate) {
             this._spherical.theta -= this.autoRotateSpeed * Math.PI / 180;
             this.updateCamera();
@@ -207,10 +210,19 @@ export class OrbitController extends ComponentBase {
      * @internal
      */
     private onWheel(e: PointerEvent3D) {
-        e.deltaY = clamp(e.deltaY, -this._spherical.radius, this._spherical.radius)
-        this._spherical.radius += e.deltaY * this.zoomFactor;
+        let deltaY = clamp(e.deltaY, -this._spherical.radius, this._spherical.radius)
+        this._spherical.radius += deltaY * this.zoomFactor;
         this._spherical.radius = clamp(this._spherical.radius, this.minDistance, this.maxDistance);
         this.updateCamera();
+
+        if(this._camera.type === CameraType.ortho){
+            this._camera.frustumSize += e.deltaY * this.zoomFactor
+            if(this._camera.frustumSize < this._minDistance)
+                this._camera.frustumSize = this._minDistance
+            else if(this._camera.frustumSize > this._maxDistance)
+                this._camera.frustumSize = this._maxDistance
+            this._camera.updateProjection()
+        }
     }
     /**
      * @internal
@@ -281,19 +293,20 @@ export class OrbitController extends ComponentBase {
      * @internal
      */
     private addEventListener() {
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
+        this._inputSystem ??= Engine3D.inputSystem;
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
     }
     /**
      * @internal
      */
     private removeEventListener() {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onWheel, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onPointerDown, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onPointerMove, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_UP, this.onPointerUp, this);
     }
 }
 

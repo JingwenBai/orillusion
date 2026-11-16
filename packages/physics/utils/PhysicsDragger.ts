@@ -1,4 +1,4 @@
-import { Engine3D, View3D, PointerEvent3D, Vector3 } from "@orillusion/core";
+import { Engine3D, View3D, PointerEvent3D, Vector3, InputSystem } from "@orillusion/core";
 import { Ammo, Physics } from "../Physics";
 import { TempPhyMath } from "./TempPhyMath";
 import { CollisionFlags } from "../rigidbody/RigidbodyEnum";
@@ -9,6 +9,7 @@ import { CollisionFlags } from "../rigidbody/RigidbodyEnum";
  */
 export class PhysicsDragger {
     private _view: View3D;
+    private _engine: Engine3D | null = null;
     private _interactionDepth: number;
     private _rigidBody: Ammo.btRigidBody;
     private _rayStart: Ammo.btVector3;
@@ -51,7 +52,15 @@ export class PhysicsDragger {
         this._raycastResult?.set_m_collisionFilterMask(value);
     }
 
-    constructor() {
+    /**
+     * @param engine Optional Engine3D instance. When running multiple Engine3D
+     *   instances on one page, pass the specific engine so this dragger uses the
+     *   correct InputSystem and View3D instead of falling back to Engine3D.current.
+     */
+    constructor(engine?: Engine3D) {
+        if (engine) {
+            this._engine = engine;
+        }
         this.initRaycast();
         this.tryRegisterEvents();
     }
@@ -62,9 +71,13 @@ export class PhysicsDragger {
         this._raycastResult = new Ammo.ClosestRayResultCallback(this._rayStart, this._rayEnd);
     }
 
+    private get _inputSystem(): InputSystem | undefined {
+        return (this._engine ?? Engine3D.current)?.inputSystem;
+    }
+
     private tryRegisterEvents() {
         const intervalId = setInterval(() => {
-            if (Engine3D.inputSystem) {
+            if ((this._engine ?? Engine3D.current)?.inputSystem) {
                 this.registerEvents();
                 clearInterval(intervalId);
             }
@@ -72,19 +85,20 @@ export class PhysicsDragger {
     }
 
     private registerEvents() {
-        this._view = Engine3D.views[0];
-        Engine3D.inputSystem?.addEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
-        Engine3D.inputSystem?.addEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this, null, 20);
-        Engine3D.inputSystem?.addEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this, null, 20);
-        Engine3D.inputSystem?.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this, null, 20);
+        const engine = this._engine ?? Engine3D.current;
+        this._view = engine?.views?.[0];
+        this._inputSystem?.addEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
+        this._inputSystem?.addEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this, null, 20);
+        this._inputSystem?.addEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this, null, 20);
+        this._inputSystem?.addEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this, null, 20);
     }
 
     private unregisterEvents() {
-        Engine3D.inputSystem?.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
-        Engine3D.inputSystem?.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this);
-        Engine3D.inputSystem?.removeEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this);
-        Engine3D.inputSystem?.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this);
-        
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_DOWN, this.onMouseDown, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_MOVE, this.onMouseMove, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_UP, this.onMouseUp, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.onMouseWheel, this);
+
         this.resetState();
         this._view = null;
     }
@@ -168,7 +182,8 @@ export class PhysicsDragger {
 
     // 更新刚体位置
     private updateRigidBody() {
-        let pos = this._view.camera.screenPointToWorld(Engine3D.inputSystem.mouseX, Engine3D.inputSystem.mouseY, this._interactionDepth);
+        const inputSystem = this._inputSystem;
+        let pos = this._view.camera.screenPointToWorld(inputSystem.mouseX, inputSystem.mouseY, this._interactionDepth);
 
         // 结合偏移量的新位置
         let newPos = pos.add(this._offset, pos);

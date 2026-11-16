@@ -20,6 +20,13 @@ export class View3D extends CEventListener {
     /** The Engine3D instance that owns this view. Set by Engine3D.startRenderView. */
     public engine: any;
 
+    /**
+     * The Engine3D instance that owns this view.
+     * Set by Engine3D.startRenderView / startRenderViews.
+     * @internal
+     */
+    public engine: any = null;
+
     constructor(x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
         super();
         this.canvasList = [];
