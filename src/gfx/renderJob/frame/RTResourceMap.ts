@@ -4,18 +4,42 @@ import { GPUContext } from '../GPUContext';
 import { RTFrame } from './RTFrame';
 import { RTResourceConfig } from '../config/RTResourceConfig';
 import { RenderTexture } from '../../../textures/RenderTexture';
+import { activeEngineId } from '../collect/EngineRegistry';
+
 /**
  * @internal
  * @group Post
  */
 export class RTResourceMap {
 
-    public static rtTextureMap: Map<string, RenderTexture>;
-    public static rtViewQuad: Map<string, ViewQuad>;
+    // Per-engine resource maps keyed by engine instance ID
+    private static _engineMaps: Map<string, { rtTextureMap: Map<string, RenderTexture>, rtViewQuad: Map<string, ViewQuad> }> = new Map();
+
+    private static _getEngineMap() {
+        const id = activeEngineId;
+        if (!RTResourceMap._engineMaps.has(id)) {
+            RTResourceMap._engineMaps.set(id, {
+                rtTextureMap: new Map<string, RenderTexture>(),
+                rtViewQuad: new Map<string, ViewQuad>()
+            });
+        }
+        return RTResourceMap._engineMaps.get(id);
+    }
+
+    public static get rtTextureMap(): Map<string, RenderTexture> {
+        return RTResourceMap._getEngineMap().rtTextureMap;
+    }
+
+    public static get rtViewQuad(): Map<string, ViewQuad> {
+        return RTResourceMap._getEngineMap().rtViewQuad;
+    }
 
     public static init() {
-        this.rtTextureMap = new Map<string, RenderTexture>();
-        this.rtViewQuad = new Map<string, ViewQuad>();
+        const id = activeEngineId;
+        RTResourceMap._engineMaps.set(id, {
+            rtTextureMap: new Map<string, RenderTexture>(),
+            rtViewQuad: new Map<string, ViewQuad>()
+        });
     }
 
     public static createRTTexture(name: string, rtWidth: number, rtHeight: number, format: GPUTextureFormat, useMipmap: boolean = false, sampleCount: number = 0) {
