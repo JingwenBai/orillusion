@@ -7,7 +7,7 @@ import { ComponentBase } from "../ComponentBase";
 
 /**
  * @internal
- * @group CameraController 
+ * @group CameraController
  */
 export class FirstPersonCameraController extends ComponentBase {
     public focus: Object3D;
@@ -15,6 +15,7 @@ export class FirstPersonCameraController extends ComponentBase {
     public distance: number = 5;
 
     private _camera: Camera3D;
+    private _inputSystem: any = null;
 
     constructor() {
         super();
@@ -31,17 +32,18 @@ export class FirstPersonCameraController extends ComponentBase {
             console.error('FirstPersonCameraController need target');
             return;
         }
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
+        this._inputSystem ??= Engine3D.inputSystem;
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
+        this._inputSystem.addEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
     }
 
     private mouseDown(e: PointerEvent3D) {
-        Engine3D.inputSystem.addEventListener(PointerEvent3D.POINTER_MOVE, this.mouseMove, this);
+        this._inputSystem?.addEventListener(PointerEvent3D.POINTER_MOVE, this.mouseMove, this);
     }
 
     private mouseUp(e: PointerEvent3D) {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_MOVE, this.mouseMove, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_MOVE, this.mouseMove, this);
     }
 
     private mouseMove(e: PointerEvent3D) {
@@ -54,7 +56,7 @@ export class FirstPersonCameraController extends ComponentBase {
     }
 
     private mouseWheel(e: PointerEvent3D) {
-        this.distance += Engine3D.inputSystem.wheelDelta * 0.1;
+        this.distance += (this._inputSystem ?? Engine3D.inputSystem).wheelDelta * 0.1;
     }
 
     public onUpdate() {
@@ -66,9 +68,9 @@ export class FirstPersonCameraController extends ComponentBase {
     }
 
     public destroy(force?: boolean): void {
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
-        Engine3D.inputSystem.removeEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_WHEEL, this.mouseWheel, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_UP, this.mouseUp, this);
+        this._inputSystem?.removeEventListener(PointerEvent3D.POINTER_DOWN, this.mouseDown, this);
         super.destroy(force);
     }
 }
