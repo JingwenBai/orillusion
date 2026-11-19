@@ -1,4 +1,5 @@
 import { Engine3D } from '../Engine3D';
+import { EngineRegistry } from '../util/EngineRegistry';
 import { SphereReflection } from '../components/renderer/SphereReflection';
 import { Texture } from '../gfx/graphics/webGpu/core/texture/Texture';
 import { EntityCollect } from '../gfx/renderJob/collect/EntityCollect';
@@ -25,7 +26,9 @@ export class Scene3D extends Object3D {
         this.skyObject = new Object3D();
         this.addChild(this.skyObject);
         this._isScene3D = true;
-        this.envMap ||= Engine3D.res.defaultSky;
+        // Use the active engine's res, with fallback to the static default for compat.
+        const res = (EngineRegistry.active as Engine3D)?.res ?? Engine3D.res;
+        this.envMap ||= res?.defaultSky;
     }
 
     /**
