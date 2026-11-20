@@ -148,6 +148,38 @@ export class Context3D extends CEventDispatcher {
 }
 
 /**
+ * Sets the active Context3D that webGPUContext proxy will forward to.
+ * Called by Engine3D before each render frame to support multiple engine instances.
  * @internal
  */
-export let webGPUContext = new Context3D();
+let _activeContext: Context3D | null = null;
+
+export function setActiveContext(ctx: Context3D): void {
+    _activeContext = ctx;
+}
+
+/**
+ * @internal
+ * Proxy that always forwards to the currently active Context3D instance.
+ * This allows multiple Engine3D instances to each own their own Context3D
+ * while all existing code that imports webGPUContext continues to work.
+ */
+export const webGPUContext: Context3D = new Proxy({} as Context3D, {
+    get(_target: Context3D, prop: string | symbol): unknown {
+        if (!_activeContext) {
+            return undefined;
+        }
+        const val = (_activeContext as unknown as Record<string | symbol, unknown>)[prop];
+        if (typeof val === 'function') {
+            return (val as Function).bind(_activeContext);
+        }
+        return val;
+    },
+    set(_target: Context3D, prop: string | symbol, value: unknown): boolean {
+        if (!_activeContext) {
+            return false;
+        }
+        (_activeContext as unknown as Record<string | symbol, unknown>)[prop] = value;
+        return true;
+    },
+});
