@@ -1,6 +1,5 @@
 import { Engine3D } from '../../../Engine3D';
 import { View3D } from '../../../core/View3D';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
 import { ColorPassRenderer } from '../passRenderer/color/ColorPassRenderer';
 import { GBufferFrame } from '../frame/GBufferFrame';
 import { RendererJob } from './RendererJob';
@@ -28,7 +27,7 @@ export class ForwardRenderJob extends RendererJob {
         super.start();
         {
             let colorPassRenderer = new ColorPassRenderer();
-            let rtFrame = GBufferFrame.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
+            let rtFrame = this.view.engine?.gBufferFrameMap?.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
 
             if (Engine3D.setting.render.zPrePass) {
                 rtFrame.zPreTexture = this.depthPassRenderer.rendererPassState.depthTexture;
@@ -37,7 +36,7 @@ export class ForwardRenderJob extends RendererJob {
             colorPassRenderer.setRenderStates(rtFrame);
 
             if (Engine3D.setting.gi.enable) {
-                let lightEntries = GlobalBindGroup.getLightEntries(this.view.scene);
+                let lightEntries = this.view.engine?.globalBindGroup?.getLightEntries(this.view.scene);
                 this.ddgiProbeRenderer = new DDGIProbeRenderer(lightEntries.irradianceVolume);
                 this.ddgiProbeRenderer.setInputTexture([
                     this.shadowMapPassRenderer.depth2DArrayTexture,
@@ -51,7 +50,7 @@ export class ForwardRenderJob extends RendererJob {
         }
 
         {
-            let guiFrame = GBufferFrame.getGUIBufferFrame();
+            let guiFrame = this.view.engine?.gBufferFrameMap?.getGUIBufferFrame();
             let guiPassRenderer = new GUIPassRenderer();
             guiPassRenderer.setRenderStates(guiFrame);
             this.rendererMap.addRenderer(guiPassRenderer);

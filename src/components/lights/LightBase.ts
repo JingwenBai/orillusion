@@ -66,20 +66,22 @@ export class LightBase extends ComponentBase implements ILight {
         if (this.bindOnChange) this.bindOnChange();
         this.transform.object3D.bound.setFromCenterAndSize(this.transform.worldPosition, new Vector3(this.size, this.size, this.size));
         if (this._castGI) {
-            EntityCollect.instance.state.giLightingChange = true;
+            const ec = this.transform.view3D?.engine?.entityCollect;
+            if (ec) ec.state.giLightingChange = true;
         }
 
+        const slc = this.transform.view3D?.engine?.shadowLightsCollect;
         if (this._castShadow) {
             this.needUpdateShadow = true;
-            ShadowLightsCollect.addShadowLight(this);
+            slc?.addShadowLight(this);
         } else {
-            ShadowLightsCollect.removeShadowLight(this);
+            slc?.removeShadowLight(this);
         }
 
-        if (this.transform.view3D && Engine3D.renderJobs) {
-            let renderer = Engine3D.renderJobs.get(this.transform.view3D).reflectionRenderer;
-            if (renderer)
-                Engine3D.renderJobs.get(this.transform.view3D).reflectionRenderer.forceUpdate();
+        const view = this.transform.view3D;
+        if (view?.engine?.renderJobs) {
+            let renderer = view.engine.renderJobs.get(view)?.reflectionRenderer;
+            if (renderer) renderer.forceUpdate();
         }
     }
 

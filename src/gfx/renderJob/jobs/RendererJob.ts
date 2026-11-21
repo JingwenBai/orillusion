@@ -2,8 +2,6 @@ import { Scene3D } from '../../../core/Scene3D';
 import { View3D } from '../../../core/View3D';
 import { Engine3D } from '../../../Engine3D';
 import { PickFire } from '../../../io/PickFire';
-import { GlobalBindGroup } from '../../graphics/webGpu/core/bindGroups/GlobalBindGroup';
-import { ShadowLightsCollect } from '../collect/ShadowLightsCollect';
 import { ColorPassRenderer } from '../passRenderer/color/ColorPassRenderer';
 import { GBufferFrame } from '../frame/GBufferFrame';
 import { OcclusionSystem } from '../occlusion/OcclusionSystem';
@@ -173,7 +171,7 @@ export class RendererJob {
      */
     public addPost(post: PostBase): PostBase | PostBase[] {
         if (!this.postRenderer) {
-            let gbufferFrame = GBufferFrame.getGBufferFrame('ColorPassGBuffer');
+            let gbufferFrame = this._view.engine?.gBufferFrameMap?.getGBufferFrame(GBufferFrame.colorPass_GBuffer);
             this.postRenderer = this.addRenderer(PostRenderer);
             this.postRenderer.setRenderStates(gbufferFrame);
         }
@@ -206,14 +204,14 @@ export class RendererJob {
 
         ProfilerUtil.startView(view);
 
-        GlobalBindGroup.getLightEntries(view.scene).update(view);
-        GlobalBindGroup.getReflectionEntries(view.scene).update(view);
+        view.engine?.globalBindGroup?.getLightEntries(view.scene).update(view);
+        view.engine?.globalBindGroup?.getReflectionEntries(view.scene).update(view);
 
         this.occlusionSystem.update(view.camera, view.scene);
         this.clusterLightingRender.render(view, this.occlusionSystem);
 
         if (this.shadowMapPassRenderer) {
-            ShadowLightsCollect.update(view);
+            view.engine?.shadowLightsCollect?.update(view);
             this.shadowMapPassRenderer.render(view, this.occlusionSystem);
         }
 
@@ -247,7 +245,7 @@ export class RendererJob {
         guiRenderer.render(view, this.occlusionSystem, this.clusterLightingRender.clusterLightingBuffer, false);
 
         //output
-        let lastTexture = GBufferFrame.getGUIBufferFrame().getColorTexture();
+        let lastTexture = view.engine?.gBufferFrameMap?.getGUIBufferFrame().getColorTexture();
         this.postRenderer.presentContent(view, lastTexture);
     }
 

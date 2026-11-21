@@ -27,11 +27,11 @@ export class ColliderComponent extends ComponentBase {
     }
 
     public onEnable(view?: View3D) {
-        ComponentCollect.bindEnablePick(view, this, null);
+        view?.engine?.componentCollect?.bindEnablePick(view, this, null);
     }
 
     public onDisable(view?: View3D) {
-        ComponentCollect.unBindEnablePick(view, this);
+        view?.engine?.componentCollect?.unBindEnablePick(view, this);
     }
 
     /**
