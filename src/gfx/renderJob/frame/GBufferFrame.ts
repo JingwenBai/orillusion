@@ -6,13 +6,21 @@ import { RTDescriptor } from "../../graphics/webGpu/descriptor/RTDescriptor";
 import { RTResourceConfig } from "../config/RTResourceConfig";
 import { RTFrame } from "./RTFrame";
 import { RTResourceMap } from "./RTResourceMap";
+import { EngineContext } from "../../../core/EngineContext";
 
 export class GBufferFrame extends RTFrame {
     public static colorPass_GBuffer: string = "ColorPassGBuffer";
     public static reflections_GBuffer: string = "reflections_GBuffer";
     public static gui_GBuffer: string = "gui_GBuffer";
-    public static gBufferMap: Map<string, GBufferFrame> = new Map<string, GBufferFrame>();
-    // public static bufferTexture: boolean = false;
+
+    /**
+     * @deprecated Use engine.gBufferMap directly for multi-instance code.
+     * This static property is kept for backward compatibility and returns
+     * the current engine's gBufferMap when accessed during a render frame.
+     */
+    public static get gBufferMap(): Map<string, GBufferFrame> {
+        return EngineContext.current?.gBufferMap as Map<string, GBufferFrame>;
+    }
 
     private _colorBufferTex: RenderTexture;
     private _compressGBufferTex: RenderTexture;

@@ -17,6 +17,10 @@ export class GlobalBindGroup {
     public static modelMatrixBindGroup: MatrixBindGroup;
 
     public static init() {
+        // Idempotent: skip if already initialised (e.g. second Engine3D instance).
+        // Each engine instance's cameras/scenes are distinct objects, so the existing
+        // maps partition state correctly without resetting them.
+        if (this.modelMatrixBindGroup) return;
         this.modelMatrixBindGroup = new MatrixBindGroup();
         this._cameraBindGroups = new Map<Camera3D, GlobalUniformGroup>();
         this._lightEntriesMap = new Map<Scene3D, LightEntries>();

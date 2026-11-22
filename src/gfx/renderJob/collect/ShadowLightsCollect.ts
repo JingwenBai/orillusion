@@ -19,6 +19,10 @@ export class ShadowLightsCollect {
     public static shadowLights: Map<Scene3D, Float32Array>;
 
     public static init() {
+        // Idempotent: skip if already initialised (e.g. second Engine3D instance).
+        // Data is keyed by Scene3D instances which are distinct per engine,
+        // so the global maps work correctly for multiple engines without resetting.
+        if (this.directionLightList) return;
         this.directionLightList = new Map<Scene3D, ILight[]>();
         this.pointLightList = new Map<Scene3D, ILight[]>();
         this.shadowLights = new Map<Scene3D, Float32Array>();
