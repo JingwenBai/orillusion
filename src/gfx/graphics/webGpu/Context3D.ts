@@ -8,6 +8,13 @@ import { CanvasConfig } from './CanvasConfig';
  */
 export class Context3D extends CEventDispatcher {
 
+    /** Shared GPU adapter across all engine instances */
+    public static sharedAdapter: GPUAdapter = null;
+    /** Shared GPU device across all engine instances */
+    public static sharedDevice: GPUDevice = null;
+    /** Shared presentation format across all engine instances */
+    public static sharedPresentationFormat: GPUTextureFormat = null;
+
     public adapter: GPUAdapter;
     public device: GPUDevice;
     public context: GPUCanvasContext;
@@ -75,33 +82,44 @@ export class Context3D extends CEventDispatcher {
             throw new Error('Your browser does not support WebGPU!');
         }
 
-        // request adapter
-        this.adapter = await navigator.gpu.requestAdapter({
-            powerPreference: 'high-performance',
-            // powerPreference: 'low-power',
-        });
+        if (Context3D.sharedDevice) {
+            // Reuse shared GPU device from the first engine instance
+            this.adapter = Context3D.sharedAdapter;
+            this.device = Context3D.sharedDevice;
+            this.presentationFormat = Context3D.sharedPresentationFormat;
+        } else {
+            // First engine instance: request adapter and device
+            this.adapter = await navigator.gpu.requestAdapter({
+                powerPreference: 'high-performance',
+                // powerPreference: 'low-power',
+            });
 
-        if (this.adapter == null) {
-            throw new Error('Your browser does not support WebGPU!');
-        }
-
-        // request device
-        this.device = await this.adapter.requestDevice({
-            requiredFeatures: [
-                "bgra8unorm-storage",
-                "depth-clip-control",
-                "depth32float-stencil8",
-                "indirect-first-instance",
-                "rg11b10ufloat-renderable",
-            ],
-            requiredLimits: {
-                minUniformBufferOffsetAlignment: 256,
-                maxStorageBufferBindingSize: this.adapter.limits.maxStorageBufferBindingSize
+            if (this.adapter == null) {
+                throw new Error('Your browser does not support WebGPU!');
             }
-        });
 
-        if (this.device == null) {
-            throw new Error('Your browser does not support WebGPU!');
+            this.device = await this.adapter.requestDevice({
+                requiredFeatures: [
+                    "bgra8unorm-storage",
+                    "depth-clip-control",
+                    "depth32float-stencil8",
+                    "indirect-first-instance",
+                    "rg11b10ufloat-renderable",
+                ],
+                requiredLimits: {
+                    minUniformBufferOffsetAlignment: 256,
+                    maxStorageBufferBindingSize: this.adapter.limits.maxStorageBufferBindingSize
+                }
+            });
+
+            if (this.device == null) {
+                throw new Error('Your browser does not support WebGPU!');
+            }
+
+            this.presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+            Context3D.sharedAdapter = this.adapter;
+            Context3D.sharedDevice = this.device;
+            Context3D.sharedPresentationFormat = this.presentationFormat;
         }
 
         this._pixelRatio = this.canvasConfig?.devicePixelRatio || window.devicePixelRatio || 1;
@@ -109,7 +127,7 @@ export class Context3D extends CEventDispatcher {
 
         // configure webgpu context
         this.device.label = 'device';
-        this.presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+        this.presentationFormat = this.presentationFormat;
         this.context = this.canvas.getContext('webgpu');
         this.context.configure({
             device: this.device,
